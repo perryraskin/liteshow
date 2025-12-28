@@ -4,10 +4,20 @@
   "private": true,
   "description": "LiteShow backend API",
   "scripts": {
-    "dev": "echo 'API development server - to be implemented'",
-    "build": "echo 'API build - to be implemented'",
-    "start": "echo 'API start - to be implemented'"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.4.0",
+    "@liteshow/db": "workspace:*",
+    "@liteshow/auth": "workspace:*",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
 }

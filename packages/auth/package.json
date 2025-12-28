@@ -10,9 +10,12 @@
     "clean": "rm -rf .turbo node_modules"
   },
   "dependencies": {
-    "better-auth": "^0.1.0"
+    "better-auth": "^1.0.0",
+    "@liteshow/db": "workspace:*",
+    "hono": "^4.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20.10.6",
     "typescript": "^5.3.3"
   }
 }
