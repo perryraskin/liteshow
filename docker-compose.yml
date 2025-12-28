@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: liteshow
+      POSTGRES_PASSWORD: liteshow
+      POSTGRES_DB: liteshow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # dashboard:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/dashboard/Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     DATABASE_URL: postgresql://liteshow:liteshow@postgres:5432/liteshow
+  #   depends_on:
+  #     - postgres
+
+  # sites:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/sites/Dockerfile
+  #   ports:
+  #     - "4321:4321"
+  #   depends_on:
+  #     - postgres
+
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/api/Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     DATABASE_URL: postgresql://liteshow:liteshow@postgres:5432/liteshow
+  #   depends_on:
+  #     - postgres
+
+volumes:
+  postgres_data:

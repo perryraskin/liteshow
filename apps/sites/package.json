@@ -1,0 +1,19 @@
+{
+  "name": "@liteshow/sites",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LiteShow Astro site generator",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "lint": "astro check"
+  },
+  "dependencies": {
+    "astro": "^4.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}

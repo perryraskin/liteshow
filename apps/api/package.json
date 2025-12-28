@@ -1,0 +1,13 @@
+{
+  "name": "@liteshow/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LiteShow backend API",
+  "scripts": {
+    "dev": "echo 'API development server - to be implemented'",
+    "build": "echo 'API build - to be implemented'",
+    "start": "echo 'API start - to be implemented'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
