@@ -17,13 +17,18 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 This is a monorepo containing:
 
-- **apps/dashboard**: Next.js user dashboard
-- **apps/sites**: Astro site generator
-- **apps/api**: FastAPI/Hono backend API
+- **apps/dashboard**: Next.js user dashboard (deployed to Vercel)
+- **apps/sites**: Astro site generator (deployed to Fly.io with API)
+- **apps/api**: Hono backend API (co-located with sites on Fly.io)
 - **packages/ui**: Shared React components
 - **packages/auth**: Better Auth configuration
-- **packages/db**: Prisma schema and client
+- **packages/db**: Drizzle ORM schema and client
 - **packages/config**: Shared configuration
+
+### Deployment Strategy
+
+- **Dashboard**: Deployed to Vercel at `app.liteshow.io`
+- **Sites + API**: Co-located in a single Fly.io container at `sites.liteshow.io` for cost optimization
 
 ## Getting Started
 

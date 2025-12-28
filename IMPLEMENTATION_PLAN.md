@@ -15,20 +15,21 @@ This document outlines the phased implementation approach for the LiteShow MVP. 
 ### 1.1 Database Setup & Schema Design
 
 **Tasks:**
-- [ ] Set up Prisma with PostgreSQL for central metadata database
-- [ ] Design and implement Prisma schema for:
+- [ ] Set up Drizzle ORM with PostgreSQL for central metadata database
+- [ ] Design and implement Drizzle schema for:
   - Users (linked to GitHub accounts)
   - Projects (one per user site)
   - Domains (custom domain mappings)
   - Activity logs
-- [ ] Create initial migrations
+- [ ] Create initial migrations with Drizzle Kit
 - [ ] Set up Turso client utilities for per-project content databases
-- [ ] Design content database schema (Pages, Blocks)
+- [ ] Design content database schema (Pages, Blocks) with Drizzle
 
 **Files to Create:**
-- `packages/db/prisma/schema.prisma`
+- `packages/db/src/schema.ts`
 - `packages/db/src/index.ts`
 - `packages/db/src/turso-client.ts`
+- `packages/db/drizzle.config.ts`
 - `packages/db/migrations/*`
 
 **Deliverable**: Working database setup with migrations, ready for data operations.
@@ -262,13 +263,16 @@ This document outlines the phased implementation approach for the LiteShow MVP. 
 ### 4.3 Deployment Setup
 
 **Tasks:**
-- [ ] Set up Vercel deployment for dashboard
-- [ ] Set up Fly.io/Railway deployment for Astro sites
+- [ ] Set up Vercel deployment for dashboard (app.liteshow.io)
+- [ ] Set up Fly.io deployment with co-located Astro sites + API (sites.liteshow.io)
+- [ ] Create Dockerfile for Fly.io container (sites + api together)
 - [ ] Configure environment variables for production
 - [ ] Set up managed Postgres (Neon/Supabase)
 - [ ] Document deployment process
 
 **Deliverable**: All apps can be deployed to production.
+
+**Note**: The API and Sites apps are co-located in a single Fly.io container for cost optimization and simplified deployment. The Astro SSR server handles domain routing and the API handles backend logic.
 
 ---
 
@@ -342,12 +346,13 @@ This document outlines the phased implementation approach for the LiteShow MVP. 
 | **Frontend Framework** | Next.js 14 (App Router) | Modern React framework, great DX, Vercel deployment |
 | **Site Generator** | Astro (SSR mode) | Best-in-class SEO and performance, SSR for multi-tenancy |
 | **API Framework** | Hono | Lightweight, fast, TypeScript-first, edge-ready |
-| **Metadata DB** | PostgreSQL + Prisma | Robust, scalable, excellent TypeScript support |
-| **Content DB** | Turso (SQLite) | Per-tenant isolation, global replication, cost-effective |
+| **Metadata DB** | PostgreSQL + Drizzle ORM | Robust, scalable, excellent TypeScript support, lightweight |
+| **Content DB** | Turso (SQLite) + Drizzle | Per-tenant isolation, global replication, cost-effective |
 | **Auth** | Better Auth | Modern, flexible, GitHub OAuth support |
 | **Monorepo Tool** | Turborepo + pnpm | Fast builds, great caching, efficient dependency management |
 | **Styling** | Tailwind CSS | Utility-first, consistent, fast development |
 | **AI Provider** | Anthropic Claude | Best for content generation, long context windows |
+| **Deployment** | Vercel (Dashboard) + Fly.io (Sites+API) | Optimal for Next.js, cost-effective co-location |
 
 ---
 

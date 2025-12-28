@@ -1,3 +1,3 @@
 # @liteshow/db
 
-Prisma schema and database client for LiteShow metadata.
+Drizzle ORM schema and database client for LiteShow metadata (PostgreSQL) and content (Turso/SQLite).
