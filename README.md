@@ -36,32 +36,78 @@ This is a monorepo containing:
 
 - Node.js >= 18.0.0
 - pnpm >= 8.0.0
-- PostgreSQL (for metadata)
+- PostgreSQL database (choose one):
+  - **Option A**: Managed database (Neon, Supabase, Railway) - **Recommended for easy setup**
+  - **Option B**: Docker Compose (local PostgreSQL)
+  - **Option C**: Local PostgreSQL installation
 - Turso account (for content databases)
 - GitHub OAuth App
 
-### Installation
+### Quick Start (Managed Database - Recommended)
+
+This is the easiest way to get started without managing a database server:
+
+1. **Create a managed PostgreSQL database:**
+   - [Neon](https://neon.tech) (free tier available) - Recommended
+   - [Supabase](https://supabase.com) (free tier available)
+   - [Railway](https://railway.app) (free trial)
+
+2. **Clone and install:**
+   ```bash
+   git clone https://github.com/perryraskin/liteshow.git
+   cd liteshow
+   pnpm install
+   ```
+
+3. **Set up environment variables:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your DATABASE_URL from Neon/Supabase
+   ```
+
+4. **Create a Turso database:**
+   ```bash
+   # Install Turso CLI
+   curl -sSfL https://get.tur.so/install.sh | bash
+
+   # Sign up and create a database
+   turso auth signup
+   turso db create liteshow
+   turso db tokens create liteshow
+   ```
+
+5. **Create a GitHub OAuth App:**
+   - Go to GitHub Settings > Developer settings > OAuth Apps
+   - Create new OAuth App
+   - Homepage URL: `http://localhost:3000`
+   - Callback URL: `http://localhost:8000/api/auth/callback/github`
+   - Add Client ID and Secret to `.env`
+
+6. **Run database migrations:**
+   ```bash
+   cd packages/db
+   pnpm db:push
+   cd ../..
+   ```
+
+7. **Start development servers:**
+   ```bash
+   pnpm dev
+   ```
+
+   This will start:
+   - Dashboard: http://localhost:3000
+   - API: http://localhost:8000
+
+### Local Setup with Docker
+
+If you prefer to run everything locally including the database:
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Set up environment variables
-cp .env.example .env
-
-# Run database migrations
-pnpm db:push
-
-# Start development servers
-pnpm dev
-```
-
-## Self-Hosting
-
-LiteShow can be self-hosted using Docker Compose:
-
-```bash
+# Start PostgreSQL with Docker Compose
 docker-compose up -d
+
+# Follow steps 2-7 above
 ```
 
 See the [Self-Hosting Guide](./docs/self-hosting.md) for detailed instructions.

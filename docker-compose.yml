@@ -1,8 +1,22 @@
 version: '3.8'
 
+# Docker Compose configuration for local development
+#
+# This file provides a local PostgreSQL database for development.
+# For production or easier self-hosting, consider using a managed database
+# service like Neon, Supabase, or Railway instead.
+#
+# Usage:
+#   docker-compose up -d          # Start PostgreSQL only
+#   docker-compose down           # Stop all services
+#   docker-compose down -v        # Stop and remove volumes (deletes data)
+
 services:
+  # PostgreSQL database (for local development only)
+  # For production/self-hosting, use Neon, Supabase, or Railway
   postgres:
     image: postgres:16-alpine
+    container_name: liteshow-postgres
     environment:
       POSTGRES_USER: liteshow
       POSTGRES_PASSWORD: liteshow
@@ -11,6 +25,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liteshow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The following services are commented out as they're typically
+  # run via `pnpm dev` during development.
+  # Uncomment and configure these for containerized deployment.
 
   # dashboard:
   #   build:
@@ -20,17 +43,10 @@ services:
   #     - "3000:3000"
   #   environment:
   #     DATABASE_URL: postgresql://liteshow:liteshow@postgres:5432/liteshow
+  #     NEXT_PUBLIC_API_URL: http://localhost:8000
   #   depends_on:
-  #     - postgres
-
-  # sites:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/sites/Dockerfile
-  #   ports:
-  #     - "4321:4321"
-  #   depends_on:
-  #     - postgres
+  #     postgres:
+  #       condition: service_healthy
 
   # api:
   #   build:
@@ -40,8 +56,24 @@ services:
   #     - "8000:8000"
   #   environment:
   #     DATABASE_URL: postgresql://liteshow:liteshow@postgres:5432/liteshow
+  #     GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+  #     GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
   #   depends_on:
-  #     - postgres
+  #     postgres:
+  #       condition: service_healthy
+
+  # sites:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/sites/Dockerfile
+  #   ports:
+  #     - "4321:4321"
+  #   environment:
+  #     DATABASE_URL: postgresql://liteshow:liteshow@postgres:5432/liteshow
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
 volumes:
   postgres_data:
+    driver: local
