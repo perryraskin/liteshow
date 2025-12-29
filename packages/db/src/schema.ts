@@ -8,7 +8,7 @@
  * - Activity logs (tracking all content changes)
  */
 
-import { pgTable, text, timestamp, uuid, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, jsonb, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Users table - stores GitHub authenticated users
@@ -20,6 +20,45 @@ export const users = pgTable('users', {
   githubAccessToken: text('github_access_token'), // For repo management
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  email: text('email'), // Better Auth - populated from github_email
+  emailVerified: boolean('email_verified').default(false).notNull(),
+  image: text('image'), // Better Auth uses 'image' instead of 'avatarUrl'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Better Auth: Sessions table
+export const sessions = pgTable('session', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Better Auth: Accounts table (for OAuth providers)
+export const accounts = pgTable('account', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  accountId: text('account_id').notNull(), // GitHub user ID
+  providerId: text('provider_id').notNull(), // 'github'
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  expiresAt: timestamp('expires_at'),
+  password: text('password'), // For email/password auth (not used)
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Better Auth: Verification tokens
+export const verifications = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -80,6 +119,22 @@ export const activityLogs = pgTable('activity_logs', {
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
   activityLogs: many(activityLogs),
+  sessions: many(sessions),
+  accounts: many(accounts),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -112,6 +167,12 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 // Export types for TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+export type Account = typeof accounts.$inferSelect;
+export type NewAccount = typeof accounts.$inferInsert;
+export type Verification = typeof verifications.$inferSelect;
+export type NewVerification = typeof verifications.$inferInsert;
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Domain = typeof domains.$inferSelect;

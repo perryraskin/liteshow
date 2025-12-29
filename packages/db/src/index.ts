@@ -7,12 +7,17 @@
  * - Database schemas and types
  */
 
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js';
 import { drizzle as drizzleTurso } from 'drizzle-orm/libsql';
 import postgres from 'postgres';
 import { createClient } from '@libsql/client';
 import * as schema from './schema';
 import * as contentSchema from './content-schema';
+
+// Load .env from root directory (2 levels up from packages/db/src)
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 // PostgreSQL client for metadata database
 const connectionString = process.env.DATABASE_URL;

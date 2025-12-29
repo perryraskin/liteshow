@@ -1,16 +1,38 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check session via API
+    // Check for session token in URL (from OAuth callback)
+    const sessionToken = searchParams.get('session');
+    if (sessionToken) {
+      // Store in localStorage
+      localStorage.setItem('session_token', sessionToken);
+      // Remove from URL
+      router.replace('/dashboard');
+      return;
+    }
+
+    // Get stored session token
+    const storedToken = localStorage.getItem('session_token');
+
+    if (!storedToken) {
+      router.push('/login');
+      return;
+    }
+
+    // Check session via API with token
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`, {
+      headers: {
+        'Authorization': `Bearer ${storedToken}`,
+      },
       credentials: 'include',
     })
       .then((res) => res.json())
@@ -18,22 +40,21 @@ export default function DashboardPage() {
         if (data.user) {
           setSession(data);
         } else {
+          localStorage.removeItem('session_token');
           router.push('/login');
         }
       })
       .catch(() => {
+        localStorage.removeItem('session_token');
         router.push('/login');
       })
       .finally(() => {
         setIsLoading(false);
       });
-  }, [router]);
+  }, [router, searchParams]);
 
   const handleSignOut = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    localStorage.removeItem('session_token');
     router.push('/');
   };
 
@@ -92,5 +113,19 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

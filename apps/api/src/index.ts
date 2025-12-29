@@ -11,9 +11,9 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import 'dotenv/config';
 
-import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import healthRoutes from './routes/health';
+import authRoutes from './routes/github-auth';
 import { errorHandler } from './middleware/error';
 
 const app = new Hono();
