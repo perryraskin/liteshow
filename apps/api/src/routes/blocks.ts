@@ -14,6 +14,7 @@ import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
 // import { syncPageToGitHub } from '../lib/git-sync'; // TODO: Fix git sync for blocks
 import { logBlockActivity } from '../lib/activity-logger';
+import { createPageVersion } from '../lib/versioning';
 
 const blocksRoutes = new Hono();
 
@@ -124,6 +125,9 @@ blocksRoutes.post('/:projectId/pages/:pageId/blocks', async (c) => {
 
     console.log(`Block created: ${newBlock.id} in page ${pageId}`);
 
+    // Create version snapshot after block creation
+    await createPageVersion(client, pageId, user.id);
+
     // Log activity
     await logBlockActivity('block_created', projectId, user.id, newBlock.id, {
       type,
@@ -193,6 +197,9 @@ blocksRoutes.put('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
 
     console.log(`Block updated: ${blockId} in page ${pageId}`);
 
+    // Create version snapshot after block update
+    await createPageVersion(client, pageId, user.id);
+
     // Log activity
     await logBlockActivity('block_updated', projectId, user.id, blockId, {
       type: existingBlock[0].type,
@@ -253,6 +260,9 @@ blocksRoutes.delete('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
     await client.delete(blocks).where(eq(blocks.id, blockId));
 
     console.log(`Block deleted: ${blockId} from page ${pageId}`);
+
+    // Create version snapshot after block deletion
+    await createPageVersion(client, pageId, user.id);
 
     // Log activity
     await logBlockActivity('block_deleted', projectId, user.id, blockId, {

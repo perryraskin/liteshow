@@ -257,8 +257,8 @@ export default function PageEditorPage() {
                 Back to Pages
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Badge variant={page.status === 'published' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                 {page.status}
               </Badge>
               <VersionHistory
@@ -271,9 +271,11 @@ export default function PageEditorPage() {
                   handleUpdateStatus(page.status === 'published' ? 'draft' : 'published')
                 }
                 disabled={isUpdatingStatus}
+                size="sm"
               >
                 {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {page.status === 'published' ? 'Unpublish' : 'Publish'}
+                <span className="hidden sm:inline">{page.status === 'published' ? 'Unpublish' : 'Publish'}</span>
+                <span className="sm:hidden">{page.status === 'published' ? 'Draft' : 'Publish'}</span>
               </Button>
             </div>
           </div>
