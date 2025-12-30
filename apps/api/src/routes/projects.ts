@@ -554,4 +554,93 @@ projectRoutes.get('/:id/activity', async (c) => {
   }
 });
 
+// DELETE /api/projects/:id - Delete a project (and GitHub repo)
+projectRoutes.delete('/:id', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    console.log(`Deleting project ${projectId} for user ${user.id}`);
+
+    // Step 1: Delete GitHub repository
+    try {
+      const repoFullName = project.githubRepoUrl.replace('https://github.com/', '');
+      console.log(`Deleting GitHub repo: ${repoFullName}`);
+
+      const deleteRepoResponse = await fetch(`https://api.github.com/repos/${repoFullName}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.githubAccessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (!deleteRepoResponse.ok && deleteRepoResponse.status !== 404) {
+        console.error('Failed to delete GitHub repo:', await deleteRepoResponse.text());
+        // Continue anyway - repo might already be deleted
+      } else {
+        console.log('GitHub repo deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting GitHub repo:', error);
+      // Continue anyway
+    }
+
+    // Step 2: Delete Turso database
+    try {
+      const tursoApiToken = process.env.TURSO_API_TOKEN;
+      const tursoOrg = process.env.TURSO_ORG || 'perryraskin';
+      const dbName = `liteshow-${project.slug}`;
+
+      console.log(`Deleting Turso database: ${dbName}`);
+
+      const deleteTursoResponse = await fetch(
+        `https://api.turso.tech/v1/organizations/${tursoOrg}/databases/${dbName}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${tursoApiToken}`,
+          },
+        }
+      );
+
+      if (!deleteTursoResponse.ok && deleteTursoResponse.status !== 404) {
+        console.error('Failed to delete Turso database:', await deleteTursoResponse.text());
+        // Continue anyway
+      } else {
+        console.log('Turso database deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting Turso database:', error);
+      // Continue anyway
+    }
+
+    // Step 3: Delete project from PostgreSQL (cascades to activity logs)
+    await db.delete(projects).where(eq(projects.id, projectId));
+
+    console.log(`Project ${projectId} deleted successfully`);
+
+    return c.json({ success: true, message: 'Project deleted successfully' });
+  } catch (error: any) {
+    console.error('Delete project error:', error);
+    return c.json({ error: error.message || 'Failed to delete project' }, 500);
+  }
+});
+
 export default projectRoutes;
