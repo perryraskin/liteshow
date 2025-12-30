@@ -12,7 +12,8 @@ import { db } from '@liteshow/db';
 import { projects, users } from '@liteshow/db';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
-import { syncPageToGitHub } from '../services/git-sync';
+// import { syncPageToGitHub } from '../lib/git-sync'; // TODO: Fix git sync for blocks
+import { logBlockActivity } from '../lib/activity-logger';
 
 const blocksRoutes = new Hono();
 
@@ -57,45 +58,17 @@ async function getProjectTursoClient(projectId: string, userId: string) {
   };
 }
 
+// TODO: Fix git sync for blocks - this helper needs to be updated to match the new git-sync API
 // Helper to sync page to GitHub after changes
-async function syncPageAfterChange(
-  client: any,
-  project: any,
-  user: any,
-  pageId: string,
-  commitMessage: string
-) {
-  try {
-    // Get page data
-    const pageData = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
-    if (pageData.length === 0) return;
-
-    // Get all blocks for this page
-    const pageBlocks = await client
-      .select()
-      .from(blocks)
-      .where(eq(blocks.pageId, pageId))
-      .orderBy(asc(blocks.order));
-
-    // Sync to GitHub
-    await syncPageToGitHub(
-      pageData[0],
-      pageBlocks,
-      {
-        repoUrl: project.githubRepoUrl,
-        accessToken: user.githubAccessToken!,
-        authorName: user.githubUsername,
-        authorEmail: user.githubEmail || `${user.githubUsername}@users.noreply.github.com`,
-      },
-      commitMessage
-    );
-
-    console.log(`Synced page ${pageId} to GitHub`);
-  } catch (error) {
-    console.error('Failed to sync to GitHub:', error);
-    // Don't throw - Git sync is optional and shouldn't fail the main operation
-  }
-}
+// async function syncPageAfterChange(
+//   client: any,
+//   project: any,
+//   user: any,
+//   pageId: string,
+//   commitMessage: string
+// ) {
+//   // Implementation commented out - needs update
+// }
 
 // POST /api/projects/:projectId/pages/:pageId/blocks - Create a new block
 blocksRoutes.post('/:projectId/pages/:pageId/blocks', async (c) => {
@@ -151,8 +124,15 @@ blocksRoutes.post('/:projectId/pages/:pageId/blocks', async (c) => {
 
     console.log(`Block created: ${newBlock.id} in page ${pageId}`);
 
-    // Sync to GitHub
-    await syncPageAfterChange(client, project, user, pageId, `Add ${type} block to ${page[0].slug}`);
+    // Log activity
+    await logBlockActivity('block_created', projectId, user.id, newBlock.id, {
+      type,
+      pageId,
+      pageTitle: page[0].title,
+    });
+
+    // TODO: Re-enable git sync after updating the helper
+    // await syncPageAfterChange(client, project, user, pageId, `Add ${type} block to ${page[0].slug}`);
 
     return c.json(newBlock, 201);
   } catch (error: any) {
@@ -213,10 +193,18 @@ blocksRoutes.put('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
 
     console.log(`Block updated: ${blockId} in page ${pageId}`);
 
-    // Sync to GitHub
-    if (page.length > 0) {
-      await syncPageAfterChange(client, project, user, pageId, `Update ${existingBlock[0].type} block in ${page[0].slug}`);
-    }
+    // Log activity
+    await logBlockActivity('block_updated', projectId, user.id, blockId, {
+      type: existingBlock[0].type,
+      pageId,
+      pageTitle: page.length > 0 ? page[0].title : undefined,
+      changes: Object.keys(updates),
+    });
+
+    // TODO: Re-enable git sync after updating the helper
+    // if (page.length > 0) {
+    //   await syncPageAfterChange(client, project, user, pageId, `Update ${existingBlock[0].type} block in ${page[0].slug}`);
+    // }
 
     return c.json(updatedBlock[0]);
   } catch (error: any) {
@@ -266,10 +254,17 @@ blocksRoutes.delete('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
 
     console.log(`Block deleted: ${blockId} from page ${pageId}`);
 
-    // Sync to GitHub
-    if (page.length > 0) {
-      await syncPageAfterChange(client, project, user, pageId, `Delete ${existingBlock[0].type} block from ${page[0].slug}`);
-    }
+    // Log activity
+    await logBlockActivity('block_deleted', projectId, user.id, blockId, {
+      type: existingBlock[0].type,
+      pageId,
+      pageTitle: page.length > 0 ? page[0].title : undefined,
+    });
+
+    // TODO: Re-enable git sync after updating the helper
+    // if (page.length > 0) {
+    //   await syncPageAfterChange(client, project, user, pageId, `Delete ${existingBlock[0].type} block from ${page[0].slug}`);
+    // }
 
     return c.json({ success: true, message: 'Block deleted' });
   } catch (error: any) {
@@ -320,6 +315,13 @@ blocksRoutes.post('/:projectId/pages/:pageId/blocks/reorder', async (c) => {
     }
 
     console.log(`Blocks reordered in page ${pageId}`);
+
+    // Log activity (log once for the whole reorder operation)
+    await logBlockActivity('block_reordered', projectId, user.id, pageId, {
+      pageId,
+      pageTitle: page[0].title,
+      blockCount: blockIds.length,
+    });
 
     return c.json({ success: true, message: 'Blocks reordered' });
   } catch (error: any) {

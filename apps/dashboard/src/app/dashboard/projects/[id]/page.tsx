@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Github, Database } from 'lucide-react';
+import { ActivityFeed } from '@/components/ActivityFeed';
 
 export default function ProjectPage() {
   const router = useRouter();
@@ -151,17 +152,23 @@ export default function ProjectPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CardTitle className="mb-2">Content Management</CardTitle>
-            <CardDescription className="mb-6 text-center">
-              Create and manage pages and blocks for your site.
-            </CardDescription>
-            <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
-              Manage Pages
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <CardTitle className="mb-2">Content Management</CardTitle>
+              <CardDescription className="mb-6 text-center">
+                Create and manage pages and blocks for your site.
+              </CardDescription>
+              <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
+                Manage Pages
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="lg:col-span-1">
+            <ActivityFeed projectId={project.id} />
+          </div>
+        </div>
       </main>
     </div>
   );

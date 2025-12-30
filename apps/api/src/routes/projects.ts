@@ -6,8 +6,8 @@
 
 import { Hono } from 'hono';
 import { db } from '@liteshow/db';
-import { projects, users } from '@liteshow/db';
-import { eq } from 'drizzle-orm';
+import { projects, users, activityLogs } from '@liteshow/db';
+import { eq, desc } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
@@ -319,6 +319,63 @@ projectRoutes.post('/:id/initialize-schema', async (c) => {
   } catch (error) {
     console.error('Initialize schema error:', error);
     return c.json({ error: 'Failed to initialize schema' }, 500);
+  }
+});
+
+// GET /api/projects/:id/activity - Get activity logs for a project
+projectRoutes.get('/:id/activity', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    // Get activity logs with optional pagination
+    const limit = parseInt(c.req.query('limit') || '50');
+    const offset = parseInt(c.req.query('offset') || '0');
+
+    const activities = await db.query.activityLogs.findMany({
+      where: eq(activityLogs.projectId, projectId),
+      orderBy: [desc(activityLogs.createdAt)],
+      limit: Math.min(limit, 100), // Max 100 items per request
+      offset,
+      with: {
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            githubUsername: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return c.json({
+      activities,
+      pagination: {
+        limit,
+        offset,
+        hasMore: activities.length === limit,
+      },
+    });
+  } catch (error) {
+    console.error('Get activity logs error:', error);
+    return c.json({ error: 'Failed to get activity logs' }, 500);
   }
 });
 

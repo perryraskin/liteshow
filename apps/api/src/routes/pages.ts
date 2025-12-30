@@ -13,6 +13,7 @@ import { projects, users } from '@liteshow/db';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
 import { syncPageToGitHub, deletePageFromGitHub } from '../lib/git-sync';
+import { logPageActivity } from '../lib/activity-logger';
 
 const pagesRoutes = new Hono();
 
@@ -176,6 +177,12 @@ pagesRoutes.post('/:projectId/pages', async (c) => {
 
     console.log(`Page created: ${newPage.id} in project ${projectId}`);
 
+    // Log activity
+    await logPageActivity('page_created', projectId, user.id, newPage.id, {
+      title: newPage.title,
+      slug: newPage.slug,
+    });
+
     return c.json(newPage, 201);
   } catch (error: any) {
     console.error('Create page error:', error);
@@ -287,8 +294,23 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
 
     console.log(`Page updated: ${pageId} in project ${projectId}`);
 
-    // If page status changed to 'published', sync to GitHub
+    // Log activity
     const newStatus = updatedPage[0].status;
+    if (oldStatus !== 'published' && newStatus === 'published') {
+      // Log page published
+      await logPageActivity('page_published', projectId, user.id, pageId, {
+        title: updatedPage[0].title,
+        slug: updatedPage[0].slug,
+      });
+    } else {
+      // Log general page update
+      await logPageActivity('page_updated', projectId, user.id, pageId, {
+        title: updatedPage[0].title,
+        changes: Object.keys(updates),
+      });
+    }
+
+    // If page status changed to 'published', sync to GitHub
     if (oldStatus !== 'published' && newStatus === 'published') {
       console.log(`Page status changed to published, syncing to GitHub...`);
 
@@ -358,6 +380,12 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
     await client.delete(pages).where(eq(pages.id, pageId));
 
     console.log(`Page deleted: ${pageId} in project ${projectId}`);
+
+    // Log activity
+    await logPageActivity('page_deleted', projectId, user.id, pageId, {
+      title: existingPage[0].title,
+      slug: pageSlug,
+    });
 
     // If page was published, delete from GitHub
     if (wasPublished) {
