@@ -8,7 +8,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 3 Complete ✅
+**Current Status**: Phase 3 Complete ✅ | Dependencies Updated to Latest ✅
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -53,11 +53,31 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ### Phase 3: Deployment Setup ✅
 - [x] Public content API for fetching published content
-- [x] Automated deployment config files (netlify.toml, vercel.json)
+- [x] Complete Astro site auto-generated in GitHub repos
+- [x] All 6 block components (Hero, Features, Testimonials, CTA, Markdown, FAQ)
+- [x] Static site generation (SSG) for optimal performance
+- [x] Automated deployment config files (netlify.toml, vercel.json, package.json)
 - [x] "Deploy to X" buttons in README for one-click setup
 - [x] Astro site fetches content from API at build time (no database credentials needed)
-- [x] Simplified deployment with single env var (LITESHOW_PROJECT_SLUG)
+- [x] Simplified deployment with env vars (LITESHOW_PROJECT_SLUG, LITESHOW_API_URL)
 - [x] Auto-deploy on publish via platform Git integration (no GitHub Actions needed)
+
+### Phase 3.1: Dependency Updates & Cleanup ✅
+- [x] Updated Next.js 14 → 16, React 18 → 19
+- [x] Updated Astro 4 → 5 with Node adapter
+- [x] Updated Drizzle ORM 0.29 → 0.45
+- [x] Updated Hono 4.0 → 4.11
+- [x] Fixed all dependency conflicts
+- [x] Cleaned up outdated documentation files
+- [x] Verified all builds and deployments working
+
+### Phase 3.2: Deployment Status & Monitoring 📋
+- [ ] Add deployment URL field to projects
+- [ ] Display deployment status in dashboard (Not Deployed / Live / Unreachable)
+- [ ] Optional: Webhook support for Netlify/Vercel deploy notifications
+- [ ] Health check ping to verify site is live
+- [ ] Show last deployment time and status
+- [ ] Quick link to deployed site from dashboard
 
 ### Phase 3.5: Advanced Deployment Options 📋
 - [ ] Self-hosting mode (direct Turso connection for users who want full control)
@@ -91,8 +111,6 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [ ] Production deployment
 
 **Legend**: ✅ Complete | 🚧 In Progress | 📋 Planned
-
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for detailed phase breakdown.
 
 ---
 
