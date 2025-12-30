@@ -283,9 +283,10 @@ export default function ProjectPage() {
               </p>
               <div className="bg-muted p-3 rounded-md">
                 <div className="flex items-start justify-between gap-2">
-                  <code className="text-xs break-all whitespace-pre-wrap">
-                    LITESHOW_PROJECT_SLUG={project.slug}{'\n'}LITESHOW_API_URL=https://api.liteshow.io
-                  </code>
+                  <div className="text-xs font-mono break-all space-y-1">
+                    <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
+                    <div>LITESHOW_API_URL=https://api.liteshow.io</div>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
