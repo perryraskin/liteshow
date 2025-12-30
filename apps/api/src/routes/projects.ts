@@ -104,7 +104,9 @@ async function createTursoDatabase(slug: string) {
       throw new Error(`Failed to create Turso database: ${createResponse.statusText}`);
     }
 
-    const dbData = await createResponse.json();
+    const dbData = await createResponse.json() as {
+      database: { Name: string; Hostname: string };
+    };
     console.log('Turso database created:', dbData);
 
     // Create an auth token for the database
@@ -124,7 +126,7 @@ async function createTursoDatabase(slug: string) {
       throw new Error(`Failed to create Turso auth token: ${tokenResponse.statusText}`);
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as { jwt: string };
 
     return {
       url: dbData.database.Hostname,
@@ -160,7 +162,7 @@ async function createGitHubRepository(slug: string, description: string, accessT
       throw new Error(`Failed to create GitHub repository: ${response.statusText}`);
     }
 
-    const repo = await response.json();
+    const repo = await response.json() as { name: string; html_url: string };
     return {
       name: repo.name,
       url: repo.html_url,

@@ -46,7 +46,7 @@ authRoutes.get('/callback/github', async (c) => {
       }),
     });
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as { access_token?: string };
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
@@ -62,7 +62,12 @@ authRoutes.get('/callback/github', async (c) => {
       },
     });
 
-    const githubUser = await userResponse.json();
+    const githubUser = await userResponse.json() as {
+      id: number;
+      login: string;
+      name: string;
+      avatar_url: string;
+    };
 
     // Get user emails
     const emailsResponse = await fetch('https://api.github.com/user/emails', {
@@ -72,7 +77,7 @@ authRoutes.get('/callback/github', async (c) => {
       },
     });
 
-    const emails = await emailsResponse.json();
+    const emails = await emailsResponse.json() as Array<{ email: string; primary: boolean }>;
     const primaryEmail = emails.find((e: any) => e.primary)?.email || emails[0]?.email;
 
     // Check if user exists

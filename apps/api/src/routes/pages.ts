@@ -12,6 +12,7 @@ import { db } from '@liteshow/db';
 import { projects, users } from '@liteshow/db';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
+import { syncPageToGitHub, deletePageFromGitHub } from '../lib/git-sync';
 
 const pagesRoutes = new Hono();
 
@@ -244,7 +245,7 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     const body = await c.req.json();
     const { slug, title, description, status, metaTitle, metaDescription, ogImage } = body;
 
-    const { client } = await getProjectTursoClient(projectId, user.id);
+    const { client, project } = await getProjectTursoClient(projectId, user.id);
 
     // Check if page exists
     const existingPage = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
@@ -252,6 +253,8 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     if (existingPage.length === 0) {
       return c.json({ error: 'Page not found' }, 404);
     }
+
+    const oldStatus = existingPage[0].status;
 
     // If slug is being changed, check for conflicts
     if (slug && slug !== existingPage[0].slug) {
@@ -284,6 +287,37 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
 
     console.log(`Page updated: ${pageId} in project ${projectId}`);
 
+    // If page status changed to 'published', sync to GitHub
+    const newStatus = updatedPage[0].status;
+    if (oldStatus !== 'published' && newStatus === 'published') {
+      console.log(`Page status changed to published, syncing to GitHub...`);
+
+      try {
+        // Fetch blocks for the page
+        const pageBlocks = await client
+          .select()
+          .from(blocks)
+          .where(eq(blocks.pageId, pageId))
+          .orderBy(asc(blocks.order));
+
+        // Sync to GitHub
+        await syncPageToGitHub(
+          project,
+          {
+            page: updatedPage[0],
+            blocks: pageBlocks,
+          },
+          user.githubAccessToken!
+        );
+
+        console.log(`Successfully synced page to GitHub`);
+      } catch (syncError) {
+        console.error('Failed to sync to GitHub:', syncError);
+        // Don't fail the update if sync fails - log and continue
+        // User can manually trigger sync later if needed
+      }
+    }
+
     return c.json(updatedPage[0]);
   } catch (error: any) {
     console.error('Update page error:', error);
@@ -308,7 +342,7 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
 
     const projectId = c.req.param('projectId');
     const pageId = c.req.param('pageId');
-    const { client } = await getProjectTursoClient(projectId, user.id);
+    const { client, project } = await getProjectTursoClient(projectId, user.id);
 
     // Check if page exists
     const existingPage = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
@@ -317,10 +351,25 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
       return c.json({ error: 'Page not found' }, 404);
     }
 
+    const pageSlug = existingPage[0].slug;
+    const wasPublished = existingPage[0].status === 'published';
+
     // Delete page (blocks will be cascade deleted)
     await client.delete(pages).where(eq(pages.id, pageId));
 
     console.log(`Page deleted: ${pageId} in project ${projectId}`);
+
+    // If page was published, delete from GitHub
+    if (wasPublished) {
+      console.log(`Deleting published page from GitHub...`);
+      try {
+        await deletePageFromGitHub(project, pageSlug, user.githubAccessToken!);
+        console.log(`Successfully deleted page from GitHub`);
+      } catch (syncError) {
+        console.error('Failed to delete from GitHub:', syncError);
+        // Don't fail the deletion if GitHub sync fails
+      }
+    }
 
     return c.json({ success: true, message: 'Page deleted' });
   } catch (error: any) {
