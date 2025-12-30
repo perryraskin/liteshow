@@ -281,40 +281,22 @@ export default function ProjectPage() {
               <p className="text-xs text-muted-foreground mb-3">
                 Add these to your hosting platform's environment settings:
               </p>
-              <div className="space-y-2">
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <code className="text-xs break-all">
-                      LITESHOW_PROJECT_SLUG={project.slug}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(project.slug);
-                        toast.success('Project slug copied to clipboard');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <code className="text-xs break-all">
-                      LITESHOW_API_URL=https://api.liteshow.io
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText('https://api.liteshow.io');
-                        toast.success('API URL copied to clipboard');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
+              <div className="bg-muted p-3 rounded-md">
+                <div className="flex items-start justify-between gap-2">
+                  <code className="text-xs break-all whitespace-pre-wrap">
+                    LITESHOW_PROJECT_SLUG={project.slug}{'\n'}LITESHOW_API_URL=https://api.liteshow.io
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
+                      toast.success('Environment variables copied to clipboard');
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
