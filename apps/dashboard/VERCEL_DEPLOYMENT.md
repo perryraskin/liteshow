@@ -13,17 +13,17 @@
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Click "Add New" → "Project"
 3. Import your `liteshow` GitHub repository
-4. Select the `apps/dashboard` directory as the root directory
+4. **Important**: Leave "Root Directory" as `.` (repository root) - do NOT select `apps/dashboard`
 
 ### 2. Configure Build Settings
 
-Vercel should auto-detect Next.js. Verify these settings:
+The `vercel.json` at the repository root has the configuration, but verify these settings in Vercel:
 
 - **Framework Preset**: Next.js
-- **Root Directory**: `apps/dashboard`
-- **Build Command**: `cd ../.. && pnpm install && pnpm --filter @liteshow/dashboard build`
-- **Output Directory**: `.next` (default)
-- **Install Command**: `pnpm install`
+- **Root Directory**: `.` (repository root - leave default)
+- **Build Command**: `pnpm --filter @liteshow/dashboard build` (auto-configured)
+- **Output Directory**: `apps/dashboard/.next` (auto-configured)
+- **Install Command**: `pnpm install --frozen-lockfile` (auto-configured)
 
 ### 3. Environment Variables
 
