@@ -88,10 +88,43 @@ function DashboardContent() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <nav className="bg-card border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <h1 className="text-xl font-bold">LiteShow</h1>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Projects</h2>
+              <p className="text-muted-foreground">Manage your LiteShow sites</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="h-6 bg-muted rounded w-3/4"></div>
+                    <div className="h-5 w-16 bg-muted rounded-full"></div>
+                  </div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }

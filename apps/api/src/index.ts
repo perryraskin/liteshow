@@ -33,8 +33,8 @@ app.use(
 // Routes
 app.route('/api/auth', authRoutes);
 app.route('/api/projects', projectRoutes);
-app.route('/api', pagesRoutes);
-app.route('/api', blocksRoutes);
+app.route('/api/projects', pagesRoutes);
+app.route('/api/projects', blocksRoutes);
 app.route('/api/health', healthRoutes);
 
 // Error handler (must be last)

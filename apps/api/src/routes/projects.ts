@@ -8,6 +8,9 @@ import { Hono } from 'hono';
 import { db } from '@liteshow/db';
 import { projects, users } from '@liteshow/db';
 import { eq } from 'drizzle-orm';
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { pages, blocks } from '@liteshow/db/src/content-schema';
 
 const projectRoutes = new Hono();
 
@@ -25,6 +28,51 @@ async function getUserFromToken(authHeader: string | undefined) {
   });
 
   return user;
+}
+
+// Helper: Initialize content schema in Turso database
+async function initializeContentSchema(dbUrl: string, authToken: string) {
+  try {
+    const tursoClient = createClient({
+      url: `libsql://${dbUrl}`,
+      authToken: authToken,
+    });
+
+    // Create pages table
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS pages (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        meta_title TEXT,
+        meta_description TEXT,
+        og_image TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+
+    // Create blocks table with foreign key to pages
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS blocks (
+        id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        "order" INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('Content schema initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize content schema:', error);
+    throw error;
+  }
 }
 
 // Helper: Create Turso database
@@ -180,6 +228,10 @@ projectRoutes.post('/', async (c) => {
     console.log('Creating Turso database...');
     const tursoDb = await createTursoDatabase(slug);
 
+    // Step 1.5: Initialize content schema
+    console.log('Initializing content schema...');
+    await initializeContentSchema(tursoDb.url, tursoDb.token);
+
     // Step 2: Create GitHub repository
     console.log('Creating GitHub repository...');
     const githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!);
@@ -233,6 +285,38 @@ projectRoutes.get('/:id', async (c) => {
   } catch (error) {
     console.error('Get project error:', error);
     return c.json({ error: 'Failed to get project' }, 500);
+  }
+});
+
+// POST /api/projects/:id/initialize-schema - Initialize content schema for existing project
+projectRoutes.post('/:id/initialize-schema', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    console.log(`Initializing content schema for project ${projectId}`);
+    await initializeContentSchema(project.tursoDbUrl, project.tursoDbToken);
+
+    return c.json({ success: true, message: 'Content schema initialized' });
+  } catch (error) {
+    console.error('Initialize schema error:', error);
+    return c.json({ error: 'Failed to initialize schema' }, 500);
   }
 });
 

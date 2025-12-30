@@ -98,9 +98,7 @@ export default function PagesListPage() {
       }
 
       const newPage = await response.json();
-      setShowCreateModal(false);
-      setFormData({ title: '', slug: '', description: '' });
-      setIsCreating(false);
+      // Keep modal open and loading state while redirecting
       router.push(`/dashboard/projects/${params.id}/pages/${newPage.id}`);
     } catch (error) {
       console.error('Error creating page:', error);
@@ -111,8 +109,42 @@ export default function PagesListPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-background">
+        <nav className="bg-card border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <Button variant="ghost" onClick={() => router.push(`/dashboard/projects/${params.id}`)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Project
+                </Button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold mb-1">Pages</h1>
+              <p className="text-muted-foreground">Manage your site pages</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-4 bg-muted rounded w-full"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }

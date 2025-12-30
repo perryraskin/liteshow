@@ -31,6 +31,46 @@ async function getUserFromToken(authHeader: string | undefined) {
   return user;
 }
 
+// Helper to initialize content schema in Turso database
+async function initializeContentSchema(tursoClient: any) {
+  try {
+    // Create pages table
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS pages (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        meta_title TEXT,
+        meta_description TEXT,
+        og_image TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+
+    // Create blocks table with foreign key to pages
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS blocks (
+        id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        "order" INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('Content schema initialized/verified');
+  } catch (error) {
+    console.error('Failed to initialize content schema:', error);
+    throw error;
+  }
+}
+
 // Helper to get Turso database client for a project
 async function getProjectTursoClient(projectId: string, userId: string) {
   const project = await db.query.projects.findFirst({
@@ -49,6 +89,9 @@ async function getProjectTursoClient(projectId: string, userId: string) {
     url: `libsql://${project.tursoDbUrl}`,
     authToken: project.tursoDbToken,
   });
+
+  // Initialize schema if tables don't exist (CREATE TABLE IF NOT EXISTS)
+  await initializeContentSchema(tursoClient);
 
   return {
     client: drizzle(tursoClient, { schema: { pages, blocks } }),

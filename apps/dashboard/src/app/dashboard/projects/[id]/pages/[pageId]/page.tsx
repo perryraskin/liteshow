@@ -45,6 +45,7 @@ export default function PageEditorPage() {
   const [isSavingBlock, setIsSavingBlock] = useState(false);
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [selectedBlockType, setSelectedBlockType] = useState<string | null>(null);
+  const [editingBlock, setEditingBlock] = useState<Block | null>(null);
 
   useEffect(() => {
     fetchPage();
@@ -138,41 +139,97 @@ export default function PageEditorPage() {
     setIsSavingBlock(true);
     try {
       const token = localStorage.getItem('session_token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type: selectedBlockType,
-            content,
-          }),
-        }
-      );
+
+      // Determine if we're editing or creating
+      const isEditing = editingBlock !== null;
+      const url = isEditing
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${editingBlock.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks`;
+
+      const response = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: selectedBlockType,
+          content,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to create block');
+        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} block`);
       }
 
       // Reset state and refresh
       setShowAddBlockModal(false);
       setSelectedBlockType(null);
+      setEditingBlock(null);
       fetchPage();
     } catch (error) {
-      console.error('Error creating block:', error);
-      alert('Failed to create block');
+      console.error(`Error ${editingBlock ? 'updating' : 'creating'} block:`, error);
+      alert(`Failed to ${editingBlock ? 'update' : 'create'} block`);
     } finally {
       setIsSavingBlock(false);
     }
   };
 
+  const handleEditBlock = (block: Block) => {
+    // Parse content if it's a string
+    const parsedBlock = {
+      ...block,
+      content: typeof block.content === 'string' ? JSON.parse(block.content) : block.content
+    };
+    setEditingBlock(parsedBlock);
+    setSelectedBlockType(block.type);
+    setShowAddBlockModal(true);
+  };
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-background">
+        <nav className="bg-card border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <div className="h-9 w-32 bg-muted rounded-full animate-pulse"></div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-5 w-16 bg-muted rounded-full animate-pulse"></div>
+                <div className="h-9 w-24 bg-muted rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="h-9 w-64 bg-muted rounded mb-2 animate-pulse"></div>
+            <div className="h-4 w-32 bg-muted rounded animate-pulse"></div>
+          </div>
+
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <div className="h-7 w-40 bg-muted rounded animate-pulse"></div>
+              <div className="h-9 w-28 bg-muted rounded-full animate-pulse"></div>
+            </div>
+
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="h-5 w-20 bg-muted rounded-full"></div>
+                      <div className="h-8 w-16 bg-muted rounded-full"></div>
+                    </div>
+                    <div className="h-32 bg-muted rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -226,7 +283,11 @@ export default function PageEditorPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Content Blocks</h2>
-            <Button onClick={() => setShowAddBlockModal(true)}>
+            <Button onClick={() => {
+              setEditingBlock(null);
+              setSelectedBlockType(null);
+              setShowAddBlockModal(true);
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               Add Block
             </Button>
@@ -240,7 +301,11 @@ export default function PageEditorPage() {
                 <CardDescription className="mb-6 text-center">
                   Add your first content block to start building this page.
                 </CardDescription>
-                <Button onClick={() => setShowAddBlockModal(true)}>
+                <Button onClick={() => {
+                  setEditingBlock(null);
+                  setSelectedBlockType(null);
+                  setShowAddBlockModal(true);
+                }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Your First Block
                 </Button>
@@ -253,13 +318,22 @@ export default function PageEditorPage() {
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start mb-4">
                       <Badge variant="secondary">{block.type}</Badge>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteBlock(block.id)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditBlock(block)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteBlock(block.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                     <pre className="text-sm bg-muted p-4 rounded overflow-x-auto">
                       {JSON.stringify(block.content, null, 2)}
@@ -307,6 +381,7 @@ export default function PageEditorPage() {
                       onClick={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       className="w-full"
                     >
@@ -318,66 +393,78 @@ export default function PageEditorPage() {
                 <>
                   <CardHeader>
                     <CardTitle>
-                      Add {selectedBlockType.charAt(0).toUpperCase() + selectedBlockType.slice(1)} Block
+                      {editingBlock ? 'Edit' : 'Add'} {selectedBlockType.charAt(0).toUpperCase() + selectedBlockType.slice(1)} Block
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                   {selectedBlockType === 'hero' && (
                     <HeroBlockEditor
+                      initialContent={editingBlock?.type === 'hero' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
                   )}
                   {selectedBlockType === 'features' && (
                     <FeaturesBlockEditor
+                      initialContent={editingBlock?.type === 'features' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
                   )}
                   {selectedBlockType === 'testimonials' && (
                     <TestimonialsBlockEditor
+                      initialContent={editingBlock?.type === 'testimonials' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
                   )}
                   {selectedBlockType === 'markdown' && (
                     <MarkdownBlockEditor
+                      initialContent={editingBlock?.type === 'markdown' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
                   )}
                   {selectedBlockType === 'cta' && (
                     <CtaBlockEditor
+                      initialContent={editingBlock?.type === 'cta' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
                   )}
                   {selectedBlockType === 'faq' && (
                     <FaqBlockEditor
+                      initialContent={editingBlock?.type === 'faq' ? editingBlock.content : undefined}
                       onSave={handleSaveBlock}
                       onCancel={() => {
                         setShowAddBlockModal(false);
                         setSelectedBlockType(null);
+                        setEditingBlock(null);
                       }}
                       isSaving={isSavingBlock}
                     />
