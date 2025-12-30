@@ -32,73 +32,87 @@ async function getUserFromToken(authHeader: string | undefined) {
 
 // Helper: Initialize content schema in Turso database
 async function initializeContentSchema(dbUrl: string, authToken: string) {
-  try {
-    const tursoClient = createClient({
-      url: `libsql://${dbUrl}`,
-      authToken: authToken,
-    });
+  // Retry logic: Turso databases need a moment to become available after creation
+  const maxRetries = 5;
+  const retryDelay = 2000; // 2 seconds
 
-    // Create pages table
-    await tursoClient.execute(`
-      CREATE TABLE IF NOT EXISTS pages (
-        id TEXT PRIMARY KEY,
-        slug TEXT NOT NULL UNIQUE,
-        title TEXT NOT NULL,
-        description TEXT,
-        status TEXT NOT NULL DEFAULT 'draft',
-        has_unpublished_changes INTEGER NOT NULL DEFAULT 0,
-        meta_title TEXT,
-        meta_description TEXT,
-        og_image TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    `);
-
-    // Create blocks table with foreign key to pages
-    await tursoClient.execute(`
-      CREATE TABLE IF NOT EXISTS blocks (
-        id TEXT PRIMARY KEY,
-        page_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        "order" INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Create page_versions table for versioning
-    await tursoClient.execute(`
-      CREATE TABLE IF NOT EXISTS page_versions (
-        id TEXT PRIMARY KEY,
-        page_id TEXT NOT NULL,
-        version_number INTEGER NOT NULL,
-        snapshot TEXT NOT NULL,
-        created_by TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Migration: Add hasUnpublishedChanges column to existing tables
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      const tursoClient = createClient({
+        url: `libsql://${dbUrl}`,
+        authToken: authToken,
+      });
+
+      // Create pages table
       await tursoClient.execute(`
-        ALTER TABLE pages ADD COLUMN has_unpublished_changes INTEGER NOT NULL DEFAULT 0
+        CREATE TABLE IF NOT EXISTS pages (
+          id TEXT PRIMARY KEY,
+          slug TEXT NOT NULL UNIQUE,
+          title TEXT NOT NULL,
+          description TEXT,
+          status TEXT NOT NULL DEFAULT 'draft',
+          has_unpublished_changes INTEGER NOT NULL DEFAULT 0,
+          meta_title TEXT,
+          meta_description TEXT,
+          og_image TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
       `);
-      console.log('Added hasUnpublishedChanges column to pages table');
-    } catch (migrationError: any) {
-      // Column might already exist, which is fine
-      if (!migrationError.message?.includes('duplicate column name')) {
-        console.warn('Migration warning:', migrationError.message);
+
+      // Create blocks table with foreign key to pages
+      await tursoClient.execute(`
+        CREATE TABLE IF NOT EXISTS blocks (
+          id TEXT PRIMARY KEY,
+          page_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          "order" INTEGER NOT NULL,
+          content TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+        )
+      `);
+
+      // Create page_versions table for versioning
+      await tursoClient.execute(`
+        CREATE TABLE IF NOT EXISTS page_versions (
+          id TEXT PRIMARY KEY,
+          page_id TEXT NOT NULL,
+          version_number INTEGER NOT NULL,
+          snapshot TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+        )
+      `);
+
+      // Migration: Add hasUnpublishedChanges column to existing tables
+      try {
+        await tursoClient.execute(`
+          ALTER TABLE pages ADD COLUMN has_unpublished_changes INTEGER NOT NULL DEFAULT 0
+        `);
+        console.log('Added hasUnpublishedChanges column to pages table');
+      } catch (migrationError: any) {
+        // Column might already exist, which is fine
+        if (!migrationError.message?.includes('duplicate column name')) {
+          console.warn('Migration warning:', migrationError.message);
+        }
+      }
+
+      console.log('Content schema initialized successfully');
+      return; // Success! Exit the retry loop
+    } catch (error: any) {
+      console.error(`Failed to initialize content schema (attempt ${attempt}/${maxRetries}):`, error.message);
+
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${retryDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      } else {
+        console.error('Max retries reached. Database might not be ready yet.');
+        throw error;
       }
     }
-
-    console.log('Content schema initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize content schema:', error);
-    throw error;
   }
 }
 
@@ -179,7 +193,7 @@ async function createGitHubRepository(slug: string, description: string, accessT
         name: `liteshow-${slug}`,
         description: description || 'LiteShow content repository',
         private: false,
-        auto_init: true,
+        auto_init: false,
       }),
     });
 
@@ -204,6 +218,7 @@ async function createGitHubRepository(slug: string, description: string, accessT
 async function createDeploymentFiles(
   repoFullName: string,
   projectName: string,
+  slug: string,
   tursoDbUrl: string,
   accessToken: string
 ) {
@@ -320,7 +335,7 @@ This Astro site fetches your published content from the LiteShow API at build ti
           'Accept': 'application/vnd.github.v3+json',
         },
         body: JSON.stringify({
-          message: `Add ${file.path} for deployment`,
+          message: `Add ${file.path}`,
           content: Buffer.from(file.content).toString('base64'),
           branch: defaultBranch,
         }),
@@ -411,7 +426,7 @@ projectRoutes.post('/', async (c) => {
     console.log('Creating deployment configuration files...');
     // Extract owner/repo from the GitHub URL (e.g., "https://github.com/username/repo")
     const repoFullName = githubRepo.url.replace('https://github.com/', '');
-    await createDeploymentFiles(repoFullName, name, tursoDb.url, user.githubAccessToken!);
+    await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
 
     // Step 3: Store project in PostgreSQL
     console.log('Storing project metadata...');
@@ -554,7 +569,7 @@ projectRoutes.get('/:id/activity', async (c) => {
   }
 });
 
-// DELETE /api/projects/:id - Delete a project (and GitHub repo)
+// DELETE /api/projects/:id - Delete a project (Turso database and records)
 projectRoutes.delete('/:id', async (c) => {
   try {
     const user = await getUserFromToken(c.req.header('Authorization'));
@@ -578,31 +593,10 @@ projectRoutes.delete('/:id', async (c) => {
 
     console.log(`Deleting project ${projectId} for user ${user.id}`);
 
-    // Step 1: Delete GitHub repository
-    try {
-      const repoFullName = project.githubRepoUrl.replace('https://github.com/', '');
-      console.log(`Deleting GitHub repo: ${repoFullName}`);
+    // Store GitHub repo URL to return in response
+    const githubRepoUrl = project.githubRepoUrl;
 
-      const deleteRepoResponse = await fetch(`https://api.github.com/repos/${repoFullName}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${user.githubAccessToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      });
-
-      if (!deleteRepoResponse.ok && deleteRepoResponse.status !== 404) {
-        console.error('Failed to delete GitHub repo:', await deleteRepoResponse.text());
-        // Continue anyway - repo might already be deleted
-      } else {
-        console.log('GitHub repo deleted successfully');
-      }
-    } catch (error) {
-      console.error('Error deleting GitHub repo:', error);
-      // Continue anyway
-    }
-
-    // Step 2: Delete Turso database
+    // Step 1: Delete Turso database
     try {
       const tursoApiToken = process.env.TURSO_API_TOKEN;
       const tursoOrg = process.env.TURSO_ORG || 'perryraskin';
@@ -631,12 +625,16 @@ projectRoutes.delete('/:id', async (c) => {
       // Continue anyway
     }
 
-    // Step 3: Delete project from PostgreSQL (cascades to activity logs)
+    // Step 2: Delete project from PostgreSQL (cascades to activity logs)
     await db.delete(projects).where(eq(projects.id, projectId));
 
     console.log(`Project ${projectId} deleted successfully`);
 
-    return c.json({ success: true, message: 'Project deleted successfully' });
+    return c.json({
+      success: true,
+      message: 'Project deleted successfully',
+      githubRepoUrl: githubRepoUrl
+    });
   } catch (error: any) {
     console.error('Delete project error:', error);
     return c.json({ error: error.message || 'Failed to delete project' }, 500);

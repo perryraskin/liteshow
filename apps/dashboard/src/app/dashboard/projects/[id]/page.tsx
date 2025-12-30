@@ -99,8 +99,21 @@ export default function ProjectPage() {
         throw new Error('Failed to delete project');
       }
 
-      toast.success('Project deleted successfully');
-      router.push('/dashboard');
+      const data = await response.json();
+
+      toast.success('Project deleted from LiteShow', {
+        description: 'Please manually delete the GitHub repository if needed',
+        action: data.githubRepoUrl ? {
+          label: 'Open GitHub',
+          onClick: () => window.open(`${data.githubRepoUrl}/settings`, '_blank')
+        } : undefined,
+        duration: 10000,
+      });
+
+      // Redirect after a short delay to allow user to see the message
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     } catch (error) {
       console.error('Error deleting project:', error);
       toast.error('Failed to delete project');
@@ -375,7 +388,7 @@ export default function ProjectPage() {
               <div>
                 <p className="font-medium mb-1">Delete this project</p>
                 <p className="text-sm text-muted-foreground">
-                  Once deleted, this project and all its content will be gone forever. This will also delete the GitHub repository.
+                  Once deleted, this project and all its content will be gone forever. This will delete the database and remove the project from LiteShow. You'll need to manually delete the GitHub repository if desired.
                 </p>
               </div>
               <Button
@@ -397,7 +410,7 @@ export default function ProjectPage() {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the project{' '}
-              <strong className="text-foreground">{project.name}</strong>, its GitHub repository, Turso database, and all associated content.
+              <strong className="text-foreground">{project.name}</strong>, its Turso database, and all associated content from LiteShow. The GitHub repository will remain and must be deleted manually if desired.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
