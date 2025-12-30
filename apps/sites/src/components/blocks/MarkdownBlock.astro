@@ -1,0 +1,68 @@
+---
+interface Props {
+  content: {
+    markdown: string;
+  };
+}
+
+const { content } = Astro.props;
+const { markdown } = content;
+---
+
+<section class="py-16 bg-white">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto prose prose-lg prose-blue">
+      <div set:html={markdown} class="text-gray-700 leading-relaxed" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .prose {
+    max-width: 65ch;
+  }
+
+  .prose :global(h2) {
+    @apply text-2xl font-bold mb-4 mt-8 text-gray-900;
+  }
+
+  .prose :global(h3) {
+    @apply text-xl font-semibold mb-3 mt-6 text-gray-900;
+  }
+
+  .prose :global(p) {
+    @apply mb-4;
+  }
+
+  .prose :global(ul), .prose :global(ol) {
+    @apply mb-4 ml-6;
+  }
+
+  .prose :global(li) {
+    @apply mb-2;
+  }
+
+  .prose :global(a) {
+    @apply text-blue-600 hover:text-blue-700 underline;
+  }
+
+  .prose :global(strong) {
+    @apply font-semibold text-gray-900;
+  }
+
+  .prose :global(code) {
+    @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800;
+  }
+
+  .prose :global(pre) {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+  }
+
+  .prose :global(pre code) {
+    @apply bg-transparent p-0;
+  }
+
+  .prose :global(blockquote) {
+    @apply border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4;
+  }
+</style>

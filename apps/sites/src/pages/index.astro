@@ -1,0 +1,23 @@
+---
+// Index page - redirect to home or show a default landing
+import { getProjectDb, getPageBySlug } from '../lib/db';
+
+// Get project configuration from environment variables
+const tursoDbUrl = import.meta.env.TURSO_DB_URL;
+const tursoDbToken = import.meta.env.TURSO_DB_TOKEN;
+
+if (tursoDbUrl && tursoDbToken) {
+  // Try to load a page with slug "home" or "index"
+  const db = getProjectDb({ tursoDbUrl, tursoDbToken });
+
+  for (const slug of ['home', 'index']) {
+    const page = await getPageBySlug(db, slug);
+    if (page && page.status === 'published') {
+      return Astro.redirect(`/${slug}`);
+    }
+  }
+}
+
+// If no home page exists, redirect to the first page or show a placeholder
+return Astro.redirect('/404');
+---

@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroBlock from '../components/blocks/HeroBlock.astro';
+import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
+import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
+import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
+import CtaBlock from '../components/blocks/CtaBlock.astro';
+import FaqBlock from '../components/blocks/FaqBlock.astro';
+import { getProjectDb, getPageBySlug } from '../lib/db';
+
+// Get project configuration from environment variables
+const tursoDbUrl = import.meta.env.TURSO_DB_URL;
+const tursoDbToken = import.meta.env.TURSO_DB_TOKEN;
+
+if (!tursoDbUrl || !tursoDbToken) {
+  throw new Error('Missing TURSO_DB_URL or TURSO_DB_TOKEN environment variables');
+}
+
+// Get the slug from the URL
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
+
+// Fetch page data
+const db = getProjectDb({ tursoDbUrl, tursoDbToken });
+const page = await getPageBySlug(db, slug);
+
+console.log('Fetching page with slug:', slug);
+console.log('Page found:', page ? 'yes' : 'no');
+if (page) {
+  console.log('Page status:', page.status);
+  console.log('Page title:', page.title);
+}
+
+if (!page) {
+  console.log('Redirecting to 404: page not found');
+  return Astro.redirect('/404');
+}
+
+// Only show published pages
+if (page.status !== 'published') {
+  console.log('Redirecting to 404: page status is', page.status);
+  return Astro.redirect('/404');
+}
+
+const blockComponents: Record<string, any> = {
+  hero: HeroBlock,
+  features: FeaturesBlock,
+  testimonials: TestimonialsBlock,
+  markdown: MarkdownBlock,
+  cta: CtaBlock,
+  faq: FaqBlock,
+};
+---
+
+<BaseLayout
+  title={page.metaTitle || page.title}
+  description={page.metaDescription || page.description || undefined}
+  ogImage={page.ogImage || undefined}
+>
+  <main>
+    {page.blocks.map((block: any) => {
+      const Component = blockComponents[block.type];
+      if (!Component) {
+        console.warn(`Unknown block type: ${block.type}`);
+        return null;
+      }
+      return <Component content={block.content} />;
+    })}
+  </main>
+</BaseLayout>

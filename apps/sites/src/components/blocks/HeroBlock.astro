@@ -1,0 +1,56 @@
+---
+interface Props {
+  content: {
+    headline: string;
+    subheadline?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    backgroundImage?: string;
+  };
+}
+
+const { content } = Astro.props;
+const { headline, subheadline, ctaText, ctaUrl, backgroundImage } = content;
+---
+
+<section
+  class="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 py-20 lg:py-32"
+  style={backgroundImage ? `background-image: url(${backgroundImage}); background-size: cover; background-position: center;` : ''}
+>
+  {backgroundImage && <div class="absolute inset-0 bg-black/40"></div>}
+
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1
+        class:list={[
+          'text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight',
+          backgroundImage ? 'text-white' : 'text-gray-900'
+        ]}
+      >
+        {headline}
+      </h1>
+
+      {subheadline && (
+        <p
+          class:list={[
+            'text-xl lg:text-2xl mb-10 leading-relaxed',
+            backgroundImage ? 'text-gray-100' : 'text-gray-600'
+          ]}
+        >
+          {subheadline}
+        </p>
+      )}
+
+      {ctaText && ctaUrl && (
+        <div class="flex justify-center">
+          <a
+            href={ctaUrl}
+            class="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            {ctaText}
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
+</section>

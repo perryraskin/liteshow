@@ -121,11 +121,35 @@ export default function ProjectPage() {
               </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Database className="h-4 w-4" />
-                {project.tursoDbUrl}
+                Turso Database: {project.tursoDbUrl}
               </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Site Configuration</CardTitle>
+            <CardDescription>
+              Use these credentials to run the Astro site locally
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-lg font-mono text-sm space-y-2">
+              <div className="flex justify-between items-center">
+                <span>TURSO_DB_URL={project.tursoDbUrl}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(`TURSO_DB_URL=${project.tursoDbUrl}\nTURSO_DB_TOKEN=${project.tursoDbToken}`)}
+                >
+                  Copy
+                </Button>
+              </div>
+              <div>TURSO_DB_TOKEN={project.tursoDbToken}</div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
