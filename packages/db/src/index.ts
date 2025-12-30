@@ -17,17 +17,31 @@ import * as schema from './schema';
 import * as contentSchema from './content-schema';
 
 // Load .env from root directory (2 levels up from packages/db/src)
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-
-// PostgreSQL client for metadata database
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set');
+// Only load from file in development - production uses env vars
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 }
 
-const client = postgres(connectionString);
-export const db = drizzlePg(client, { schema });
+// PostgreSQL client for metadata database - lazy initialization
+let _db: ReturnType<typeof drizzlePg> | null = null;
+
+export const db = new Proxy({} as ReturnType<typeof drizzlePg>, {
+  get(target, prop) {
+    if (!_db) {
+      const connectionString = process.env.DATABASE_URL;
+      if (!connectionString) {
+        throw new Error('DATABASE_URL environment variable is not set');
+      }
+      const client = postgres(connectionString, {
+        connect_timeout: 10,
+        idle_timeout: 20,
+        max_lifetime: 60 * 30,
+      });
+      _db = drizzlePg(client, { schema });
+    }
+    return (_db as any)[prop];
+  },
+});
 
 // Turso client factory - creates a client for a specific project's content database
 export function createTursoClient(url: string, authToken: string) {

@@ -31,6 +31,16 @@ app.use(
   })
 );
 
+// Root route - simple status check
+app.get('/', (c) => {
+  return c.json({
+    service: 'LiteShow API',
+    version: '0.1.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Routes - no /api prefix since entire domain is the API
 app.route('/auth', authRoutes);
 app.route('/public', publicContentRoutes);
@@ -44,10 +54,18 @@ app.onError(errorHandler);
 
 const port = parseInt(process.env.API_PORT || process.env.PORT || '8080');
 
-console.log(`🚀 LiteShow API server starting on port ${port}`);
+console.log(`🚀 LiteShow API server starting on 0.0.0.0:${port}`);
+console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`   Database: ${process.env.DATABASE_URL ? 'configured' : 'missing'}`);
 
-serve({
-  fetch: app.fetch,
-  port,
-  hostname: '0.0.0.0',
-});
+try {
+  serve({
+    fetch: app.fetch,
+    port,
+    hostname: '0.0.0.0',
+  });
+  console.log(`✅ Server listening on 0.0.0.0:${port}`);
+} catch (error) {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+}
