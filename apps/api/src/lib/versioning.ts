@@ -107,16 +107,22 @@ export async function createPageVersion(
 export async function getPageVersions(
   db: LibSQLDatabase<any>,
   pageId: string,
-  limit: number = 50
+  limit: number = 10
 ) {
-  const versions = await db
-    .select()
-    .from(pageVersions)
-    .where(eq(pageVersions.pageId, pageId))
-    .orderBy(desc(pageVersions.versionNumber))
-    .limit(limit);
+  try {
+    // Limit to 10 versions to keep response size reasonable
+    const versions = await db
+      .select()
+      .from(pageVersions)
+      .where(eq(pageVersions.pageId, pageId))
+      .orderBy(desc(pageVersions.versionNumber))
+      .limit(limit);
 
-  return versions;
+    return versions;
+  } catch (error) {
+    console.error('Error fetching page versions:', error);
+    throw error;
+  }
 }
 
 /**

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import HeroBlockEditor from '@/components/block-editors/HeroBlockEditor';
 import FeaturesBlockEditor from '@/components/block-editors/FeaturesBlockEditor';
 import TestimonialsBlockEditor from '@/components/block-editors/TestimonialsBlockEditor';
@@ -48,6 +48,7 @@ export default function PageEditorPage() {
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [selectedBlockType, setSelectedBlockType] = useState<string | null>(null);
   const [editingBlock, setEditingBlock] = useState<Block | null>(null);
+  const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPage();
@@ -197,6 +198,70 @@ export default function PageEditorPage() {
     });
     setSelectedBlockType(block.type);
     setShowAddBlockModal(true);
+  };
+
+  const handleMoveBlock = async (blockId: string, direction: 'up' | 'down') => {
+    if (!page) return;
+
+    const currentIndex = page.blocks.findIndex(b => b.id === blockId);
+    if (currentIndex === -1) return;
+
+    // Can't move up if first, can't move down if last
+    if ((direction === 'up' && currentIndex === 0) ||
+        (direction === 'down' && currentIndex === page.blocks.length - 1)) {
+      return;
+    }
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const currentBlock = page.blocks[currentIndex];
+    const swapBlock = page.blocks[newIndex];
+
+    setMovingBlockId(blockId);
+    try {
+      const token = localStorage.getItem('session_token');
+
+      // Update both blocks' order values
+      await Promise.all([
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${currentBlock.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              type: currentBlock.type,
+              content: currentBlock.content,
+              order: swapBlock.order,
+            }),
+          }
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${swapBlock.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              type: swapBlock.type,
+              content: swapBlock.content,
+              order: currentBlock.order,
+            }),
+          }
+        ),
+      ]);
+
+      // Refresh page to show new order
+      await fetchPage();
+    } catch (error) {
+      console.error('Error moving block:', error);
+      alert('Failed to move block');
+    } finally {
+      setMovingBlockId(null);
+    }
   };
 
   if (isLoading) {
@@ -355,7 +420,7 @@ export default function PageEditorPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {page.blocks.map((block) => (
+              {page.blocks.map((block, index) => (
                 <Card key={block.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start mb-4">
@@ -364,7 +429,34 @@ export default function PageEditorPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleMoveBlock(block.id, 'up')}
+                          disabled={index === 0 || movingBlockId === block.id}
+                          title="Move up"
+                        >
+                          {movingBlockId === block.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowUp className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMoveBlock(block.id, 'down')}
+                          disabled={index === page.blocks.length - 1 || movingBlockId === block.id}
+                          title="Move down"
+                        >
+                          {movingBlockId === block.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEditBlock(block)}
+                          disabled={movingBlockId === block.id}
                         >
                           Edit
                         </Button>
@@ -372,6 +464,7 @@ export default function PageEditorPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteBlock(block.id)}
+                          disabled={movingBlockId === block.id}
                         >
                           Delete
                         </Button>

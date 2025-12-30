@@ -9,7 +9,7 @@
  * - Blocks: Ordered array of content blocks (hero, features, markdown, etc.)
  */
 
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // Pages table - main content containers
@@ -59,7 +59,10 @@ export const pageVersions = sqliteTable('page_versions', {
   createdBy: text('created_by').notNull(), // User ID from main database
 
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-});
+}, (table) => ({
+  pageIdIdx: index('page_versions_page_id_idx').on(table.pageId),
+  pageIdVersionIdx: index('page_versions_page_id_version_idx').on(table.pageId, table.versionNumber),
+}));
 
 // Relations
 export const pagesRelations = relations(pages, ({ many }) => ({

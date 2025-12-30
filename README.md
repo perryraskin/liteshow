@@ -8,7 +8,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 2.3 Complete ✅
+**Current Status**: Phase 2.4 Complete ✅
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -44,12 +44,12 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Responsive mobile-first design
 - [x] Inter font and modern UI styling
 
-### Phase 2.4: Remaining Content Features 🚧
+### Phase 2.4: Remaining Content Features ✅
 - [x] Git sync for content changes (push to GitHub on publish)
 - [x] Activity feed integration
 - [x] Content versioning (snapshots on update, history, restore)
 - [x] Draft/publish workflow (unpublished changes indicator, explicit publish)
-- [ ] Novel editor integration for markdown blocks and blog pages
+- [x] Novel editor integration for markdown blocks and blog pages
 
 ### Phase 3: Deployment Automation 📋
 - [ ] Automated deployment to Vercel/Netlify/Cloudflare Pages
