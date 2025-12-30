@@ -235,11 +235,11 @@ Built with [LiteShow](https://liteshow.com) - AI-first, Git-powered CMS
 
 Choose your preferred hosting platform:
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName})
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName}#LITESHOW_PROJECT_SLUG=${slug})
 
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName})
 
-**Required:** Add the \`LITESHOW_PROJECT_SLUG\` environment variable with value: \`${projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-')}\`
+**Note:** Netlify auto-fills the project slug. For Vercel, add: \`LITESHOW_PROJECT_SLUG=${slug}\`
 
 After deploying, any content you publish in LiteShow will automatically trigger a rebuild.
 

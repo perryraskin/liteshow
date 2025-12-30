@@ -189,7 +189,7 @@ export default function ProjectPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}`}
+                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -209,6 +209,10 @@ export default function ProjectPage() {
                   </Button>
                 </a>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                <strong>Netlify:</strong> Project slug auto-filled! Just click and deploy.<br />
+                <strong>Vercel:</strong> You'll need to add the project slug below during setup.
+              </p>
             </div>
 
             <div className="border-t pt-4">
