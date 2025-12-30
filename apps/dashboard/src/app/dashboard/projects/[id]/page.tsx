@@ -12,13 +12,16 @@ export default function ProjectPage() {
   const router = useRouter();
   const params = useParams();
   const [project, setProject] = useState<any>(null);
+  const [pages, setPages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProject = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem('session_token');
-        const response = await fetch(
+
+        // Fetch project details
+        const projectResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}`,
           {
             headers: {
@@ -27,20 +30,35 @@ export default function ProjectPage() {
           }
         );
 
-        if (!response.ok) {
+        if (!projectResponse.ok) {
           throw new Error('Failed to fetch project');
         }
 
-        const data = await response.json();
-        setProject(data);
+        const projectData = await projectResponse.json();
+        setProject(projectData);
+
+        // Fetch pages
+        const pagesResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (pagesResponse.ok) {
+          const pagesData = await pagesResponse.json();
+          setPages(pagesData);
+        }
       } catch (error) {
-        console.error('Error fetching project:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProject();
+    fetchData();
   }, [params.id]);
 
   if (isLoading) {
@@ -154,14 +172,51 @@ export default function ProjectPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <CardTitle className="mb-2">Content Management</CardTitle>
-              <CardDescription className="mb-6 text-center">
-                Create and manage pages and blocks for your site.
-              </CardDescription>
-              <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
-                Manage Pages
-              </Button>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Pages</CardTitle>
+                  <CardDescription>
+                    {pages.length} {pages.length === 1 ? 'page' : 'pages'} in this project
+                  </CardDescription>
+                </div>
+                <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
+                  Manage Pages
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {pages.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No pages yet</p>
+                  <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
+                    Create Your First Page
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pages.map((page: any) => (
+                    <div
+                      key={page.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/dashboard/projects/${project.id}/pages/${page.id}`)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{page.title}</h3>
+                          <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
+                            {page.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(page.updatedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
