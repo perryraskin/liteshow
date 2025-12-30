@@ -14,6 +14,7 @@ import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
 import { syncPageToGitHub, deletePageFromGitHub } from '../lib/git-sync';
 import { logPageActivity } from '../lib/activity-logger';
+import { createPageVersion, getPageVersions, restorePageVersion } from '../lib/versioning';
 
 const pagesRoutes = new Hono();
 
@@ -62,6 +63,19 @@ async function initializeContentSchema(tursoClient: any) {
         content TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create page_versions table for versioning
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS page_versions (
+        id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        snapshot TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
         FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
       )
     `);
@@ -288,6 +302,9 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     if (metaDescription !== undefined) updates.metaDescription = metaDescription;
     if (ogImage !== undefined) updates.ogImage = ogImage;
 
+    // Create version snapshot before updating
+    await createPageVersion(client, pageId, user.id);
+
     await client.update(pages).set(updates).where(eq(pages.id, pageId));
 
     const updatedPage = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
@@ -409,6 +426,86 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
       return c.json({ error: 'Forbidden' }, 403);
     }
     return c.json({ error: 'Failed to delete page' }, 500);
+  }
+});
+
+// GET /api/projects/:projectId/pages/:pageId/versions - Get version history for a page
+pagesRoutes.get('/:projectId/pages/:pageId/versions', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('projectId');
+    const pageId = c.req.param('pageId');
+    const { client } = await getProjectTursoClient(projectId, user.id);
+
+    // Check if page exists
+    const page = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
+
+    if (page.length === 0) {
+      return c.json({ error: 'Page not found' }, 404);
+    }
+
+    // Get versions
+    const versions = await getPageVersions(client, pageId);
+
+    return c.json(versions);
+  } catch (error: any) {
+    console.error('Get versions error:', error);
+    if (error.message === 'Project not found') {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+    if (error.message === 'Forbidden') {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+    return c.json({ error: 'Failed to get versions' }, 500);
+  }
+});
+
+// POST /api/projects/:projectId/pages/:pageId/versions/:versionNumber/restore - Restore a version
+pagesRoutes.post('/:projectId/pages/:pageId/versions/:versionNumber/restore', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('projectId');
+    const pageId = c.req.param('pageId');
+    const versionNumber = parseInt(c.req.param('versionNumber'));
+
+    if (isNaN(versionNumber)) {
+      return c.json({ error: 'Invalid version number' }, 400);
+    }
+
+    const { client } = await getProjectTursoClient(projectId, user.id);
+
+    // Check if page exists
+    const page = await client.select().from(pages).where(eq(pages.id, pageId)).limit(1);
+
+    if (page.length === 0) {
+      return c.json({ error: 'Page not found' }, 404);
+    }
+
+    // Restore version
+    await restorePageVersion(client, pageId, versionNumber, user.id);
+
+    console.log(`Restored page ${pageId} to version ${versionNumber}`);
+
+    return c.json({ success: true, message: 'Version restored' });
+  } catch (error: any) {
+    console.error('Restore version error:', error);
+    if (error.message === 'Project not found') {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+    if (error.message === 'Forbidden') {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+    return c.json({ error: error.message || 'Failed to restore version' }, 500);
   }
 });
 

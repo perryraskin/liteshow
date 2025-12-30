@@ -68,6 +68,19 @@ async function initializeContentSchema(dbUrl: string, authToken: string) {
       )
     `);
 
+    // Create page_versions table for versioning
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS page_versions (
+        id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        snapshot TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('Content schema initialized successfully');
   } catch (error) {
     console.error('Failed to initialize content schema:', error);

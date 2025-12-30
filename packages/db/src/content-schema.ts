@@ -45,9 +45,25 @@ export const blocks = sqliteTable('blocks', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
+// Page versions table - snapshots of page + blocks at different points in time
+export const pageVersions = sqliteTable('page_versions', {
+  id: text('id').primaryKey(), // UUID as text in SQLite
+  pageId: text('page_id').notNull().references(() => pages.id, { onDelete: 'cascade' }),
+  versionNumber: integer('version_number').notNull(), // Incremental version number (1, 2, 3...)
+
+  // Snapshot of page and blocks at this point in time
+  snapshot: text('snapshot', { mode: 'json' }).notNull(), // { page: {...}, blocks: [...] }
+
+  // Who created this version (from PostgreSQL users table)
+  createdBy: text('created_by').notNull(), // User ID from main database
+
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // Relations
 export const pagesRelations = relations(pages, ({ many }) => ({
   blocks: many(blocks),
+  versions: many(pageVersions),
 }));
 
 export const blocksRelations = relations(blocks, ({ one }) => ({
@@ -57,11 +73,20 @@ export const blocksRelations = relations(blocks, ({ one }) => ({
   }),
 }));
 
+export const pageVersionsRelations = relations(pageVersions, ({ one }) => ({
+  page: one(pages, {
+    fields: [pageVersions.pageId],
+    references: [pages.id],
+  }),
+}));
+
 // Export types for TypeScript
 export type Page = typeof pages.$inferSelect;
 export type NewPage = typeof pages.$inferInsert;
 export type Block = typeof blocks.$inferSelect;
 export type NewBlock = typeof blocks.$inferInsert;
+export type PageVersion = typeof pageVersions.$inferSelect;
+export type NewPageVersion = typeof pageVersions.$inferInsert;
 
 // Block content type definitions
 export interface HeroBlockContent {
