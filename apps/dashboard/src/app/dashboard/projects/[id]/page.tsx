@@ -199,7 +199,7 @@ export default function ProjectPage() {
                   </Button>
                 </a>
                 <a
-                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}`}
+                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG&envDescription=Your%20project%20slug%20from%20LiteShow%20dashboard%3A%20${project.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -211,7 +211,7 @@ export default function ProjectPage() {
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 <strong>Netlify:</strong> Project slug auto-filled! Just click and deploy.<br />
-                <strong>Vercel:</strong> You'll need to add the project slug below during setup.
+                <strong>Vercel:</strong> Prompted to enter your project slug during setup (shown below).
               </p>
             </div>
 

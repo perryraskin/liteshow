@@ -237,9 +237,9 @@ Choose your preferred hosting platform:
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName}#LITESHOW_PROJECT_SLUG=${slug})
 
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName})
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName}&env=LITESHOW_PROJECT_SLUG&envDescription=Your%20project%20slug%20from%20LiteShow%20dashboard%3A%20${slug})
 
-**Note:** Netlify auto-fills the project slug. For Vercel, add: \`LITESHOW_PROJECT_SLUG=${slug}\`
+**Your project slug:** \`${slug}\` (copy and paste when prompted during deployment)
 
 After deploying, any content you publish in LiteShow will automatically trigger a rebuild.
 
