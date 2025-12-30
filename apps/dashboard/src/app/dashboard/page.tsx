@@ -107,8 +107,11 @@ function DashboardContent() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             No projects yet. Create your first project to get started!
           </p>
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Create Project (Phase 2)
+          <button
+            onClick={() => router.push('/dashboard/projects/new')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Project
           </button>
         </div>
       </main>
