@@ -1,0 +1,12 @@
+[build]
+  command = "pnpm install && pnpm --filter @liteshow/db build && pnpm --filter @liteshow/sites build"
+  publish = "apps/sites/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--version"
+
+[[redirects]]
+  from = "/*"
+  to = "/404"
+  status = 404
