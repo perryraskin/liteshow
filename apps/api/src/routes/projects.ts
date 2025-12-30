@@ -250,9 +250,9 @@ Built with [LiteShow](https://liteshow.io) - AI-first, Git-powered CMS
 
 Choose your preferred hosting platform:
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName}#LITESHOW_PROJECT_SLUG=${slug})
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName}#LITESHOW_PROJECT_SLUG=${slug}&LITESHOW_API_URL=https://api.liteshow.io)
 
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName}&env=LITESHOW_PROJECT_SLUG&envDescription=Your%20project%20slug%20from%20LiteShow%20dashboard%3A%20${slug})
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables)
 
 **Your project slug:** \`${slug}\` (copy and paste when prompted during deployment)
 
@@ -265,13 +265,18 @@ If you prefer manual setup:
 1. Import this repo in your hosting platform
 2. Set build command: \`pnpm install && pnpm build\`
 3. Set publish directory: \`dist\`
-4. Add environment variable: \`LITESHOW_PROJECT_SLUG\` (your project slug)
-5. (Optional) Add \`LITESHOW_API_URL\` if using custom API endpoint
+4. Add these **required** environment variables:
+   - \`LITESHOW_PROJECT_SLUG\` = \`${slug}\`
+   - \`LITESHOW_API_URL\` = \`https://api.liteshow.io\`
 
 ## Environment Variables
 
-- \`LITESHOW_PROJECT_SLUG\` - Your project slug (get from LiteShow dashboard)
-- \`LITESHOW_API_URL\` - (Optional) API endpoint, defaults to production
+**Both environment variables are required for deployment:**
+
+- \`LITESHOW_PROJECT_SLUG\` - Your project slug: \`${slug}\`
+- \`LITESHOW_API_URL\` - LiteShow API endpoint: \`https://api.liteshow.io\`
+
+The site fetches your published content from the LiteShow API at build time.
 
 ## Local Development
 
@@ -279,8 +284,9 @@ If you prefer manual setup:
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your project slug
-# LITESHOW_PROJECT_SLUG=your-project-slug
+# Edit .env and add your configuration
+# LITESHOW_PROJECT_SLUG=${slug}
+# LITESHOW_API_URL=https://api.liteshow.io
 
 # Install and run
 pnpm install
