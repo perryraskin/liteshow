@@ -239,6 +239,8 @@ Choose your preferred hosting platform:
 
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName})
 
+**Required:** Add the \`LITESHOW_PROJECT_SLUG\` environment variable with value: \`${projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-')}\`
+
 After deploying, any content you publish in LiteShow will automatically trigger a rebuild.
 
 ## Manual Setup
@@ -248,24 +250,33 @@ If you prefer manual setup:
 1. Import this repo in your hosting platform
 2. Set build command: \`pnpm install && pnpm build\`
 3. Set publish directory: \`dist\`
-4. Add environment variable: \`TURSO_DATABASE_URL\` (provided in LiteShow dashboard)
-5. Add environment variable: \`TURSO_AUTH_TOKEN\` (provided in LiteShow dashboard)
+4. Add environment variable: \`LITESHOW_PROJECT_SLUG\` (your project slug)
+5. (Optional) Add \`LITESHOW_API_URL\` if using custom API endpoint
 
 ## Environment Variables
 
-Copy from your LiteShow project settings:
-
-- \`TURSO_DATABASE_URL\` - Your project's database URL
-- \`TURSO_AUTH_TOKEN\` - Your project's database token
+- \`LITESHOW_PROJECT_SLUG\` - Your project slug (get from LiteShow dashboard)
+- \`LITESHOW_API_URL\` - (Optional) API endpoint, defaults to production
 
 ## Local Development
 
 \`\`\`bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and add your project slug
+# LITESHOW_PROJECT_SLUG=your-project-slug
+
+# Install and run
 pnpm install
 pnpm dev
 \`\`\`
 
 Visit http://localhost:4321
+
+## How It Works
+
+This Astro site fetches your published content from the LiteShow API at build time. LiteShow handles all the database infrastructure - you just manage your content!
 `,
       },
       {

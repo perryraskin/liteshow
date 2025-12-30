@@ -212,46 +212,30 @@ export default function ProjectPage() {
             </div>
 
             <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-2">Environment Variables</p>
+              <p className="text-sm font-medium mb-2">Environment Variable</p>
               <p className="text-xs text-muted-foreground mb-3">
-                Copy these to your hosting platform's environment settings:
+                Add this to your hosting platform's environment settings:
               </p>
-              <div className="space-y-3">
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <code className="text-xs break-all">
-                      TURSO_DATABASE_URL=libsql://{project.tursoDbUrl}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`libsql://${project.tursoDbUrl}`);
-                        toast.success('Database URL copied to clipboard');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <code className="text-xs break-all">
-                      TURSO_AUTH_TOKEN=••••••••
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(project.tursoDbToken);
-                        toast.success('Auth token copied to clipboard');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
+              <div className="bg-muted p-3 rounded-md">
+                <div className="flex items-start justify-between gap-2">
+                  <code className="text-xs break-all">
+                    LITESHOW_PROJECT_SLUG={project.slug}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(project.slug);
+                      toast.success('Project slug copied to clipboard');
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                That's it! Your site will fetch content from the LiteShow API at build time. No database credentials needed.
+              </p>
             </div>
 
             <div className="border-t pt-4">

@@ -16,6 +16,7 @@ import pagesRoutes from './routes/pages';
 import blocksRoutes from './routes/blocks';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/github-auth';
+import publicContentRoutes from './routes/public-content';
 import { errorHandler } from './middleware/error';
 
 const app = new Hono();
@@ -32,6 +33,7 @@ app.use(
 
 // Routes
 app.route('/api/auth', authRoutes);
+app.route('/api/public', publicContentRoutes);
 app.route('/api/projects', projectRoutes);
 app.route('/api/projects', pagesRoutes);
 app.route('/api/projects', blocksRoutes);

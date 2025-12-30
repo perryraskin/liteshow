@@ -52,11 +52,19 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Novel editor integration for markdown blocks and blog pages
 
 ### Phase 3: Deployment Setup ✅
+- [x] Public content API for fetching published content
 - [x] Automated deployment config files (netlify.toml, vercel.json)
 - [x] "Deploy to X" buttons in README for one-click setup
-- [x] Astro site fetches content from Turso at build time
-- [x] Deployment instructions and env vars in dashboard
+- [x] Astro site fetches content from API at build time (no database credentials needed)
+- [x] Simplified deployment with single env var (LITESHOW_PROJECT_SLUG)
 - [x] Auto-deploy on publish via platform Git integration (no GitHub Actions needed)
+
+### Phase 3.5: Advanced Deployment Options 📋
+- [ ] Self-hosting mode (direct Turso connection for users who want full control)
+- [ ] SQLite database export/download feature
+- [ ] Option to BYO database (bring your own Turso/SQLite instance)
+- [ ] Migration tool to export project and all content
+- [ ] Documentation for running LiteShow infrastructure yourself
 
 ### Phase 4: AI Content Assistant 📋
 - [ ] Anthropic Claude API integration
