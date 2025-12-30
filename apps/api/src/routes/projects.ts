@@ -1067,7 +1067,7 @@ projectRoutes.post('/', async (c) => {
     }
 
     const body = await c.req.json();
-    const { name, slug, description } = body;
+    const { name, slug, description, githubAuthType, githubInstallationId, githubRepoId, isPrivate } = body;
 
     if (!name || !slug) {
       return c.json({ error: 'Name and slug are required' }, 400);
@@ -1087,7 +1087,27 @@ projectRoutes.post('/', async (c) => {
       return c.json({ error: 'A project with this slug already exists' }, 409);
     }
 
-    console.log(`Creating project "${name}" (${slug}) for user ${user.id}`);
+    // Validate GitHub auth configuration
+    const authType = githubAuthType || 'oauth';
+    if (authType === 'oauth') {
+      // Check if user has the required scope
+      const requiredScope = isPrivate ? 'hasPrivateRepoScope' : 'hasPublicRepoScope';
+      if (!user[requiredScope]) {
+        return c.json({
+          error: `User does not have ${isPrivate ? 'private' : 'public'} repo access. Please authorize repository access first.`,
+          requiresAuth: true,
+          requiredScope: isPrivate ? 'repo' : 'public_repo'
+        }, 403);
+      }
+    } else if (authType === 'github_app') {
+      if (!githubInstallationId || !githubRepoId) {
+        return c.json({ error: 'GitHub App installation ID and repository ID are required' }, 400);
+      }
+    } else {
+      return c.json({ error: 'Invalid githubAuthType. Must be "oauth" or "github_app"' }, 400);
+    }
+
+    console.log(`Creating project "${name}" (${slug}) for user ${user.id} with ${authType} auth`);
 
     // Step 1: Create Turso database
     console.log('Creating Turso database...');
@@ -1097,15 +1117,30 @@ projectRoutes.post('/', async (c) => {
     console.log('Initializing content schema...');
     await initializeContentSchema(tursoDb.url, tursoDb.token);
 
-    // Step 2: Create GitHub repository
-    console.log('Creating GitHub repository...');
-    const githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!);
+    // Step 2: Create or link GitHub repository
+    let githubRepo;
+    if (authType === 'oauth') {
+      // LiteShow creates the repository
+      console.log('Creating GitHub repository...');
+      githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!);
 
-    // Step 2.5: Create deployment configuration files
-    console.log('Creating deployment configuration files...');
-    // Extract owner/repo from the GitHub URL (e.g., "https://github.com/username/repo")
-    const repoFullName = githubRepo.url.replace('https://github.com/', '');
-    await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
+      // Create deployment configuration files
+      console.log('Creating deployment configuration files...');
+      const repoFullName = githubRepo.url.replace('https://github.com/', '');
+      await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
+    } else {
+      // GitHub App - repository already exists and is selected by user
+      // We need to fetch the repository details to get the URL
+      console.log('Linking to existing GitHub repository...');
+      // The githubRepoId format is "owner/repo"
+      githubRepo = {
+        name: githubRepoId.split('/')[1],
+        url: `https://github.com/${githubRepoId}`,
+      };
+
+      // Note: We could create deployment files here too using the GitHub App token,
+      // but for now we'll let users do that manually since they own the repo
+    }
 
     // Step 3: Store project in PostgreSQL
     console.log('Storing project metadata...');
@@ -1118,6 +1153,9 @@ projectRoutes.post('/', async (c) => {
       tursoDbToken: tursoDb.token,
       githubRepoName: githubRepo.name,
       githubRepoUrl: githubRepo.url,
+      githubAuthType: authType,
+      githubInstallationId: githubInstallationId || null,
+      githubRepoId: githubRepoId || null,
       isPublished: false,
     }).returning();
 

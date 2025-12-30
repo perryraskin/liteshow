@@ -6,6 +6,8 @@
  */
 
 import type { Project } from '@liteshow/db';
+import { getGitHubTokenForProject } from './github-token';
+import type { User } from '@liteshow/db';
 
 export interface PageWithBlocks {
   page: {
@@ -37,10 +39,13 @@ export interface PageWithBlocks {
 export async function syncPageToGitHub(
   project: Project,
   pageData: PageWithBlocks,
-  githubAccessToken: string
+  user: User
 ): Promise<void> {
   const { page, blocks } = pageData;
   const filePath = `content/pages/${page.slug}.json`;
+
+  // Get the appropriate GitHub token (OAuth or GitHub App)
+  const githubAccessToken = await getGitHubTokenForProject(project, user);
 
   // Extract owner and repo from GitHub URL
   // Format: https://github.com/owner/repo
@@ -144,9 +149,12 @@ export async function syncPageToGitHub(
 export async function deletePageFromGitHub(
   project: Project,
   pageSlug: string,
-  githubAccessToken: string
+  user: User
 ): Promise<void> {
   const filePath = `content/pages/${pageSlug}.json`;
+
+  // Get the appropriate GitHub token (OAuth or GitHub App)
+  const githubAccessToken = await getGitHubTokenForProject(project, user);
 
   const urlParts = project.githubRepoUrl.split('/');
   const owner = urlParts[urlParts.length - 2];

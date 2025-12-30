@@ -39,6 +39,33 @@ LiteShow is an AI-first, SEO-optimized, Git-powered CMS built with:
 
 4. **Document new features** in relevant docs/ files
 
+5. **Update ARCHITECTURE.md** with any new components, services, or data flows
+   - Keep the Mermaid diagram current with the actual implementation
+   - Add new packages, apps, or external services
+   - Update authentication/data flows when they change
+   - Document any new integrations (GitHub App, external APIs, etc.)
+
+## Architecture Documentation
+
+**IMPORTANT**: Maintain the living architecture diagram in `ARCHITECTURE.md`
+
+### When to Update the Architecture Diagram:
+
+- **Adding new apps or packages** to the monorepo
+- **Implementing new API routes** or significant endpoints
+- **Adding database tables** or schemas
+- **Integrating external services** (GitHub App, Turso, deployment platforms)
+- **Changing authentication flows** or adding new auth methods
+- **Adding deployment targets** or infrastructure
+
+### How to Update:
+
+1. Edit the Mermaid diagram in `ARCHITECTURE.md`
+2. Keep it at a high level - show components, not implementation details
+3. Use clear labels and relationships
+4. Include brief descriptions for new components
+5. Test the diagram renders correctly in GitHub/IDE preview
+
 ## Code Conventions
 
 ### File Organization

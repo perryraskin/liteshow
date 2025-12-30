@@ -23,6 +23,12 @@ export const users = pgTable('users', {
   email: text('email'), // Better Auth - populated from github_email
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'), // Better Auth uses 'image' instead of 'avatarUrl'
+
+  // Progressive permissions tracking
+  hasPublicRepoScope: boolean('has_public_repo_scope').default(false).notNull(),
+  hasPrivateRepoScope: boolean('has_private_repo_scope').default(false).notNull(),
+  scopesGrantedAt: timestamp('scopes_granted_at'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -78,6 +84,9 @@ export const projects = pgTable('projects', {
   // GitHub repository details
   githubRepoName: text('github_repo_name').notNull(),
   githubRepoUrl: text('github_repo_url').notNull(),
+  githubAuthType: text('github_auth_type'), // 'oauth' or 'github_app'
+  githubInstallationId: text('github_installation_id'), // For GitHub App installations
+  githubRepoId: text('github_repo_id'), // GitHub repository ID
 
   // Project settings
   isPublished: boolean('is_published').default(false).notNull(),

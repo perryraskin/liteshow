@@ -14,11 +14,29 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
 const CALLBACK_URL = `${process.env.BETTER_AUTH_URL}/callback/github`;
 const FRONTEND_URL = process.env.NEXT_PUBLIC_APP_URL!;
 
-// Initiate GitHub OAuth
+// Initiate GitHub OAuth (minimal scope - just profile)
 authRoutes.get('/github', (c) => {
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=user:email%20repo`;
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=user:email`;
 
   console.log('Redirecting to GitHub:', githubAuthUrl);
+  return c.redirect(githubAuthUrl);
+});
+
+// Request additional scopes (for repository access)
+authRoutes.get('/github/request-scope', (c) => {
+  const scope = c.req.query('scope'); // 'public_repo' or 'repo'
+  const redirect = c.req.query('redirect') || '/dashboard';
+
+  if (!scope || (scope !== 'public_repo' && scope !== 'repo')) {
+    return c.json({ error: 'Invalid scope. Must be "public_repo" or "repo"' }, 400);
+  }
+
+  // Store redirect URL in state parameter
+  const state = Buffer.from(redirect).toString('base64');
+
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=user:email%20${scope}&state=${state}`;
+
+  console.log(`Requesting additional scope: ${scope}`);
   return c.redirect(githubAuthUrl);
 });
 
@@ -26,9 +44,20 @@ authRoutes.get('/github', (c) => {
 authRoutes.get('/callback/github', async (c) => {
   try {
     const code = c.req.query('code');
+    const state = c.req.query('state');
 
     if (!code) {
       return c.json({ error: 'No code provided' }, 400);
+    }
+
+    // Decode redirect URL from state if present
+    let customRedirect = '/dashboard';
+    if (state) {
+      try {
+        customRedirect = Buffer.from(state, 'base64').toString();
+      } catch (e) {
+        console.log('Could not decode state, using default redirect');
+      }
     }
 
     // Exchange code for access token
@@ -46,13 +75,23 @@ authRoutes.get('/callback/github', async (c) => {
       }),
     });
 
-    const tokenData = await tokenResponse.json() as { access_token?: string };
+    const tokenData = await tokenResponse.json() as {
+      access_token?: string;
+      scope?: string;
+    };
     const accessToken = tokenData.access_token;
+    const grantedScopes = tokenData.scope?.split(',') || [];
 
     if (!accessToken) {
       console.error('No access token received:', tokenData);
       return c.json({ error: 'Failed to get access token' }, 500);
     }
+
+    // Determine which repo scopes were granted
+    const hasPublicRepoScope = grantedScopes.includes('public_repo');
+    const hasPrivateRepoScope = grantedScopes.includes('repo');
+
+    console.log('Granted scopes:', grantedScopes);
 
     // Get user info from GitHub
     const userResponse = await fetch('https://api.github.com/user', {
@@ -96,6 +135,9 @@ authRoutes.get('/callback/github', async (c) => {
           githubAccessToken: accessToken,
           name: githubUser.name,
           avatarUrl: githubUser.avatar_url,
+          hasPublicRepoScope: hasPublicRepoScope || existingUser.hasPublicRepoScope,
+          hasPrivateRepoScope: hasPrivateRepoScope || existingUser.hasPrivateRepoScope,
+          scopesGrantedAt: hasPublicRepoScope || hasPrivateRepoScope ? new Date() : existingUser.scopesGrantedAt,
           updatedAt: new Date(),
         })
         .where(eq(users.id, existingUser.id));
@@ -110,6 +152,9 @@ authRoutes.get('/callback/github', async (c) => {
         githubAccessToken: accessToken,
         name: githubUser.name,
         avatarUrl: githubUser.avatar_url,
+        hasPublicRepoScope,
+        hasPrivateRepoScope,
+        scopesGrantedAt: hasPublicRepoScope || hasPrivateRepoScope ? new Date() : undefined,
       }).returning();
 
       userId = newUser.id;
@@ -118,8 +163,8 @@ authRoutes.get('/callback/github', async (c) => {
     // Set session cookie (simple implementation)
     const sessionToken = Buffer.from(`${userId}:${accessToken}`).toString('base64');
 
-    // Redirect to dashboard with session
-    const redirectUrl = `${FRONTEND_URL}/dashboard?session=${sessionToken}`;
+    // Redirect to custom path or dashboard with session
+    const redirectUrl = `${FRONTEND_URL}${customRedirect}${customRedirect.includes('?') ? '&' : '?'}session=${sessionToken}`;
     console.log('Auth successful, redirecting to:', redirectUrl);
 
     return c.redirect(redirectUrl);

@@ -383,7 +383,7 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
             page: updatedPage[0],
             blocks: pageBlocks,
           },
-          user.githubAccessToken!
+          user
         );
 
         console.log(`Successfully synced page to GitHub`);
@@ -445,7 +445,7 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
     if (wasPublished) {
       console.log(`Deleting published page from GitHub...`);
       try {
-        await deletePageFromGitHub(project, pageSlug, user.githubAccessToken!);
+        await deletePageFromGitHub(project, pageSlug, user);
         console.log(`Successfully deleted page from GitHub`);
       } catch (syncError) {
         console.error('Failed to delete from GitHub:', syncError);

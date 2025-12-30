@@ -17,6 +17,7 @@ import blocksRoutes from './routes/blocks';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/github-auth';
 import publicContentRoutes from './routes/public-content';
+import githubAppRoutes from './routes/github-app-routes';
 import { errorHandler } from './middleware/error';
 
 const app = new Hono();
@@ -47,6 +48,7 @@ app.route('/public', publicContentRoutes);
 app.route('/projects', projectRoutes);
 app.route('/projects', pagesRoutes);
 app.route('/projects', blocksRoutes);
+app.route('/github-app', githubAppRoutes);
 app.route('/health', healthRoutes);
 
 // Error handler (must be last)
