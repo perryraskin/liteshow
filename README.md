@@ -154,7 +154,10 @@ This is a monorepo containing:
   - Health monitoring and auto-scaling
   - Environment variables managed via Fly.io secrets
 
-- **Dashboard**: To be deployed to Vercel at `app.liteshow.io`
+- **Dashboard**: Ready for Vercel deployment at `app.liteshow.io`
+  - All API calls updated to work without `/api` prefix
+  - Vercel configuration and deployment guide included
+  - See `apps/dashboard/VERCEL_DEPLOYMENT.md` for setup instructions
 
 - **User Sites**: Auto-generated Astro sites deployed to user's choice of:
   - Netlify (recommended)
