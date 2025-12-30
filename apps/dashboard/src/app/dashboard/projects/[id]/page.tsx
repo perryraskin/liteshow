@@ -250,7 +250,7 @@ export default function ProjectPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}`}
+                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}&LITESHOW_API_URL=https://api.liteshow.io`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -260,7 +260,7 @@ export default function ProjectPage() {
                   </Button>
                 </a>
                 <a
-                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG&envDescription=Your%20project%20slug%20from%20LiteShow%20dashboard%3A%20${project.slug}`}
+                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -271,35 +271,54 @@ export default function ProjectPage() {
                 </a>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                <strong>Netlify:</strong> Project slug auto-filled! Just click and deploy.<br />
-                <strong>Vercel:</strong> Prompted to enter your project slug during setup (shown below).
+                <strong>Netlify:</strong> Both environment variables auto-filled! Just click and deploy.<br />
+                <strong>Vercel:</strong> Prompted to enter environment variables during setup (shown below).
               </p>
             </div>
 
             <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-2">Environment Variable</p>
+              <p className="text-sm font-medium mb-2">Environment Variables</p>
               <p className="text-xs text-muted-foreground mb-3">
-                Add this to your hosting platform's environment settings:
+                Add these to your hosting platform's environment settings:
               </p>
-              <div className="bg-muted p-3 rounded-md">
-                <div className="flex items-start justify-between gap-2">
-                  <code className="text-xs break-all">
-                    LITESHOW_PROJECT_SLUG={project.slug}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(project.slug);
-                      toast.success('Project slug copied to clipboard');
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+              <div className="space-y-2">
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs break-all">
+                      LITESHOW_PROJECT_SLUG={project.slug}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(project.slug);
+                        toast.success('Project slug copied to clipboard');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs break-all">
+                      LITESHOW_API_URL=https://api.liteshow.io
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText('https://api.liteshow.io');
+                        toast.success('API URL copied to clipboard');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                That's it! Your site will fetch content from the LiteShow API at build time. No database credentials needed.
+                Your site will fetch content from the LiteShow API at build time. No database credentials needed.
               </p>
             </div>
 
