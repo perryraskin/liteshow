@@ -21,8 +21,9 @@ export const auth = betterAuth({
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      // Request repo scope for repository management
-      scope: ['user:email', 'repo'],
+      // Request public_repo scope for managing public repositories only
+      // This is sufficient since generated sites need to be public for deployment
+      scope: ['user:email', 'public_repo'],
     },
   },
   session: {
