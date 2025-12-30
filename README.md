@@ -8,7 +8,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 3 Complete ✅ | Dependencies Updated to Latest ✅
+**Current Status**: Phase 3.2 Complete ✅ | API Deployed to Production 🚀
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -71,7 +71,17 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Cleaned up outdated documentation files
 - [x] Verified all builds and deployments working
 
-### Phase 3.2: GitHub App Integration & Deployment Monitoring 📋
+### Phase 3.2: API Production Deployment ✅
+- [x] Deployed LiteShow API to Fly.io at `liteshow-api.fly.dev`
+- [x] Configured custom domain `api.liteshow.io` (SSL pending)
+- [x] Set up GitHub integration for automated deployments
+- [x] Implemented lazy database initialization for improved startup
+- [x] Routes simplified (no `/api` prefix needed)
+- [x] Health checks and monitoring configured
+- [x] Multi-stage Docker build with tsx runtime
+- [x] Environment variables secured in Fly.io secrets
+
+### Phase 3.3: GitHub App Integration & Deployment Monitoring 📋
 - [ ] Create LiteShow GitHub App with deployment permissions
 - [ ] User installs GitHub App to grant deployment access
 - [ ] Monitor GitHub Deployments API for all platforms (Netlify, Vercel, Cloudflare Pages)
@@ -128,9 +138,9 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 This is a monorepo containing:
 
-- **apps/dashboard**: Next.js user dashboard (deployed to Vercel)
-- **apps/sites**: Astro site generator (deployed to Fly.io with API)
-- **apps/api**: Hono backend API (co-located with sites on Fly.io)
+- **apps/dashboard**: Next.js user dashboard (to be deployed to Vercel)
+- **apps/sites**: Astro site generator (user sites deployed to Netlify/Vercel/Cloudflare Pages)
+- **apps/api**: Hono backend API (deployed to Fly.io)
 - **packages/ui**: Shared React components
 - **packages/auth**: Better Auth configuration
 - **packages/db**: Drizzle ORM schema and client
@@ -138,8 +148,32 @@ This is a monorepo containing:
 
 ### Deployment Strategy
 
-- **Dashboard**: Deployed to Vercel at `app.liteshow.io`
-- **Sites + API**: Co-located in a single Fly.io container at `sites.liteshow.io` for cost optimization
+- **API**: Production deployment at `api.liteshow.io` (Fly.io)
+  - Automated deployments via GitHub integration
+  - Lazy database initialization for fast startup
+  - Health monitoring and auto-scaling
+  - Environment variables managed via Fly.io secrets
+
+- **Dashboard**: To be deployed to Vercel at `app.liteshow.io`
+
+- **User Sites**: Auto-generated Astro sites deployed to user's choice of:
+  - Netlify (recommended)
+  - Vercel
+  - Cloudflare Pages
+  - Any static host
+
+### Production API
+
+The LiteShow API is live and accessible at:
+- **Primary**: `https://liteshow-api.fly.dev/`
+- **Custom Domain**: `https://api.liteshow.io/` (SSL certificate provisioning)
+
+**Available Endpoints:**
+- `GET /` - API status and version
+- `GET /health` - Health check endpoint
+- `GET /public/:projectSlug/pages` - Fetch all published pages
+- `GET /public/:projectSlug/pages/:slug` - Fetch specific page with blocks
+- Authentication and project management endpoints (authenticated)
 
 ## Getting Started
 
