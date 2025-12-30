@@ -1,23 +1,57 @@
 ---
 // Index page - redirect to home or show a default landing
-import { getProjectDb, getPageBySlug } from '../lib/db';
+import { db } from '../lib/db';
+import { pages } from '@liteshow/db/src/content-schema';
+import { eq } from 'drizzle-orm';
+import BaseLayout from '../layouts/BaseLayout.astro';
 
-// Get project configuration from environment variables
-const tursoDbUrl = import.meta.env.TURSO_DB_URL;
-const tursoDbToken = import.meta.env.TURSO_DB_TOKEN;
+// Try to find a page with slug 'home' or 'index'
+const homePage = await db
+  .select()
+  .from(pages)
+  .where(eq(pages.slug, 'home'))
+  .limit(1);
 
-if (tursoDbUrl && tursoDbToken) {
-  // Try to load a page with slug "home" or "index"
-  const db = getProjectDb({ tursoDbUrl, tursoDbToken });
-
-  for (const slug of ['home', 'index']) {
-    const page = await getPageBySlug(db, slug);
-    if (page && page.status === 'published') {
-      return Astro.redirect(`/${slug}`);
-    }
-  }
+if (homePage.length > 0 && homePage[0].status === 'published') {
+  return Astro.redirect('/home');
 }
 
-// If no home page exists, redirect to the first page or show a placeholder
-return Astro.redirect('/404');
+const indexPage = await db
+  .select()
+  .from(pages)
+  .where(eq(pages.slug, 'index'))
+  .limit(1);
+
+if (indexPage.length > 0 && indexPage[0].status === 'published') {
+  return Astro.redirect('/index');
+}
+
+// If no home/index page, redirect to first published page
+const firstPage = await db
+  .select()
+  .from(pages)
+  .where(eq(pages.status, 'published'))
+  .limit(1);
+
+if (firstPage.length > 0) {
+  return Astro.redirect('/' + firstPage[0].slug);
+}
+
+// Otherwise show a placeholder
 ---
+
+<BaseLayout title="Welcome" description="Welcome to your site">
+  <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div class="text-center p-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        Welcome to Your Site
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+        No pages have been published yet. Create and publish pages in your LiteShow dashboard to get started.
+      </p>
+      <div class="text-sm text-gray-500 dark:text-gray-400">
+        Built with <span class="font-semibold">LiteShow</span> - AI-first, Git-powered CMS
+      </div>
+    </div>
+  </main>
+</BaseLayout>

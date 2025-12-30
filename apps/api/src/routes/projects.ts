@@ -200,6 +200,137 @@ async function createGitHubRepository(slug: string, description: string, accessT
   }
 }
 
+// Helper: Create deployment configuration files in GitHub repo
+async function createDeploymentFiles(
+  repoFullName: string,
+  projectName: string,
+  tursoDbUrl: string,
+  accessToken: string
+) {
+  try {
+    // Get the default branch (usually main)
+    const repoResponse = await fetch(`https://api.github.com/repos/${repoFullName}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
+
+    if (!repoResponse.ok) {
+      throw new Error('Failed to get repository info');
+    }
+
+    const repoData = await repoResponse.json() as { default_branch: string };
+    const defaultBranch = repoData.default_branch;
+
+    // Files to create
+    const files = [
+      {
+        path: 'README.md',
+        content: `# ${projectName}
+
+Built with [LiteShow](https://liteshow.com) - AI-first, Git-powered CMS
+
+## Quick Deploy
+
+Choose your preferred hosting platform:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName})
+
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName})
+
+After deploying, any content you publish in LiteShow will automatically trigger a rebuild.
+
+## Manual Setup
+
+If you prefer manual setup:
+
+1. Import this repo in your hosting platform
+2. Set build command: \`pnpm install && pnpm build\`
+3. Set publish directory: \`dist\`
+4. Add environment variable: \`TURSO_DATABASE_URL\` (provided in LiteShow dashboard)
+5. Add environment variable: \`TURSO_AUTH_TOKEN\` (provided in LiteShow dashboard)
+
+## Environment Variables
+
+Copy from your LiteShow project settings:
+
+- \`TURSO_DATABASE_URL\` - Your project's database URL
+- \`TURSO_AUTH_TOKEN\` - Your project's database token
+
+## Local Development
+
+\`\`\`bash
+pnpm install
+pnpm dev
+\`\`\`
+
+Visit http://localhost:4321
+`,
+      },
+      {
+        path: 'netlify.toml',
+        content: `[build]
+  command = "pnpm install && pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/404"
+  status = 404
+`,
+      },
+      {
+        path: 'vercel.json',
+        content: `{
+  "buildCommand": "pnpm install && pnpm build",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install",
+  "framework": "astro"
+}
+`,
+      },
+      {
+        path: '.node-version',
+        content: '20',
+      },
+    ];
+
+    // Create each file
+    for (const file of files) {
+      const createFileResponse = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${file.path}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json',
+        },
+        body: JSON.stringify({
+          message: `Add ${file.path} for deployment`,
+          content: Buffer.from(file.content).toString('base64'),
+          branch: defaultBranch,
+        }),
+      });
+
+      if (!createFileResponse.ok) {
+        const error = await createFileResponse.text();
+        console.error(`Failed to create ${file.path}:`, error);
+        // Don't throw - continue creating other files
+      } else {
+        console.log(`Created ${file.path}`);
+      }
+    }
+
+    console.log('Deployment files created successfully');
+  } catch (error) {
+    console.error('Failed to create deployment files:', error);
+    // Don't throw - this shouldn't block project creation
+  }
+}
+
 // GET /api/projects - List all projects for the authenticated user
 projectRoutes.get('/', async (c) => {
   try {
@@ -264,6 +395,12 @@ projectRoutes.post('/', async (c) => {
     // Step 2: Create GitHub repository
     console.log('Creating GitHub repository...');
     const githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!);
+
+    // Step 2.5: Create deployment configuration files
+    console.log('Creating deployment configuration files...');
+    // Extract owner/repo from the GitHub URL (e.g., "https://github.com/username/repo")
+    const repoFullName = githubRepo.url.replace('https://github.com/', '');
+    await createDeploymentFiles(repoFullName, name, tursoDb.url, user.githubAccessToken!);
 
     // Step 3: Store project in PostgreSQL
     console.log('Storing project metadata...');

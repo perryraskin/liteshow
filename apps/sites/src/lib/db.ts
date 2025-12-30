@@ -6,6 +6,7 @@ import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { eq } from 'drizzle-orm';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
+import * as schema from '@liteshow/db/src/content-schema';
 
 interface ProjectConfig {
   tursoDbUrl: string;
@@ -13,7 +14,19 @@ interface ProjectConfig {
 }
 
 /**
+ * Default database client using environment variables
+ * Use this for standard deployments where env vars are configured
+ */
+const tursoClient = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN,
+});
+
+export const db = drizzle(tursoClient, { schema });
+
+/**
  * Get a Turso database client for a specific project
+ * Use this when you need to connect to a different project's database
  */
 export function getProjectDb(config: ProjectConfig) {
   const tursoClient = createClient({

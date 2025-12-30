@@ -6,44 +6,38 @@ import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
 import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
 import CtaBlock from '../components/blocks/CtaBlock.astro';
 import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getProjectDb, getPageBySlug } from '../lib/db';
+import { db } from '../lib/db';
+import { pages, blocks } from '@liteshow/db/src/content-schema';
+import { eq } from 'drizzle-orm';
 
-// Get project configuration from environment variables
-const tursoDbUrl = import.meta.env.TURSO_DB_URL;
-const tursoDbToken = import.meta.env.TURSO_DB_TOKEN;
+// Generate static paths at build time
+export async function getStaticPaths() {
+  // Fetch all published pages
+  const allPages = await db
+    .select()
+    .from(pages)
+    .where(eq(pages.status, 'published'));
 
-if (!tursoDbUrl || !tursoDbToken) {
-  throw new Error('Missing TURSO_DB_URL or TURSO_DB_TOKEN environment variables');
+  return allPages.map(page => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
 }
 
-// Get the slug from the URL
-const { slug } = Astro.params;
+const { page } = Astro.props;
 
-if (!slug) {
-  return Astro.redirect('/404');
-}
+// Fetch blocks for this page
+const pageBlocks = await db
+  .select()
+  .from(blocks)
+  .where(eq(blocks.pageId, page.id))
+  .orderBy(blocks.order);
 
-// Fetch page data
-const db = getProjectDb({ tursoDbUrl, tursoDbToken });
-const page = await getPageBySlug(db, slug);
-
-console.log('Fetching page with slug:', slug);
-console.log('Page found:', page ? 'yes' : 'no');
-if (page) {
-  console.log('Page status:', page.status);
-  console.log('Page title:', page.title);
-}
-
-if (!page) {
-  console.log('Redirecting to 404: page not found');
-  return Astro.redirect('/404');
-}
-
-// Only show published pages
-if (page.status !== 'published') {
-  console.log('Redirecting to 404: page status is', page.status);
-  return Astro.redirect('/404');
-}
+// Parse block content
+const parsedBlocks = pageBlocks.map(block => ({
+  ...block,
+  content: typeof block.content === 'string' ? JSON.parse(block.content) : block.content
+}));
 
 const blockComponents: Record<string, any> = {
   hero: HeroBlock,
@@ -61,7 +55,7 @@ const blockComponents: Record<string, any> = {
   ogImage={page.ogImage || undefined}
 >
   <main>
-    {page.blocks.map((block: any) => {
+    {parsedBlocks.map((block: any) => {
       const Component = blockComponents[block.type];
       if (!Component) {
         console.warn(`Unknown block type: ${block.type}`);

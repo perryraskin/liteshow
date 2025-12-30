@@ -8,7 +8,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 2.4 Complete ✅
+**Current Status**: Phase 3 Complete ✅
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -51,12 +51,12 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Draft/publish workflow (unpublished changes indicator, explicit publish)
 - [x] Novel editor integration for markdown blocks and blog pages
 
-### Phase 3: Deployment Automation 📋
-- [ ] Automated deployment to Vercel/Netlify/Cloudflare Pages
-- [ ] GitHub Actions workflow setup
-- [ ] Environment variable injection
-- [ ] Live URL generation and display
-- [ ] Deploy webhook on content publish
+### Phase 3: Deployment Setup ✅
+- [x] Automated deployment config files (netlify.toml, vercel.json)
+- [x] "Deploy to X" buttons in README for one-click setup
+- [x] Astro site fetches content from Turso at build time
+- [x] Deployment instructions and env vars in dashboard
+- [x] Auto-deploy on publish via platform Git integration (no GitHub Actions needed)
 
 ### Phase 4: AI Content Assistant 📋
 - [ ] Anthropic Claude API integration

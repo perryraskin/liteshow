@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Github, Database } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { toast } from 'sonner';
 
 export default function ProjectPage() {
   const router = useRouter();
@@ -166,6 +167,103 @@ export default function ProjectPage() {
                 </Button>
               </div>
               <div>TURSO_DB_TOKEN={project.tursoDbToken}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Rocket className="h-5 w-5" />
+              <CardTitle>Deployment</CardTitle>
+            </div>
+            <CardDescription>
+              Deploy your site to your preferred hosting platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <p className="text-sm font-medium mb-3">Quick Deploy</p>
+              <p className="text-sm text-muted-foreground mb-3">
+                Click a button below to deploy your site. After connecting once, any content you publish will automatically trigger a rebuild.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm">
+                    <ExternalLink className="mr-2 h-3 w-3" />
+                    Deploy to Netlify
+                  </Button>
+                </a>
+                <a
+                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm">
+                    <ExternalLink className="mr-2 h-3 w-3" />
+                    Deploy to Vercel
+                  </Button>
+                </a>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-2">Environment Variables</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Copy these to your hosting platform's environment settings:
+              </p>
+              <div className="space-y-3">
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs break-all">
+                      TURSO_DATABASE_URL=libsql://{project.tursoDbUrl}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`libsql://${project.tursoDbUrl}`);
+                        toast.success('Database URL copied to clipboard');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs break-all">
+                      TURSO_AUTH_TOKEN=••••••••
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(project.tursoDbToken);
+                        toast.success('Auth token copied to clipboard');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <a
+                href={project.githubRepoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                View full deployment instructions on GitHub
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </CardContent>
         </Card>
