@@ -12,6 +12,7 @@ import TestimonialsBlockEditor from '@/components/block-editors/TestimonialsBloc
 import MarkdownBlockEditor from '@/components/block-editors/MarkdownBlockEditor';
 import CtaBlockEditor from '@/components/block-editors/CtaBlockEditor';
 import FaqBlockEditor from '@/components/block-editors/FaqBlockEditor';
+import { VersionHistory } from '@/components/VersionHistory';
 
 interface Block {
   id: string;
@@ -260,6 +261,11 @@ export default function PageEditorPage() {
               <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
                 {page.status}
               </Badge>
+              <VersionHistory
+                projectId={params.id as string}
+                pageId={params.pageId as string}
+                onRestore={fetchPage}
+              />
               <Button
                 onClick={() =>
                   handleUpdateStatus(page.status === 'published' ? 'draft' : 'published')
