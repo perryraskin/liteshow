@@ -58,7 +58,7 @@ export default function PageEditorPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -84,7 +84,7 @@ export default function PageEditorPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}`,
         {
           method: 'PUT',
           headers: {
@@ -117,7 +117,7 @@ export default function PageEditorPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${blockId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}/blocks/${blockId}`,
         {
           method: 'DELETE',
           headers: {
@@ -146,8 +146,8 @@ export default function PageEditorPage() {
       // Determine if we're editing or creating
       const isEditing = editingBlock !== null;
       const url = isEditing
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${editingBlock.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks`;
+        ? `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}/blocks/${editingBlock.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}/blocks`;
 
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
@@ -223,7 +223,7 @@ export default function PageEditorPage() {
       // Update both blocks' order values
       await Promise.all([
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${currentBlock.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}/blocks/${currentBlock.id}`,
           {
             method: 'PUT',
             headers: {
@@ -238,7 +238,7 @@ export default function PageEditorPage() {
           }
         ),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages/${params.pageId}/blocks/${swapBlock.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages/${params.pageId}/blocks/${swapBlock.id}`,
           {
             method: 'PUT',
             headers: {

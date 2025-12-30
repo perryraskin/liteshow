@@ -41,7 +41,7 @@ export default function PagesListPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ export default function PagesListPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages`,
         {
           method: 'POST',
           headers: {

@@ -27,7 +27,7 @@ export default function NewProjectPage() {
     try {
       const token = localStorage.getItem('session_token');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

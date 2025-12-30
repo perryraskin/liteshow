@@ -37,7 +37,7 @@ export default function ProjectPage() {
 
         // Fetch project details
         const projectResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -54,7 +54,7 @@ export default function ProjectPage() {
 
         // Fetch pages
         const pagesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}/pages`,
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/pages`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ export default function ProjectPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${params.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
         {
           method: 'DELETE',
           headers: {

@@ -46,7 +46,7 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
 
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${projectId}/pages/${pageId}/versions`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/pages/${pageId}/versions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
 
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${projectId}/pages/${pageId}/versions/${versionNumber}/restore`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/pages/${pageId}/versions/${versionNumber}/restore`,
         {
           method: 'POST',
           headers: {

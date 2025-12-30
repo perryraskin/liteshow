@@ -9,7 +9,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       // Redirect to API auth endpoint
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/github`;
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github`;
     } catch (error) {
       console.error('Sign in error:', error);
       setIsLoading(false);

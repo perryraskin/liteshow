@@ -88,7 +88,7 @@ export function ActivityFeed({ projectId }: ActivityFeedProps) {
       try {
         const token = localStorage.getItem('session_token');
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${projectId}/activity?limit=20`,
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/activity?limit=20`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

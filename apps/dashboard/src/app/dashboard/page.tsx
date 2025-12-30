@@ -43,7 +43,7 @@ function DashboardContent() {
     }
 
     // Check session via API with token
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`, {
       headers: {
         'Authorization': `Bearer ${storedToken}`,
       },
@@ -54,7 +54,7 @@ function DashboardContent() {
         if (data.user) {
           setSession(data);
           // Fetch projects
-          return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`, {
+          return fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`, {
             headers: {
               'Authorization': `Bearer ${storedToken}`,
             },

@@ -9,6 +9,7 @@
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js';
 import { drizzle as drizzleTurso } from 'drizzle-orm/libsql';
 import postgres from 'postgres';
@@ -19,6 +20,7 @@ import * as contentSchema from './content-schema';
 // Load .env from root directory (2 levels up from packages/db/src)
 // Only load from file in development - production uses env vars
 if (process.env.NODE_ENV !== 'production') {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 }
 
