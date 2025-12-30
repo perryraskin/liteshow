@@ -244,7 +244,7 @@ async function createDeploymentFiles(
         path: 'README.md',
         content: `# ${projectName}
 
-Built with [LiteShow](https://liteshow.com) - AI-first, Git-powered CMS
+Built with [LiteShow](https://liteshow.io) - AI-first, Git-powered CMS
 
 ## Quick Deploy
 
