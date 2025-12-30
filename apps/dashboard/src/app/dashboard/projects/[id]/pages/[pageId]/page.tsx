@@ -29,6 +29,7 @@ interface Page {
   title: string;
   description: string | null;
   status: string;
+  hasUnpublishedChanges: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   ogImage: string | null;
@@ -177,12 +178,23 @@ export default function PageEditorPage() {
   };
 
   const handleEditBlock = (block: Block) => {
-    // Parse content if it's a string
-    const parsedBlock = {
+    // Handle both old (double-encoded) and new (properly encoded) data
+    let parsedContent = block.content;
+
+    // If content is a string, it's old double-encoded data
+    if (typeof block.content === 'string') {
+      try {
+        parsedContent = JSON.parse(block.content);
+      } catch (e) {
+        console.error('Failed to parse block content:', e);
+        parsedContent = {};
+      }
+    }
+
+    setEditingBlock({
       ...block,
-      content: typeof block.content === 'string' ? JSON.parse(block.content) : block.content
-    };
-    setEditingBlock(parsedBlock);
+      content: parsedContent
+    });
     setSelectedBlockType(block.type);
     setShowAddBlockModal(true);
   };
@@ -261,21 +273,43 @@ export default function PageEditorPage() {
               <Badge variant={page.status === 'published' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                 {page.status}
               </Badge>
+              {page.hasUnpublishedChanges && (
+                <Badge variant="outline" className="hidden sm:inline-flex border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                  Unpublished Changes
+                </Badge>
+              )}
               <VersionHistory
                 projectId={params.id as string}
                 pageId={params.pageId as string}
+                currentPageStatus={{
+                  status: page.status,
+                  hasUnpublishedChanges: page.hasUnpublishedChanges
+                }}
                 onRestore={fetchPage}
               />
               <Button
-                onClick={() =>
-                  handleUpdateStatus(page.status === 'published' ? 'draft' : 'published')
-                }
+                onClick={() => {
+                  // If published with unpublished changes, re-publish to trigger sync
+                  // Otherwise, toggle status
+                  if (page.status === 'published' && page.hasUnpublishedChanges) {
+                    handleUpdateStatus('published');
+                  } else {
+                    handleUpdateStatus(page.status === 'published' ? 'draft' : 'published');
+                  }
+                }}
                 disabled={isUpdatingStatus}
                 size="sm"
+                variant={page.hasUnpublishedChanges && page.status === 'published' ? 'default' : undefined}
               >
                 {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <span className="hidden sm:inline">{page.status === 'published' ? 'Unpublish' : 'Publish'}</span>
-                <span className="sm:hidden">{page.status === 'published' ? 'Draft' : 'Publish'}</span>
+                <span className="hidden sm:inline">
+                  {page.status === 'published'
+                    ? (page.hasUnpublishedChanges ? 'Publish Changes' : 'Unpublish')
+                    : 'Publish'}
+                </span>
+                <span className="sm:hidden">
+                  {page.status === 'published' ? 'Draft' : 'Publish'}
+                </span>
               </Button>
             </div>
           </div>

@@ -19,6 +19,7 @@ export const pages = sqliteTable('pages', {
   title: text('title').notNull(),
   description: text('description'),
   status: text('status').notNull().default('draft'), // 'draft', 'published'
+  hasUnpublishedChanges: integer('has_unpublished_changes', { mode: 'boolean' }).notNull().default(false),
 
   // SEO metadata
   metaTitle: text('meta_title'),

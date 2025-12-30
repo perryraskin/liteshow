@@ -45,6 +45,7 @@ async function initializeContentSchema(tursoClient: any) {
         title TEXT NOT NULL,
         description TEXT,
         status TEXT NOT NULL DEFAULT 'draft',
+        has_unpublished_changes INTEGER NOT NULL DEFAULT 0,
         meta_title TEXT,
         meta_description TEXT,
         og_image TEXT,
@@ -79,6 +80,19 @@ async function initializeContentSchema(tursoClient: any) {
         FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
       )
     `);
+
+    // Migration: Add hasUnpublishedChanges column to existing tables
+    try {
+      await tursoClient.execute(`
+        ALTER TABLE pages ADD COLUMN has_unpublished_changes INTEGER NOT NULL DEFAULT 0
+      `);
+      console.log('Added hasUnpublishedChanges column to pages table');
+    } catch (migrationError: any) {
+      // Column might already exist, which is fine
+      if (!migrationError.message?.includes('duplicate column name')) {
+        console.warn('Migration warning:', migrationError.message);
+      }
+    }
 
     console.log('Content schema initialized/verified');
   } catch (error) {
@@ -294,6 +308,10 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
       updatedAt: new Date(),
     };
 
+    // Track if content is changing (not just status)
+    const hasContentChanges = slug !== undefined || title !== undefined || description !== undefined ||
+      metaTitle !== undefined || metaDescription !== undefined || ogImage !== undefined;
+
     if (slug !== undefined) updates.slug = slug;
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
@@ -302,8 +320,29 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     if (metaDescription !== undefined) updates.metaDescription = metaDescription;
     if (ogImage !== undefined) updates.ogImage = ogImage;
 
-    // Create version snapshot before updating
-    await createPageVersion(client, pageId, user.id);
+    // Set hasUnpublishedChanges flag if content is changing
+    if (hasContentChanges) {
+      updates.hasUnpublishedChanges = true;
+    }
+
+    // Determine if we'll trigger git sync
+    const newStatus = status !== undefined ? status : existingPage[0].status;
+    const hadUnpublishedChanges = existingPage[0].hasUnpublishedChanges;
+    const shouldSyncToGit = newStatus === 'published' && (
+      (oldStatus !== 'published') || // First-time publish
+      (hadUnpublishedChanges || hasContentChanges) // Publishing changes
+    );
+
+    // If we're about to sync to git, clear the unpublished flag
+    if (shouldSyncToGit) {
+      updates.hasUnpublishedChanges = false;
+    }
+
+    // Only create version snapshot if content is actually changing
+    // Don't create a version for status changes or publishing
+    if (hasContentChanges) {
+      await createPageVersion(client, pageId, user.id);
+    }
 
     await client.update(pages).set(updates).where(eq(pages.id, pageId));
 
@@ -312,7 +351,6 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     console.log(`Page updated: ${pageId} in project ${projectId}`);
 
     // Log activity
-    const newStatus = updatedPage[0].status;
     if (oldStatus !== 'published' && newStatus === 'published') {
       // Log page published
       await logPageActivity('page_published', projectId, user.id, pageId, {
@@ -327,8 +365,7 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
       });
     }
 
-    // If page status changed to 'published', sync to GitHub
-    if (oldStatus !== 'published' && newStatus === 'published') {
+    if (shouldSyncToGit) {
       console.log(`Page status changed to published, syncing to GitHub...`);
 
       try {

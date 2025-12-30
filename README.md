@@ -48,6 +48,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Git sync for content changes (push to GitHub on publish)
 - [x] Activity feed integration
 - [x] Content versioning (snapshots on update, history, restore)
+- [ ] Draft/publish workflow (unpublished changes indicator, explicit publish)
 - [ ] Novel editor integration for markdown blocks and blog pages
 
 ### Phase 3: Deployment Automation 📋

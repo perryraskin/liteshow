@@ -23,12 +23,12 @@ interface Props {
 }
 
 export default function FaqBlockEditor({ initialContent, onSave, onCancel, isSaving = false }: Props) {
-  const [content, setContent] = useState<FaqBlockContent>(
-    initialContent || {
-      title: '',
-      faqs: [{ question: '', answer: '' }],
-    }
-  );
+  const [content, setContent] = useState<FaqBlockContent>({
+    title: initialContent?.title || '',
+    faqs: initialContent?.faqs && Array.isArray(initialContent.faqs) && initialContent.faqs.length > 0
+      ? initialContent.faqs
+      : [{ question: '', answer: '' }],
+  });
 
   const addFaq = () => {
     setContent({

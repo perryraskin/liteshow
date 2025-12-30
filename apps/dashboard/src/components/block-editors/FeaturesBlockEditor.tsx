@@ -24,12 +24,12 @@ interface Props {
 }
 
 export default function FeaturesBlockEditor({ initialContent, onSave, onCancel, isSaving = false }: Props) {
-  const [content, setContent] = useState<FeaturesBlockContent>(
-    initialContent || {
-      title: '',
-      features: [{ icon: '', title: '', description: '' }],
-    }
-  );
+  const [content, setContent] = useState<FeaturesBlockContent>({
+    title: initialContent?.title || '',
+    features: initialContent?.features && Array.isArray(initialContent.features) && initialContent.features.length > 0
+      ? initialContent.features
+      : [{ icon: '', title: '', description: '' }],
+  });
 
   const addFeature = () => {
     setContent({

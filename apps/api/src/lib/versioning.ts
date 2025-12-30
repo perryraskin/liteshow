@@ -17,6 +17,7 @@ interface PageSnapshot {
     title: string;
     description: string | null;
     status: string;
+    hasUnpublishedChanges: boolean;
     metaTitle: string | null;
     metaDescription: string | null;
     ogImage: string | null;
@@ -70,6 +71,7 @@ export async function createPageVersion(
         title: pageData[0].title,
         description: pageData[0].description,
         status: pageData[0].status,
+        hasUnpublishedChanges: pageData[0].hasUnpublishedChanges || false,
         metaTitle: pageData[0].metaTitle,
         metaDescription: pageData[0].metaDescription,
         ogImage: pageData[0].ogImage,
@@ -167,6 +169,7 @@ export async function restorePageVersion(
       title: snapshot.page.title,
       description: snapshot.page.description,
       status: snapshot.page.status,
+      hasUnpublishedChanges: snapshot.page.hasUnpublishedChanges || false,
       metaTitle: snapshot.page.metaTitle,
       metaDescription: snapshot.page.metaDescription,
       ogImage: snapshot.page.ogImage,

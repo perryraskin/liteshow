@@ -115,7 +115,7 @@ blocksRoutes.post('/:projectId/pages/:pageId/blocks', async (c) => {
       id: randomUUID(),
       pageId,
       type,
-      content: JSON.stringify(content),
+      content: content, // Drizzle handles JSON serialization with mode: 'json'
       order: blockOrder,
       createdAt: now,
       updatedAt: now,
@@ -124,6 +124,9 @@ blocksRoutes.post('/:projectId/pages/:pageId/blocks', async (c) => {
     await client.insert(blocks).values(newBlock);
 
     console.log(`Block created: ${newBlock.id} in page ${pageId}`);
+
+    // Mark page as having unpublished changes
+    await client.update(pages).set({ hasUnpublishedChanges: true }).where(eq(pages.id, pageId));
 
     // Create version snapshot after block creation
     await createPageVersion(client, pageId, user.id);
@@ -188,7 +191,7 @@ blocksRoutes.put('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
     };
 
     if (type !== undefined) updates.type = type;
-    if (content !== undefined) updates.content = JSON.stringify(content);
+    if (content !== undefined) updates.content = content; // Drizzle handles JSON serialization with mode: 'json'
     if (order !== undefined) updates.order = order;
 
     await client.update(blocks).set(updates).where(eq(blocks.id, blockId));
@@ -196,6 +199,9 @@ blocksRoutes.put('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
     const updatedBlock = await client.select().from(blocks).where(eq(blocks.id, blockId)).limit(1);
 
     console.log(`Block updated: ${blockId} in page ${pageId}`);
+
+    // Mark page as having unpublished changes
+    await client.update(pages).set({ hasUnpublishedChanges: true }).where(eq(pages.id, pageId));
 
     // Create version snapshot after block update
     await createPageVersion(client, pageId, user.id);
@@ -260,6 +266,9 @@ blocksRoutes.delete('/:projectId/pages/:pageId/blocks/:blockId', async (c) => {
     await client.delete(blocks).where(eq(blocks.id, blockId));
 
     console.log(`Block deleted: ${blockId} from page ${pageId}`);
+
+    // Mark page as having unpublished changes
+    await client.update(pages).set({ hasUnpublishedChanges: true }).where(eq(pages.id, pageId));
 
     // Create version snapshot after block deletion
     await createPageVersion(client, pageId, user.id);

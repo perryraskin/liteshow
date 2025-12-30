@@ -25,12 +25,12 @@ interface Props {
 }
 
 export default function TestimonialsBlockEditor({ initialContent, onSave, onCancel, isSaving = false }: Props) {
-  const [content, setContent] = useState<TestimonialsBlockContent>(
-    initialContent || {
-      title: '',
-      testimonials: [{ quote: '', author: '', role: '', avatarUrl: '' }],
-    }
-  );
+  const [content, setContent] = useState<TestimonialsBlockContent>({
+    title: initialContent?.title || '',
+    testimonials: initialContent?.testimonials && Array.isArray(initialContent.testimonials) && initialContent.testimonials.length > 0
+      ? initialContent.testimonials
+      : [{ quote: '', author: '', role: '', avatarUrl: '' }],
+  });
 
   const addTestimonial = () => {
     setContent({

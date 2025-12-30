@@ -46,6 +46,7 @@ async function initializeContentSchema(dbUrl: string, authToken: string) {
         title TEXT NOT NULL,
         description TEXT,
         status TEXT NOT NULL DEFAULT 'draft',
+        has_unpublished_changes INTEGER NOT NULL DEFAULT 0,
         meta_title TEXT,
         meta_description TEXT,
         og_image TEXT,
@@ -80,6 +81,19 @@ async function initializeContentSchema(dbUrl: string, authToken: string) {
         FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
       )
     `);
+
+    // Migration: Add hasUnpublishedChanges column to existing tables
+    try {
+      await tursoClient.execute(`
+        ALTER TABLE pages ADD COLUMN has_unpublished_changes INTEGER NOT NULL DEFAULT 0
+      `);
+      console.log('Added hasUnpublishedChanges column to pages table');
+    } catch (migrationError: any) {
+      // Column might already exist, which is fine
+      if (!migrationError.message?.includes('duplicate column name')) {
+        console.warn('Migration warning:', migrationError.message);
+      }
+    }
 
     console.log('Content schema initialized successfully');
   } catch (error) {

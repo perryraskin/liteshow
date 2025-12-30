@@ -19,10 +19,14 @@ interface Version {
 interface VersionHistoryProps {
   projectId: string;
   pageId: string;
+  currentPageStatus?: {
+    status: string;
+    hasUnpublishedChanges: boolean;
+  };
   onRestore?: () => void;
 }
 
-export function VersionHistory({ projectId, pageId, onRestore }: VersionHistoryProps) {
+export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore }: VersionHistoryProps) {
   const [versions, setVersions] = useState<Version[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -112,12 +116,14 @@ export function VersionHistory({ projectId, pageId, onRestore }: VersionHistoryP
         title: data.page?.title || 'Untitled',
         blockCount: data.blocks?.length || 0,
         status: data.page?.status || 'unknown',
+        hasUnpublishedChanges: data.page?.hasUnpublishedChanges || false,
       };
     } catch {
       return {
         title: 'Unknown',
         blockCount: 0,
         status: 'unknown',
+        hasUnpublishedChanges: false,
       };
     }
   };
@@ -177,6 +183,12 @@ export function VersionHistory({ projectId, pageId, onRestore }: VersionHistoryP
                 const preview = getSnapshotPreview(version.snapshot);
                 const isCurrent = index === 0;
 
+                // For current version, use live page status; for historical, use snapshot
+                const displayStatus = isCurrent && currentPageStatus ? currentPageStatus.status : preview.status;
+                const displayHasUnpublishedChanges = isCurrent && currentPageStatus
+                  ? currentPageStatus.hasUnpublishedChanges
+                  : preview.hasUnpublishedChanges;
+
                 return (
                   <div
                     key={version.id}
@@ -190,9 +202,21 @@ export function VersionHistory({ projectId, pageId, onRestore }: VersionHistoryP
                             Current
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
-                          {preview.status}
-                        </Badge>
+                        {isCurrent && !displayHasUnpublishedChanges && (
+                          <Badge variant="outline" className="text-xs">
+                            {displayStatus}
+                          </Badge>
+                        )}
+                        {isCurrent && displayHasUnpublishedChanges && (
+                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                            Unpublished Changes
+                          </Badge>
+                        )}
+                        {!isCurrent && displayHasUnpublishedChanges && (
+                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                            Had Draft Changes
+                          </Badge>
+                        )}
                       </div>
 
                       <p className="text-sm text-muted-foreground mb-2">
