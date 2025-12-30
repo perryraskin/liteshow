@@ -71,13 +71,14 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Cleaned up outdated documentation files
 - [x] Verified all builds and deployments working
 
-### Phase 3.2: Deployment Status & Monitoring 📋
-- [ ] Add deployment URL field to projects
-- [ ] Display deployment status in dashboard (Not Deployed / Live / Unreachable)
-- [ ] Optional: Webhook support for Netlify/Vercel deploy notifications
-- [ ] Health check ping to verify site is live
-- [ ] Show last deployment time and status
+### Phase 3.2: GitHub App Integration & Deployment Monitoring 📋
+- [ ] Create LiteShow GitHub App with deployment permissions
+- [ ] User installs GitHub App to grant deployment access
+- [ ] Monitor GitHub Deployments API for all platforms (Netlify, Vercel, Cloudflare Pages)
+- [ ] Display deployment status in dashboard (Building / Success / Failed / Not Deployed)
+- [ ] Show deployment history with timestamps and commit SHAs
 - [ ] Quick link to deployed site from dashboard
+- [ ] Support for multiple deployments (preview/production)
 
 ### Phase 3.5: Advanced Deployment Options 📋
 - [ ] Self-hosting mode (direct Turso connection for users who want full control)
