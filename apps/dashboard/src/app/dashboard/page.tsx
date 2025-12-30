@@ -2,9 +2,23 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Plus } from 'lucide-react';
+
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  isPublished: boolean;
+  createdAt: string;
+}
 
 function DashboardContent() {
   const [session, setSession] = useState<any>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,9 +53,23 @@ function DashboardContent() {
       .then((data) => {
         if (data.user) {
           setSession(data);
+          // Fetch projects
+          return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`, {
+            headers: {
+              'Authorization': `Bearer ${storedToken}`,
+            },
+          });
         } else {
           localStorage.removeItem('session_token');
           router.push('/login');
+        }
+      })
+      .then((res) => {
+        if (res) return res.json();
+      })
+      .then((projectsData) => {
+        if (projectsData) {
+          setProjects(projectsData);
         }
       })
       .catch(() => {
@@ -73,47 +101,79 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold">LiteShow</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 {session.user.email}
               </span>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
+              <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Welcome back! Your projects will appear here.
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Projects</h2>
+            <p className="text-muted-foreground">
+              Manage your LiteShow sites
+            </p>
+          </div>
+          <Button onClick={() => router.push('/dashboard/projects/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Project
+          </Button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            No projects yet. Create your first project to get started!
-          </p>
-          <button
-            onClick={() => router.push('/dashboard/projects/new')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Create Project
-          </button>
-        </div>
+        {projects.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <CardDescription className="mb-4 text-center">
+                No projects yet. Create your first project to get started!
+              </CardDescription>
+              <Button onClick={() => router.push('/dashboard/projects/new')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Project
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <Card
+                key={project.id}
+                className="cursor-pointer hover:border-primary transition-colors"
+                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-xl">{project.name}</CardTitle>
+                    <Badge variant={project.isPublished ? "default" : "secondary"}>
+                      {project.isPublished ? 'Published' : 'Draft'}
+                    </Badge>
+                  </div>
+                  {project.description && (
+                    <CardDescription>{project.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    /{project.slug}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

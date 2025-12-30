@@ -12,6 +12,8 @@ import { logger } from 'hono/logger';
 import 'dotenv/config';
 
 import projectRoutes from './routes/projects';
+import pagesRoutes from './routes/pages';
+import blocksRoutes from './routes/blocks';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/github-auth';
 import { errorHandler } from './middleware/error';
@@ -31,6 +33,8 @@ app.use(
 // Routes
 app.route('/api/auth', authRoutes);
 app.route('/api/projects', projectRoutes);
+app.route('/api', pagesRoutes);
+app.route('/api', blocksRoutes);
 app.route('/api/health', healthRoutes);
 
 // Error handler (must be last)

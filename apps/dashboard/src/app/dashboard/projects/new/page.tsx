@@ -2,6 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -54,110 +60,100 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <button
-                onClick={() => router.back()}
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                ← Back
-              </button>
+              <Button variant="ghost" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
             </div>
           </div>
         </div>
       </nav>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create New Project</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Set up a new website with its own content database and GitHub repository.
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Project</CardTitle>
+            <CardDescription>
+              Set up a new website with its own content database and GitHub repository.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-destructive/15 border border-destructive/50 rounded-lg p-4">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-6">
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-            </div>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="name">Project Name *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={handleNameChange}
+                  placeholder="My Awesome Site"
+                  required
+                />
+              </div>
 
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              required
-              value={formData.name}
-              onChange={handleNameChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="My Awesome Site"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug">Project Slug *</Label>
+                <Input
+                  id="slug"
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="my-awesome-site"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used for GitHub repository and database names
+                </p>
+              </div>
 
-          <div>
-            <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project Slug *
-            </label>
-            <input
-              type="text"
-              id="slug"
-              required
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="my-awesome-site"
-            />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Used for GitHub repository and database names
-            </p>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  placeholder="A brief description of your project"
+                />
+              </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description (optional)
-            </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="A brief description of your project"
-            />
-          </div>
+              <div className="flex gap-4">
+                <Button type="submit" disabled={isSubmitting} className="flex-1">
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSubmitting ? 'Creating...' : 'Create Project'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
 
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Project'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-
-          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-            <p className="font-medium">This will:</p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Create a new Turso database for your content</li>
-              <li>Create a GitHub repository in your account</li>
-              <li>Set up the initial project structure</li>
-            </ul>
-          </div>
-        </form>
+              <div className="text-sm text-muted-foreground space-y-2 pt-4">
+                <p className="font-medium">This will:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Create a new Turso database for your content</li>
+                  <li>Create a GitHub repository in your account</li>
+                  <li>Set up the initial project structure</li>
+                </ul>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
