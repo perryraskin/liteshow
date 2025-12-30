@@ -975,6 +975,13 @@ const { title, faqs } = content;
 [build.environment]
   NODE_VERSION = "20"
 
+# Redirect root to home page
+[[redirects]]
+  from = "/"
+  to = "/home"
+  status = 302
+
+# Catch-all 404
 [[redirects]]
   from = "/*"
   to = "/404"
