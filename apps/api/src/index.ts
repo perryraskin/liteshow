@@ -31,22 +31,23 @@ app.use(
   })
 );
 
-// Routes
-app.route('/api/auth', authRoutes);
-app.route('/api/public', publicContentRoutes);
-app.route('/api/projects', projectRoutes);
-app.route('/api/projects', pagesRoutes);
-app.route('/api/projects', blocksRoutes);
-app.route('/api/health', healthRoutes);
+// Routes - no /api prefix since entire domain is the API
+app.route('/auth', authRoutes);
+app.route('/public', publicContentRoutes);
+app.route('/projects', projectRoutes);
+app.route('/projects', pagesRoutes);
+app.route('/projects', blocksRoutes);
+app.route('/health', healthRoutes);
 
 // Error handler (must be last)
 app.onError(errorHandler);
 
-const port = parseInt(process.env.API_PORT || '8000');
+const port = parseInt(process.env.API_PORT || process.env.PORT || '8080');
 
 console.log(`🚀 LiteShow API server starting on port ${port}`);
 
 serve({
   fetch: app.fetch,
   port,
+  hostname: '0.0.0.0',
 });
