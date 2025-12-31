@@ -11,6 +11,7 @@ import { eq, desc } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
+import { syncTemplateToRepo } from '../lib/template-sync';
 
 const projectRoutes = new Hono();
 
@@ -1526,6 +1527,59 @@ projectRoutes.post('/:id/link-github', async (c) => {
   } catch (error: any) {
     console.error('Link GitHub error:', error);
     return c.json({ error: error.message || 'Failed to link GitHub repository' }, 500);
+  }
+});
+
+// POST /api/projects/:id/sync-template - Create PR with template updates
+projectRoutes.post('/:id/sync-template', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+
+    // Get project and verify ownership
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    if (!project.githubRepoUrl) {
+      return c.json({ error: 'GitHub repository not connected. Setup GitHub first.' }, 403);
+    }
+
+    // Sync template to repository
+    const result = await syncTemplateToRepo(projectId, user.id);
+
+    if (result.existingPrUrl) {
+      return c.json(
+        {
+          error: 'Sync PR already exists',
+          prUrl: result.existingPrUrl,
+        },
+        409
+      );
+    }
+
+    return c.json({
+      success: true,
+      prUrl: result.prUrl,
+      branchName: result.branchName,
+      filesChanged: result.filesChanged,
+    });
+  } catch (error: any) {
+    console.error('Template sync error:', error);
+    return c.json({ error: error.message || 'Failed to sync template' }, 500);
   }
 });
 
