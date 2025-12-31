@@ -418,7 +418,7 @@ export interface PageWithBlocks extends Page {
  */
 export async function getAllPages(): Promise<Page[]> {
   try {
-    const response = await fetch(\`\${API_URL}/api/public/sites/\${PROJECT_SLUG}/pages\`);
+    const response = await fetch(\`\${API_URL}/public/sites/\${PROJECT_SLUG}/pages\`);
 
     if (!response.ok) {
       console.error(\`Failed to fetch pages: \${response.status} \${response.statusText}\`);
@@ -437,7 +437,7 @@ export async function getAllPages(): Promise<Page[]> {
  */
 export async function getPageBySlug(slug: string): Promise<PageWithBlocks | null> {
   try {
-    const response = await fetch(\`\${API_URL}/api/public/sites/\${PROJECT_SLUG}/pages/\${slug}\`);
+    const response = await fetch(\`\${API_URL}/public/sites/\${PROJECT_SLUG}/pages/\${slug}\`);
 
     if (!response.ok) {
       if (response.status === 404) {

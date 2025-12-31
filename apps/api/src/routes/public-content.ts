@@ -15,10 +15,11 @@ import { pages, blocks } from '@liteshow/db/src/content-schema';
 
 const publicContentRoutes = new Hono();
 
-// GET /api/public/sites/:slug/pages - Get all published pages for a project
+// GET /public/sites/:slug/pages - Get all published pages for a project
 publicContentRoutes.get('/sites/:slug/pages', async (c) => {
   try {
     const projectSlug = c.req.param('slug');
+    console.log(`[public-content] Looking for project with slug: ${projectSlug}`);
 
     // Find project by slug
     const project = await db.query.projects.findFirst({
@@ -26,8 +27,11 @@ publicContentRoutes.get('/sites/:slug/pages', async (c) => {
     });
 
     if (!project) {
+      console.log(`[public-content] Project not found for slug: ${projectSlug}`);
       return c.json({ error: 'Project not found' }, 404);
     }
+
+    console.log(`[public-content] Found project: ${project.id} (${project.name})`);
 
     // Connect to project's Turso database
     const tursoClient = createClient({
@@ -50,11 +54,12 @@ publicContentRoutes.get('/sites/:slug/pages', async (c) => {
   }
 });
 
-// GET /api/public/sites/:slug/pages/:pageSlug - Get a specific page with its blocks
+// GET /public/sites/:slug/pages/:pageSlug - Get a specific page with its blocks
 publicContentRoutes.get('/sites/:slug/pages/:pageSlug', async (c) => {
   try {
     const projectSlug = c.req.param('slug');
     const pageSlug = c.req.param('pageSlug');
+    console.log(`[public-content] Looking for project: ${projectSlug}, page: ${pageSlug}`);
 
     // Find project by slug
     const project = await db.query.projects.findFirst({
@@ -62,8 +67,11 @@ publicContentRoutes.get('/sites/:slug/pages/:pageSlug', async (c) => {
     });
 
     if (!project) {
+      console.log(`[public-content] Project not found for slug: ${projectSlug}`);
       return c.json({ error: 'Project not found' }, 404);
     }
+
+    console.log(`[public-content] Found project: ${project.id} (${project.name})`);
 
     // Connect to project's Turso database
     const tursoClient = createClient({
