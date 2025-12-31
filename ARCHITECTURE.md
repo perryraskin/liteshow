@@ -2,7 +2,7 @@
 
 Living architecture documentation for the LiteShow monorepo. This diagram is updated as features are implemented.
 
-**Last Updated**: 2025-12-30 - Progressive GitHub Permissions
+**Last Updated**: 2025-12-31 - GitHub App Integration Complete
 
 ## System Overview
 
@@ -137,10 +137,11 @@ erDiagram
         string github_id
         string github_username
         string github_access_token
-        boolean has_public_repo_scope "NEW"
-        boolean has_private_repo_scope "NEW"
-        timestamp scopes_granted_at "NEW"
+        boolean has_public_repo_scope
+        boolean has_private_repo_scope
+        timestamp scopes_granted_at
         timestamp created_at
+        timestamp updated_at
     }
 
     PROJECTS {
@@ -149,12 +150,14 @@ erDiagram
         string slug UK
         string turso_db_url
         string turso_db_token
-        string github_repo_url
-        string github_auth_type "NEW: oauth|github_app"
-        string github_installation_id "NEW"
-        string github_repo_id "NEW"
+        string github_repo_name "nullable"
+        string github_repo_url "nullable"
+        string github_auth_type "oauth|github_app"
+        string github_installation_id
+        string github_repo_id
         boolean is_published
         timestamp created_at
+        timestamp updated_at
     }
 
     ACTIVITY_LOGS {
@@ -188,6 +191,7 @@ graph LR
         P1["/projects<br/>List/Create"]
         P2["/projects/:id<br/>Get/Delete"]
         P3["/projects/:id/activity<br/>Activity Logs"]
+        P4["/projects/:id/link-github<br/>Link GitHub Repository"]
     end
 
     subgraph "Content Management"
@@ -289,6 +293,11 @@ graph TB
     LocalAPI --> TursoCloud
 ```
 
+**Current Deployment Status:**
+- ✅ **API**: Deployed to Fly.io at `api.liteshow.io`
+- ✅ **Dashboard**: Deployed to Vercel at `liteshow-dashboard.vercel.app`
+- ✅ **Development**: Active Cloudflare Tunnel at `devpi-*.shmob.xyz`
+
 ## Key Features Implemented
 
 ### ✅ Phase 1: Core Infrastructure
@@ -303,7 +312,7 @@ graph TB
 - Git sync to GitHub repositories
 - Activity logging
 
-### 🚧 Phase 3: Progressive GitHub Permissions (Current)
+### ✅ Phase 3: GitHub App Integration (Complete)
 - ✅ Minimal initial OAuth scope (`user:email`)
 - ✅ Progressive scope requests (`public_repo`, `repo`)
 - ✅ GitHub App integration (JWT, installation tokens)
@@ -311,10 +320,12 @@ graph TB
 - ✅ Database schema for permission tracking
 - ✅ Backend API routes
 - ✅ Integration tests (23 passing)
-- ⏳ Frontend project creation wizard
-- ⏳ End-to-end testing
+- ✅ Frontend GitHub setup wizard (OAuth vs GitHub App choice)
+- ✅ Repository selection UI for GitHub App
+- ✅ GitHub App callback and installation flow
+- ✅ Environment-based GitHub App configuration
 
-### 📋 Phase 4: Deployment Automation (Next)
+### 📋 Phase 4: Deployment Monitoring (Next)
 - Repository webhook setup
 - Netlify/Vercel deployment triggers
 - Build status tracking

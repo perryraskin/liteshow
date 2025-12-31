@@ -8,7 +8,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 3.2 Complete ✅ | API Deployed to Production 🚀
+**Current Status**: Phase 3.3 Complete ✅ | GitHub App Integration Fully Functional 🚀
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -81,9 +81,18 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Multi-stage Docker build with tsx runtime
 - [x] Environment variables secured in Fly.io secrets
 
-### Phase 3.3: GitHub App Integration & Deployment Monitoring 📋
-- [ ] Create LiteShow GitHub App with deployment permissions
-- [ ] User installs GitHub App to grant deployment access
+### Phase 3.3: GitHub App Integration ✅
+- [x] Create LiteShow GitHub App with repository permissions
+- [x] User installs GitHub App to grant fine-grained repository access
+- [x] GitHub App callback and installation flow
+- [x] Repository selection UI (list all accessible repos)
+- [x] Link existing repositories to projects via GitHub App
+- [x] Store GitHub App installation tokens and metadata
+- [x] Support both OAuth (create-now) and GitHub App (link-existing) strategies
+- [x] Progressive permission flow with minimal initial scope
+- [x] Environment variable based GitHub App configuration
+
+### Phase 3.4: Deployment Monitoring 📋
 - [ ] Monitor GitHub Deployments API for all platforms (Netlify, Vercel, Cloudflare Pages)
 - [ ] Display deployment status in dashboard (Building / Success / Failed / Not Deployed)
 - [ ] Show deployment history with timestamps and commit SHAs
@@ -154,10 +163,10 @@ This is a monorepo containing:
   - Health monitoring and auto-scaling
   - Environment variables managed via Fly.io secrets
 
-- **Dashboard**: Ready for Vercel deployment at `app.liteshow.io`
-  - All API calls updated to work without `/api` prefix
-  - Vercel configuration and deployment guide included
-  - See `apps/dashboard/VERCEL_DEPLOYMENT.md` for setup instructions
+- **Dashboard**: Deployed to Vercel at `liteshow-dashboard.vercel.app`
+  - Production deployments active and running
+  - All API calls integrated with production API
+  - Auto-deploys from main branch via GitHub integration
 
 - **User Sites**: Auto-generated Astro sites deployed to user's choice of:
   - Netlify (recommended)
