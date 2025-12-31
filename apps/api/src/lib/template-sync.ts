@@ -1120,6 +1120,12 @@ export async function syncTemplateToRepo(
 
   // Get repo full name (owner/repo)
   const repoFullName = project.githubRepoName;
+  console.log('Syncing template for repo:', {
+    projectId,
+    repoFullName,
+    githubAuthType: project.githubAuthType,
+    hasToken: !!token,
+  });
 
   // Check if sync PR already exists
   const existingPrUrl = await checkExistingSyncPR(repoFullName, token);
@@ -1160,7 +1166,14 @@ export async function syncTemplateToRepo(
   );
 
   if (!repoResponse.ok) {
-    throw new Error('Failed to fetch repository info');
+    const errorBody = await repoResponse.text();
+    console.error('GitHub API error fetching repo info:', {
+      status: repoResponse.status,
+      statusText: repoResponse.statusText,
+      repoFullName,
+      body: errorBody,
+    });
+    throw new Error(`Failed to fetch repository info: ${repoResponse.status} ${repoResponse.statusText} - ${errorBody}`);
   }
 
   const repoData: any = await repoResponse.json();
