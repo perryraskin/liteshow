@@ -155,11 +155,13 @@ LITESHOW_API_URL=https://api.liteshow.io
   files.push({
     path: 'netlify.toml',
     content: `[build]
-  command = "pnpm install && pnpm build"
+  command = "corepack enable && pnpm install && pnpm build"
   publish = "dist"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF"
 
 [build.environment]
   NODE_VERSION = "20"
+  NPM_FLAGS = "--version"
 `,
   });
 
