@@ -17,63 +17,59 @@ const allPages = await getAllPages();
 
 // Try to find a page with slug 'home'
 const homePageData = allPages.find(p => p.slug === 'home');
+let homePage = null;
 
-// If home page exists, fetch its full content and render it
+// If home page exists, fetch its full content
 if (homePageData) {
-  const homePage = await getPageBySlug('home');
-
-  if (homePage) {
-    const blockComponents: Record<string, any> = {
-      hero: HeroBlock,
-      features: FeaturesBlock,
-      testimonials: TestimonialsBlock,
-      markdown: MarkdownBlock,
-      cta: CtaBlock,
-      faq: FaqBlock,
-    };
----
-
-<BaseLayout
-  title={homePage.title}
-  description={homePage.metaDescription || homePage.description || undefined}
-  ogImage={homePage.ogImage || undefined}
-  siteSettings={siteSettings}
->
-  <main>
-    {homePage.blocks.map((block: any) => {
-      const Component = blockComponents[block.type];
-      if (!Component) {
-        console.warn(`Unknown block type: ${block.type}`);
-        return null;
-      }
-      return <Component content={block.content} />;
-    })}
-  </main>
-</BaseLayout>
-
----
-  }
+  homePage = await getPageBySlug('home');
 }
 
-// If no home page, show a placeholder
+const blockComponents: Record<string, any> = {
+  hero: HeroBlock,
+  features: FeaturesBlock,
+  testimonials: TestimonialsBlock,
+  markdown: MarkdownBlock,
+  cta: CtaBlock,
+  faq: FaqBlock,
+};
 ---
 
-<BaseLayout
-  title="Welcome"
-  description="Welcome to your site"
-  siteSettings={siteSettings}
->
-  <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-    <div class="text-center p-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        Welcome to Your Site
-      </h1>
-      <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
-        No pages have been published yet. Create and publish pages in your LiteShow dashboard to get started.
-      </p>
-      <div class="text-sm text-gray-500 dark:text-gray-400">
-        Built with <span class="font-semibold">LiteShow</span> - AI-first, Git-powered CMS
+{homePage ? (
+  <BaseLayout
+    title={homePage.title}
+    description={homePage.metaDescription || homePage.description || undefined}
+    ogImage={homePage.ogImage || undefined}
+    siteSettings={siteSettings}
+  >
+    <main>
+      {homePage.blocks.map((block: any) => {
+        const Component = blockComponents[block.type];
+        if (!Component) {
+          console.warn(`Unknown block type: ${block.type}`);
+          return null;
+        }
+        return <Component content={block.content} />;
+      })}
+    </main>
+  </BaseLayout>
+) : (
+  <BaseLayout
+    title="Welcome"
+    description="Welcome to your site"
+    siteSettings={siteSettings}
+  >
+    <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div class="text-center p-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          Welcome to Your Site
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+          No pages have been published yet. Create and publish pages in your LiteShow dashboard to get started.
+        </p>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Built with <span class="font-semibold">LiteShow</span> - AI-first, Git-powered CMS
+        </div>
       </div>
-    </div>
-  </main>
-</BaseLayout>
+    </main>
+  </BaseLayout>
+)}
