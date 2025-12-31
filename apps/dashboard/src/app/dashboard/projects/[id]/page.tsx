@@ -191,15 +191,32 @@ export default function ProjectPage() {
               <CardTitle>Resources</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <a
-                href={project.githubRepoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-primary hover:underline"
-              >
-                <Github className="h-4 w-4" />
-                View GitHub Repository
-              </a>
+              {project.githubRepoUrl ? (
+                <a
+                  href={project.githubRepoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <Github className="h-4 w-4" />
+                  View GitHub Repository
+                </a>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Github className="h-4 w-4" />
+                    <span>No GitHub repository connected</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/dashboard/projects/${project.id}/setup-github`)}
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    Setup GitHub
+                  </Button>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Database className="h-4 w-4" />
                 Turso Database: {project.tursoDbUrl}
@@ -232,92 +249,94 @@ export default function ProjectPage() {
           </CardContent>
         </Card>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Rocket className="h-5 w-5" />
-              <CardTitle>Deployment</CardTitle>
-            </div>
-            <CardDescription>
-              Deploy your site to your preferred hosting platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <p className="text-sm font-medium mb-3">Quick Deploy</p>
-              <p className="text-sm text-muted-foreground mb-3">
-                Click a button below to deploy your site. After connecting once, any content you publish will automatically trigger a rebuild.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}&LITESHOW_API_URL=https://api.liteshow.io`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="outline" size="sm">
-                    <ExternalLink className="mr-2 h-3 w-3" />
-                    Deploy to Netlify
-                  </Button>
-                </a>
-                <a
-                  href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="outline" size="sm">
-                    <ExternalLink className="mr-2 h-3 w-3" />
-                    Deploy to Vercel
-                  </Button>
-                </a>
+        {project.githubRepoUrl && (
+          <Card className="mb-8">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Rocket className="h-5 w-5" />
+                <CardTitle>Deployment</CardTitle>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                <strong>Netlify:</strong> Both environment variables auto-filled! Just click and deploy.<br />
-                <strong>Vercel:</strong> Prompted to enter environment variables during setup (shown below).
-              </p>
-            </div>
-
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-2">Environment Variables</p>
-              <p className="text-xs text-muted-foreground mb-3">
-                Add these to your hosting platform's environment settings:
-              </p>
-              <div className="bg-muted p-3 rounded-md">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs font-mono break-all space-y-1">
-                    <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
-                    <div>LITESHOW_API_URL=https://api.liteshow.io</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
-                      toast.success('Environment variables copied to clipboard');
-                    }}
+              <CardDescription>
+                Deploy your site to your preferred hosting platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <p className="text-sm font-medium mb-3">Quick Deploy</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Click a button below to deploy your site. After connecting once, any content you publish will automatically trigger a rebuild.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}&LITESHOW_API_URL=https://api.liteshow.io`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+                    <Button variant="outline" size="sm">
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Deploy to Netlify
+                    </Button>
+                  </a>
+                  <a
+                    href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" size="sm">
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Deploy to Vercel
+                    </Button>
+                  </a>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  <strong>Netlify:</strong> Both environment variables auto-filled! Just click and deploy.<br />
+                  <strong>Vercel:</strong> Prompted to enter environment variables during setup (shown below).
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Your site will fetch content from the LiteShow API at build time. No database credentials needed.
-              </p>
-            </div>
 
-            <div className="border-t pt-4">
-              <a
-                href={project.githubRepoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-              >
-                View full deployment instructions on GitHub
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2">Environment Variables</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Add these to your hosting platform's environment settings:
+                </p>
+                <div className="bg-muted p-3 rounded-md">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-mono break-all space-y-1">
+                      <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
+                      <div>LITESHOW_API_URL=https://api.liteshow.io</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
+                        toast.success('Environment variables copied to clipboard');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your site will fetch content from the LiteShow API at build time. No database credentials needed.
+                </p>
+              </div>
+
+              <div className="border-t pt-4">
+                <a
+                  href={project.githubRepoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  View full deployment instructions on GitHub
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">

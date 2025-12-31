@@ -81,9 +81,9 @@ export const projects = pgTable('projects', {
   tursoDbUrl: text('turso_db_url').notNull(),
   tursoDbToken: text('turso_db_token').notNull(),
 
-  // GitHub repository details
-  githubRepoName: text('github_repo_name').notNull(),
-  githubRepoUrl: text('github_repo_url').notNull(),
+  // GitHub repository details (nullable for link-later strategy)
+  githubRepoName: text('github_repo_name'),
+  githubRepoUrl: text('github_repo_url'),
   githubAuthType: text('github_auth_type'), // 'oauth' or 'github_app'
   githubInstallationId: text('github_installation_id'), // For GitHub App installations
   githubRepoId: text('github_repo_id'), // GitHub repository ID

@@ -180,7 +180,7 @@ async function createTursoDatabase(slug: string) {
 }
 
 // Helper: Create GitHub repository
-async function createGitHubRepository(slug: string, description: string, accessToken: string) {
+async function createGitHubRepository(slug: string, description: string, accessToken: string, isPrivate: boolean = false) {
   try {
     const response = await fetch('https://api.github.com/user/repos', {
       method: 'POST',
@@ -192,7 +192,7 @@ async function createGitHubRepository(slug: string, description: string, accessT
       body: JSON.stringify({
         name: `liteshow-${slug}`,
         description: description || 'LiteShow content repository',
-        private: false,
+        private: isPrivate,
         auto_init: false,
       }),
     });
@@ -1067,7 +1067,7 @@ projectRoutes.post('/', async (c) => {
     }
 
     const body = await c.req.json();
-    const { name, slug, description, githubAuthType, githubInstallationId, githubRepoId, isPrivate } = body;
+    const { name, slug, description, githubStrategy, repoVisibility, githubInstallationId, githubRepoId } = body;
 
     if (!name || !slug) {
       return c.json({ error: 'Name and slug are required' }, 400);
@@ -1087,10 +1087,18 @@ projectRoutes.post('/', async (c) => {
       return c.json({ error: 'A project with this slug already exists' }, 409);
     }
 
-    // Validate GitHub auth configuration
-    const authType = githubAuthType || 'oauth';
-    if (authType === 'oauth') {
+    // Determine GitHub auth strategy
+    const strategy = githubStrategy || 'link-later';
+    let authType: string | null = null;
+    let shouldCreateGitHubRepo = false;
+
+    if (strategy === 'create-now') {
+      // OAuth: LiteShow creates the repo
+      authType = 'oauth';
+      shouldCreateGitHubRepo = true;
+
       // Check if user has the required scope
+      const isPrivate = repoVisibility === 'private';
       const requiredScope = isPrivate ? 'hasPrivateRepoScope' : 'hasPublicRepoScope';
       if (!user[requiredScope]) {
         return c.json({
@@ -1099,15 +1107,22 @@ projectRoutes.post('/', async (c) => {
           requiredScope: isPrivate ? 'repo' : 'public_repo'
         }, 403);
       }
-    } else if (authType === 'github_app') {
+    } else if (strategy === 'link-later') {
+      // No GitHub setup yet - will be linked after project creation
+      authType = null;
+      shouldCreateGitHubRepo = false;
+    } else if (strategy === 'github-app') {
+      // GitHub App: User links existing repo
+      authType = 'github_app';
+      shouldCreateGitHubRepo = false;
       if (!githubInstallationId || !githubRepoId) {
         return c.json({ error: 'GitHub App installation ID and repository ID are required' }, 400);
       }
     } else {
-      return c.json({ error: 'Invalid githubAuthType. Must be "oauth" or "github_app"' }, 400);
+      return c.json({ error: 'Invalid githubStrategy. Must be "create-now", "link-later", or "github-app"' }, 400);
     }
 
-    console.log(`Creating project "${name}" (${slug}) for user ${user.id} with ${authType} auth`);
+    console.log(`Creating project "${name}" (${slug}) for user ${user.id} with strategy: ${strategy}`);
 
     // Step 1: Create Turso database
     console.log('Creating Turso database...');
@@ -1117,20 +1132,21 @@ projectRoutes.post('/', async (c) => {
     console.log('Initializing content schema...');
     await initializeContentSchema(tursoDb.url, tursoDb.token);
 
-    // Step 2: Create or link GitHub repository
-    let githubRepo;
-    if (authType === 'oauth') {
-      // LiteShow creates the repository
+    // Step 2: Create or link GitHub repository (if applicable)
+    let githubRepo: { name: string; url: string } | null = null;
+
+    if (shouldCreateGitHubRepo) {
+      // LiteShow creates the repository via OAuth
       console.log('Creating GitHub repository...');
-      githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!);
+      const isPrivate = repoVisibility === 'private';
+      githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!, isPrivate);
 
       // Create deployment configuration files
       console.log('Creating deployment configuration files...');
       const repoFullName = githubRepo.url.replace('https://github.com/', '');
       await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
-    } else {
+    } else if (authType === 'github_app') {
       // GitHub App - repository already exists and is selected by user
-      // We need to fetch the repository details to get the URL
       console.log('Linking to existing GitHub repository...');
       // The githubRepoId format is "owner/repo"
       githubRepo = {
@@ -1140,6 +1156,9 @@ projectRoutes.post('/', async (c) => {
 
       // Note: We could create deployment files here too using the GitHub App token,
       // but for now we'll let users do that manually since they own the repo
+    } else {
+      // link-later strategy - no GitHub repo yet
+      console.log('Skipping GitHub repository setup (will be linked later)');
     }
 
     // Step 3: Store project in PostgreSQL
@@ -1151,8 +1170,8 @@ projectRoutes.post('/', async (c) => {
       description: description || null,
       tursoDbUrl: tursoDb.url,
       tursoDbToken: tursoDb.token,
-      githubRepoName: githubRepo.name,
-      githubRepoUrl: githubRepo.url,
+      githubRepoName: githubRepo?.name || null,
+      githubRepoUrl: githubRepo?.url || null,
       githubAuthType: authType,
       githubInstallationId: githubInstallationId || null,
       githubRepoId: githubRepoId || null,
@@ -1283,6 +1302,117 @@ projectRoutes.get('/:id/activity', async (c) => {
   } catch (error) {
     console.error('Get activity logs error:', error);
     return c.json({ error: 'Failed to get activity logs' }, 500);
+  }
+});
+
+// POST /api/projects/:id/link-github - Link GitHub repository to existing project
+projectRoutes.post('/:id/link-github', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+    const body = await c.req.json();
+    const { strategy, repoVisibility } = body;
+
+    // Get the project
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    // Check if project already has a GitHub repo
+    if (project.githubRepoUrl) {
+      return c.json({ error: 'Project already has a GitHub repository linked' }, 400);
+    }
+
+    console.log(`Linking GitHub to project ${projectId} with strategy: ${strategy}`);
+
+    if (strategy === 'create-now') {
+      // Check if user has the required scope
+      const isPrivate = repoVisibility === 'private';
+      const requiredScope = isPrivate ? 'hasPrivateRepoScope' : 'hasPublicRepoScope';
+      if (!user[requiredScope]) {
+        return c.json({
+          error: `User does not have ${isPrivate ? 'private' : 'public'} repo access. Please authorize repository access first.`,
+          requiresAuth: true,
+          requiredScope: isPrivate ? 'repo' : 'public_repo'
+        }, 403);
+      }
+
+      // Create GitHub repository
+      console.log('Creating GitHub repository...');
+      const githubRepo = await createGitHubRepository(project.slug, project.description || '', user.githubAccessToken!, isPrivate);
+
+      // Create deployment files
+      console.log('Creating deployment files...');
+      const repoFullName = githubRepo.url.replace('https://github.com/', '');
+      await createDeploymentFiles(repoFullName, project.name, project.slug, project.tursoDbUrl, user.githubAccessToken!);
+
+      // Update project with GitHub info
+      await db.update(projects)
+        .set({
+          githubRepoName: githubRepo.name,
+          githubRepoUrl: githubRepo.url,
+          githubAuthType: 'oauth',
+          updatedAt: new Date(),
+        })
+        .where(eq(projects.id, projectId));
+
+      console.log('GitHub repository linked successfully');
+
+      return c.json({
+        success: true,
+        githubRepoUrl: githubRepo.url,
+      });
+    } else if (strategy === 'github-app') {
+      // GitHub App - link existing repository
+      const { githubInstallationId, githubRepoId } = body;
+
+      if (!githubInstallationId || !githubRepoId) {
+        return c.json({ error: 'GitHub installation ID and repository ID are required' }, 400);
+      }
+
+      console.log(`Linking GitHub App repository: ${githubRepoId}`);
+
+      // Extract repo name and URL from full_name (e.g., "owner/repo")
+      const repoName = githubRepoId.split('/')[1];
+      const repoUrl = `https://github.com/${githubRepoId}`;
+
+      // Update project with GitHub App info
+      await db.update(projects)
+        .set({
+          githubRepoName: repoName,
+          githubRepoUrl: repoUrl,
+          githubAuthType: 'github_app',
+          githubInstallationId: githubInstallationId,
+          githubRepoId: githubRepoId,
+          updatedAt: new Date(),
+        })
+        .where(eq(projects.id, projectId));
+
+      console.log('GitHub App repository linked successfully');
+
+      return c.json({
+        success: true,
+        githubRepoUrl: repoUrl,
+      });
+    } else {
+      return c.json({ error: 'Invalid strategy' }, 400);
+    }
+  } catch (error: any) {
+    console.error('Link GitHub error:', error);
+    return c.json({ error: error.message || 'Failed to link GitHub repository' }, 500);
   }
 });
 

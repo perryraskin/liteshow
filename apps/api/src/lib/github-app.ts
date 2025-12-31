@@ -18,6 +18,9 @@ export function generateGitHubAppJWT(): string {
   const appId = process.env.GITHUB_APP_ID;
   const privateKeyBase64 = process.env.GITHUB_APP_PRIVATE_KEY;
 
+  console.log('[GitHub App] Generating JWT with App ID:', appId);
+  console.log('[GitHub App] Private key present:', !!privateKeyBase64);
+
   if (!appId) {
     throw new Error('GITHUB_APP_ID environment variable is not set');
   }
