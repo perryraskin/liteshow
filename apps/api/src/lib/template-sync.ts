@@ -2,6 +2,8 @@ import { db } from '@liteshow/db';
 import { projects, users } from '@liteshow/db';
 import { eq } from 'drizzle-orm';
 import { getGitHubTokenForProject } from './github-token';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export interface TemplateFile {
   path: string;
@@ -26,13 +28,103 @@ export interface SyncResult {
   existingPrUrl?: string;
   branchName?: string;
   filesChanged?: number;
+  upToDate?: boolean;
 }
 
 /**
- * Get template files for a project
- * This reuses the template generation logic from createDeploymentFiles
+ * Recursively read all files from a directory
  */
-export function getTemplateFiles(projectName: string, slug: string, tursoDbUrl: string): TemplateFile[] {
+async function readDirectoryRecursive(dir: string, baseDir: string = dir): Promise<{ relativePath: string; content: string }[]> {
+  const files: { relativePath: string; content: string }[] = [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      // Recursively read subdirectories
+      const subFiles = await readDirectoryRecursive(fullPath, baseDir);
+      files.push(...subFiles);
+    } else if (entry.isFile()) {
+      // Skip certain files
+      if (entry.name === '.gitignore' || entry.name === 'pnpm-lock.yaml' || entry.name === 'package-lock.json') {
+        continue;
+      }
+
+      // Read file content
+      const content = await fs.readFile(fullPath, 'utf-8');
+      const relativePath = path.relative(baseDir, fullPath);
+      files.push({ relativePath, content });
+    }
+  }
+
+  return files;
+}
+
+/**
+ * Replace template variables in content
+ */
+function replaceTemplateVariables(
+  content: string,
+  variables: {
+    PROJECT_NAME: string;
+    PROJECT_SLUG: string;
+    TURSO_DATABASE_URL: string;
+    TURSO_AUTH_TOKEN: string;
+    SITE_URL: string;
+  }
+): string {
+  let result = content;
+
+  // Replace all template variables
+  result = result.replace(/\{\{PROJECT_NAME\}\}/g, variables.PROJECT_NAME);
+  result = result.replace(/\{\{PROJECT_SLUG\}\}/g, variables.PROJECT_SLUG);
+  result = result.replace(/\{\{TURSO_DATABASE_URL\}\}/g, variables.TURSO_DATABASE_URL);
+  result = result.replace(/\{\{TURSO_AUTH_TOKEN\}\}/g, variables.TURSO_AUTH_TOKEN);
+  result = result.replace(/\{\{SITE_URL\}\}/g, variables.SITE_URL);
+
+  return result;
+}
+
+/**
+ * Get template files for a project by reading from templates/astro/ directory
+ */
+export async function getTemplateFiles(projectName: string, slug: string, tursoDbUrl: string, tursoAuthToken?: string): Promise<TemplateFile[]> {
+  // Determine template directory path
+  // In production (Fly.io), the app runs from /app/apps/api
+  // In development, it runs from the repo root
+  const templateDir = process.env.FLY_APP_NAME
+    ? path.join('/app', 'templates', 'astro')
+    : path.join(process.cwd(), '..', '..', 'templates', 'astro');
+
+  console.log('Reading template files from:', templateDir);
+
+  // Read all files from template directory
+  const rawFiles = await readDirectoryRecursive(templateDir);
+
+  // Template variables to replace
+  const variables = {
+    PROJECT_NAME: projectName,
+    PROJECT_SLUG: slug,
+    TURSO_DATABASE_URL: `libsql://${tursoDbUrl}`,
+    TURSO_AUTH_TOKEN: tursoAuthToken || '{{TURSO_AUTH_TOKEN}}',
+    SITE_URL: '{{SITE_URL}}', // Will be set by deployment platform
+  };
+
+  // Process each file
+  const files: TemplateFile[] = rawFiles.map(({ relativePath, content }) => ({
+    path: relativePath,
+    content: replaceTemplateVariables(content, variables),
+  }));
+
+  return files;
+}
+
+/**
+ * DEPRECATED: Old string-based template function
+ * Keeping for reference during migration
+ */
+export function getTemplateFilesOld(projectName: string, slug: string, tursoDbUrl: string): TemplateFile[] {
   const files: TemplateFile[] = [];
 
   // README.md
@@ -1161,10 +1253,11 @@ export async function syncTemplateToRepo(
   }
 
   // Get template files
-  const templateFiles = getTemplateFiles(
+  const templateFiles = await getTemplateFiles(
     project.name,
     project.slug,
-    project.tursoDbUrl
+    project.tursoDbUrl,
+    project.tursoDbToken
   );
 
   // Fetch existing files from repo

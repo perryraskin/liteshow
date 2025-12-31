@@ -1,0 +1,108 @@
+---
+interface Props {
+  markdown?: string;
+}
+
+const { markdown = '' } = Astro.props;
+---
+
+<section class="markdown-block">
+  <div class="markdown-content" set:html={markdown} />
+</section>
+
+<style>
+  .markdown-block {
+    padding: 2rem;
+  }
+
+  .markdown-content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.75;
+    color: #2d3748;
+  }
+
+  .markdown-content :global(h1),
+  .markdown-content :global(h2),
+  .markdown-content :global(h3),
+  .markdown-content :global(h4),
+  .markdown-content :global(h5),
+  .markdown-content :global(h6) {
+    font-weight: bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #1a202c;
+  }
+
+  .markdown-content :global(h1) {
+    font-size: 2.25rem;
+  }
+
+  .markdown-content :global(h2) {
+    font-size: 1.875rem;
+  }
+
+  .markdown-content :global(h3) {
+    font-size: 1.5rem;
+  }
+
+  .markdown-content :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .markdown-content :global(a) {
+    color: #667eea;
+    text-decoration: underline;
+  }
+
+  .markdown-content :global(a:hover) {
+    color: #5a67d8;
+  }
+
+  .markdown-content :global(ul),
+  .markdown-content :global(ol) {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+
+  .markdown-content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .markdown-content :global(code) {
+    background: #f7fafc;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.875em;
+  }
+
+  .markdown-content :global(pre) {
+    background: #2d3748;
+    color: #f7fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  .markdown-content :global(pre code) {
+    background: transparent;
+    padding: 0;
+  }
+
+  .markdown-content :global(blockquote) {
+    border-left: 4px solid #667eea;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #4a5568;
+    font-style: italic;
+  }
+
+  .markdown-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+  }
+</style>

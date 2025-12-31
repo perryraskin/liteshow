@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroBlock from '../components/blocks/HeroBlock.astro';
+import CtaBlock from '../components/blocks/CtaBlock.astro';
+import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
+import { getPage } from '../lib/content-api';
+
+const page = await getPage('index');
+
+if (!page) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout
+  title={page.seo_title || page.title}
+  description={page.seo_description}
+  keywords={page.seo_keywords}
+>
+  {page.blocks.map((block) => {
+    switch (block.type) {
+      case 'hero':
+        return (
+          <HeroBlock
+            headline={block.content.headline as string}
+            subheadline={block.content.subheadline as string}
+            ctaText={block.content.ctaText as string}
+            ctaUrl={block.content.ctaUrl as string}
+          />
+        );
+      case 'cta':
+        return (
+          <CtaBlock
+            headline={block.content.headline as string}
+            body={block.content.body as string}
+            buttonText={block.content.buttonText as string}
+            buttonUrl={block.content.buttonUrl as string}
+          />
+        );
+      case 'markdown':
+        return <MarkdownBlock markdown={block.content.markdown as string} />;
+      default:
+        return null;
+    }
+  })}
+</BaseLayout>
