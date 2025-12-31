@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 export default function ProjectPage() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function ProjectPage() {
   const [siteDescription, setSiteDescription] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,6 +129,53 @@ export default function ProjectPage() {
       });
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const handleSyncTemplate = async () => {
+    setIsSyncing(true);
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/sync-template`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.status === 409) {
+        // Existing PR
+        toast.info('Template sync PR already exists', {
+          description: 'Review the existing PR before creating a new one.',
+          action: {
+            label: 'View PR',
+            onClick: () => window.open(data.prUrl, '_blank'),
+          },
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to sync template');
+      }
+
+      toast.success('Template sync PR created!', {
+        description: `${data.filesChanged} files updated. Review and merge in GitHub.`,
+        action: {
+          label: 'View PR',
+          onClick: () => window.open(data.prUrl, '_blank'),
+        },
+      });
+    } catch (error: any) {
+      console.error('Sync error:', error);
+      toast.error('Failed to sync template', {
+        description: error.message || 'Please try again or contact support.',
+      });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -249,15 +298,27 @@ export default function ProjectPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {project.githubRepoUrl ? (
-                <a
-                  href={project.githubRepoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-primary hover:underline"
-                >
-                  <Github className="h-4 w-4" />
-                  View GitHub Repository
-                </a>
+                <div className="space-y-3">
+                  <a
+                    href={project.githubRepoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <Github className="h-4 w-4" />
+                    View GitHub Repository
+                  </a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncTemplate}
+                    disabled={isSyncing}
+                    className="w-full"
+                  >
+                    <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
+                    {isSyncing ? 'Syncing...' : 'Sync Template'}
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
