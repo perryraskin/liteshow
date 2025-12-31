@@ -527,26 +527,27 @@ const siteSettings = await getSiteSettings();
       content: `---
 interface Props {
   content: {
-    title: string;
-    subtitle?: string;
+    headline: string;
+    subheadline?: string;
     ctaText?: string;
     ctaUrl?: string;
+    backgroundImage?: string;
   };
 }
 
 const { content } = Astro.props;
-const { title, subtitle, ctaText, ctaUrl } = content;
+const { headline, subheadline, ctaText, ctaUrl } = content;
 ---
 
 <section class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 text-white py-20 lg:py-32">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto text-center">
       <h1 class="text-4xl lg:text-6xl font-bold mb-6">
-        {title}
+        {headline}
       </h1>
-      {subtitle && (
+      {subheadline && (
         <p class="text-xl lg:text-2xl mb-8 text-blue-100">
-          {subtitle}
+          {subheadline}
         </p>
       )}
       {ctaText && ctaUrl && (
@@ -742,33 +743,42 @@ const htmlContent = await marked.parse(markdown || '');
       content: `---
 interface Props {
   content: {
-    title: string;
-    description?: string;
-    ctaText: string;
-    ctaUrl: string;
+    headline: string;
+    subheadline?: string;
+    buttonText: string;
+    buttonUrl: string;
+    backgroundColor?: string;
   };
 }
 
 const { content } = Astro.props;
-const { title, description, ctaText, ctaUrl } = content;
+const { headline, subheadline, buttonText, buttonUrl, backgroundColor } = content;
 ---
 
-<section class="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <h2 class="text-3xl lg:text-5xl font-bold mb-6">
-      {title}
-    </h2>
-    {description && (
-      <p class="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
-        {description}
-      </p>
-    )}
-    <a
-      href={ctaUrl}
-      class="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg text-lg"
-    >
-      {ctaText}
-    </a>
+<section
+  class="py-20"
+  style={backgroundColor ? \`background-color: \${backgroundColor}\` : ''}
+  class:list={[!backgroundColor && 'bg-blue-600']}
+>
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-3xl lg:text-4xl font-bold mb-6 text-white">
+        {headline}
+      </h2>
+
+      {subheadline && (
+        <p class="text-xl mb-10 text-blue-100 leading-relaxed">
+          {subheadline}
+        </p>
+      )}
+
+      <a
+        href={buttonUrl}
+        class="inline-block px-8 py-4 bg-white text-blue-600 font-semibold rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      >
+        {buttonText}
+      </a>
+    </div>
   </div>
 </section>
 `,
