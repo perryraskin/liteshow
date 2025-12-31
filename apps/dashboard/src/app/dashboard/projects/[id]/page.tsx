@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +34,10 @@ export default function ProjectPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [siteTitle, setSiteTitle] = useState('');
+  const [siteDescription, setSiteDescription] = useState('');
+  const [faviconUrl, setFaviconUrl] = useState('');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +60,11 @@ export default function ProjectPage() {
 
         const projectData = await projectResponse.json();
         setProject(projectData);
+
+        // Initialize site settings form
+        setSiteTitle(projectData.siteTitle || '');
+        setSiteDescription(projectData.siteDescription || '');
+        setFaviconUrl(projectData.faviconUrl || '');
 
         // Fetch pages
         const pagesResponse = await fetch(
@@ -78,6 +89,42 @@ export default function ProjectPage() {
 
     fetchData();
   }, [params.id]);
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/settings`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            siteTitle,
+            siteDescription,
+            faviconUrl,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update settings');
+      }
+
+      const updatedProject = await response.json();
+      setProject(updatedProject);
+
+      toast.success('Site settings updated successfully');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update site settings');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const handleDeleteProject = async () => {
     if (deleteConfirmation !== project.name) {
@@ -231,6 +278,7 @@ export default function ProjectPage() {
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="deployment">Deployment</TabsTrigger>
             <TabsTrigger value="development">Development</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="content">
@@ -442,6 +490,71 @@ export default function ProjectPage() {
               </div>
             </div>
           </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5" />
+                  <CardTitle>Site Settings</CardTitle>
+                </div>
+                <CardDescription>
+                  Customize how your site appears with a custom title, description, and favicon
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="siteTitle">Site Title</Label>
+                  <Input
+                    id="siteTitle"
+                    value={siteTitle}
+                    onChange={(e) => setSiteTitle(e.target.value)}
+                    placeholder={project.name}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This appears after page titles. Example: "Home - {siteTitle || project.name}"
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="siteDescription">Site Description</Label>
+                  <Textarea
+                    id="siteDescription"
+                    value={siteDescription}
+                    onChange={(e) => setSiteDescription(e.target.value)}
+                    placeholder={`Welcome to ${project.name}`}
+                    rows={3}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Used as the default meta description for SEO when pages don't have their own description
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="faviconUrl">Favicon URL</Label>
+                  <Input
+                    id="faviconUrl"
+                    type="url"
+                    value={faviconUrl}
+                    onChange={(e) => setFaviconUrl(e.target.value)}
+                    placeholder="https://example.com/favicon.png"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    URL to your favicon image (PNG, ICO, or SVG). Leave empty to use the default.
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSaveSettings}
+                    disabled={isSavingSettings}
+                  >
+                    {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                  </Button>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

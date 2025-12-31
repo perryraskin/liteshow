@@ -1500,6 +1500,55 @@ projectRoutes.post('/:id/link-github', async (c) => {
   }
 });
 
+// PATCH /api/projects/:id/settings - Update project site settings
+projectRoutes.patch('/:id/settings', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+    const body = await c.req.json();
+    const { siteTitle, siteDescription, faviconUrl } = body;
+
+    // Verify project exists and belongs to user
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    // Update project settings
+    await db
+      .update(projects)
+      .set({
+        siteTitle: siteTitle || null,
+        siteDescription: siteDescription || null,
+        faviconUrl: faviconUrl || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId));
+
+    // Fetch and return updated project
+    const updatedProject = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    return c.json(updatedProject);
+  } catch (error) {
+    console.error('Update settings error:', error);
+    return c.json({ error: 'Failed to update settings' }, 500);
+  }
+});
+
 // DELETE /api/projects/:id - Delete a project (Turso database and records)
 projectRoutes.delete('/:id', async (c) => {
   try {
