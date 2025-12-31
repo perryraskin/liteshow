@@ -904,9 +904,9 @@ export async function checkExistingSyncPR(
   token: string
 ): Promise<string | null> {
   try {
-    const [owner, repo] = repoFullName.split('/');
+    // Get all open PRs and filter for template-sync branches
     const response = await fetch(
-      `https://api.github.com/repos/${repoFullName}/pulls?state=open&head=${owner}:liteshow/template-sync`,
+      `https://api.github.com/repos/${repoFullName}/pulls?state=open`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -917,8 +917,13 @@ export async function checkExistingSyncPR(
 
     if (response.ok) {
       const pulls: any = await response.json();
-      if (pulls.length > 0) {
-        return pulls[0].html_url;
+      // Find PRs with branch name starting with liteshow/template-sync
+      const syncPR = pulls.find((pr: any) =>
+        pr.head.ref.startsWith('liteshow/template-sync')
+      );
+
+      if (syncPR) {
+        return syncPR.html_url;
       }
     }
   } catch (error) {
