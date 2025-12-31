@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,7 @@ export default function ProjectPage() {
   const [faviconUrl, setFaviconUrl] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncPrUrl, setSyncPrUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,12 +149,9 @@ export default function ProjectPage() {
 
       if (response.status === 409) {
         // Existing PR
+        setSyncPrUrl(data.prUrl);
         toast.info('Template sync PR already exists', {
           description: 'Review the existing PR before creating a new one.',
-          action: {
-            label: 'View PR',
-            onClick: () => window.open(data.prUrl, '_blank'),
-          },
         });
         return;
       }
@@ -162,12 +160,9 @@ export default function ProjectPage() {
         throw new Error(data.error || 'Failed to sync template');
       }
 
+      setSyncPrUrl(data.prUrl);
       toast.success('Template sync PR created!', {
         description: `${data.filesChanged} files updated. Review and merge in GitHub.`,
-        action: {
-          label: 'View PR',
-          onClick: () => window.open(data.prUrl, '_blank'),
-        },
       });
     } catch (error: any) {
       console.error('Sync error:', error);
@@ -296,18 +291,43 @@ export default function ProjectPage() {
             <CardHeader>
               <CardTitle>Resources</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {project.githubRepoUrl ? (
                 <div className="space-y-3">
-                  <a
-                    href={project.githubRepoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <Github className="h-4 w-4" />
-                    View GitHub Repository
-                  </a>
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground mb-1">GitHub Repository</div>
+                    <a
+                      href={project.githubRepoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Github className="h-4 w-4" />
+                      {project.githubRepoName || 'View Repository'}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+
+                  {syncPrUrl && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <GitPullRequest className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">Template Sync PR Pending</div>
+                          <a
+                            href={syncPrUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 mt-1"
+                          >
+                            Review and merge in GitHub
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -336,10 +356,6 @@ export default function ProjectPage() {
                   </Link>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Database className="h-4 w-4" />
-                Turso Database: {project.tursoDbUrl}
-              </div>
             </CardContent>
           </Card>
         </div>
