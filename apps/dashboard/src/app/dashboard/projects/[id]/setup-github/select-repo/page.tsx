@@ -87,11 +87,15 @@ function SelectRepoContent() {
         throw new Error(data.error || 'Failed to link repository');
       }
 
-      toast.success('Repository linked successfully!');
+      toast.success('GitHub repository linked!', {
+        description: 'Your project is now connected to the repository.',
+      });
       router.push(`/dashboard/projects/${params.id}`);
     } catch (err: any) {
       console.error('Error linking repository:', err);
-      toast.error(err.message);
+      toast.error('Failed to link repository', {
+        description: err.message || 'Please try again or contact support.',
+      });
     } finally {
       setIsLinking(false);
     }

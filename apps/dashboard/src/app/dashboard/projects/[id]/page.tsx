@@ -117,10 +117,14 @@ export default function ProjectPage() {
       const updatedProject = await response.json();
       setProject(updatedProject);
 
-      toast.success('Site settings updated successfully');
+      toast.success('Settings saved!', {
+        description: 'Your site will use these settings on the next build.',
+      });
     } catch (error) {
       console.error('Error updating settings:', error);
-      toast.error('Failed to update site settings');
+      toast.error('Failed to save settings', {
+        description: 'Please try again or contact support if the issue persists.',
+      });
     } finally {
       setIsSavingSettings(false);
     }
@@ -128,7 +132,9 @@ export default function ProjectPage() {
 
   const handleDeleteProject = async () => {
     if (deleteConfirmation !== project.name) {
-      toast.error('Project name does not match');
+      toast.error('Project name does not match', {
+        description: `Please type "${project.name}" exactly to confirm deletion.`,
+      });
       return;
     }
 
@@ -151,10 +157,12 @@ export default function ProjectPage() {
 
       const data = await response.json();
 
-      toast.success('Project deleted from LiteShow', {
-        description: 'Please manually delete the GitHub repository if needed',
+      toast.success('Project deleted successfully', {
+        description: data.githubRepoUrl
+          ? 'The GitHub repository still exists and must be deleted manually if desired.'
+          : 'All project data has been removed from LiteShow.',
         action: data.githubRepoUrl ? {
-          label: 'Open GitHub',
+          label: 'Open GitHub Repo',
           onClick: () => window.open(`${data.githubRepoUrl}/settings`, '_blank')
         } : undefined,
         duration: 10000,
@@ -166,7 +174,9 @@ export default function ProjectPage() {
       }, 1000);
     } catch (error) {
       console.error('Error deleting project:', error);
-      toast.error('Failed to delete project');
+      toast.error('Failed to delete project', {
+        description: 'An error occurred while deleting the project. Please try again.',
+      });
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -481,7 +491,9 @@ export default function ProjectPage() {
                   size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(`TURSO_DB_URL=${project.tursoDbUrl}\nTURSO_DB_TOKEN=${project.tursoDbToken}`);
-                    toast.success('Environment variables copied to clipboard');
+                    toast.success('Copied to clipboard!', {
+                      description: 'Environment variables are ready to paste into your .env file.',
+                    });
                   }}
                 >
                   <Copy className="h-4 w-4 mr-2" />
