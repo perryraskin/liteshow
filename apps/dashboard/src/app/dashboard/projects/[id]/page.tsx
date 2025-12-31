@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
 import {
@@ -29,6 +29,7 @@ export default function ProjectPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,12 +157,7 @@ export default function ProjectPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            <Badge variant={project.isPublished ? "default" : "secondary"}>
-              {project.isPublished ? 'Published' : 'Draft'}
-            </Badge>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">{project.name}</h1>
           <p className="text-muted-foreground">{project.description || 'No description'}</p>
         </div>
 
@@ -233,18 +229,42 @@ export default function ProjectPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-muted p-4 rounded-lg font-mono text-sm space-y-2">
-              <div className="flex justify-between items-center">
-                <span>TURSO_DB_URL={project.tursoDbUrl}</span>
+            <div className="bg-muted p-4 rounded-lg space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="flex-1 font-mono text-sm break-all">
+                  <div className="text-muted-foreground">TURSO_DB_URL</div>
+                  <div className="mt-1">{project.tursoDbUrl}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="flex-1 font-mono text-sm">
+                  <div className="text-muted-foreground">TURSO_DB_TOKEN</div>
+                  <div className={`mt-1 ${showToken ? 'break-all' : ''}`}>
+                    {showToken ? project.tursoDbToken : '•••••••••••••••••••••••••••••••••••'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => navigator.clipboard.writeText(`TURSO_DB_URL=${project.tursoDbUrl}\nTURSO_DB_TOKEN=${project.tursoDbToken}`)}
+                  onClick={() => setShowToken(!showToken)}
                 >
-                  Copy
+                  {showToken ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                  {showToken ? 'Hide' : 'Show'} Token
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`TURSO_DB_URL=${project.tursoDbUrl}\nTURSO_DB_TOKEN=${project.tursoDbToken}`);
+                    toast.success('Environment variables copied to clipboard');
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy All
                 </Button>
               </div>
-              <div>TURSO_DB_TOKEN={project.tursoDbToken}</div>
             </div>
           </CardContent>
         </Card>

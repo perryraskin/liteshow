@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 
 interface Project {
@@ -12,7 +11,6 @@ interface Project {
   name: string;
   slug: string;
   description: string | null;
-  isPublished: boolean;
   createdAt: string;
 }
 
@@ -188,12 +186,7 @@ function DashboardContent() {
                 onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               >
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl">{project.name}</CardTitle>
-                    <Badge variant={project.isPublished ? "default" : "secondary"}>
-                      {project.isPublished ? 'Published' : 'Draft'}
-                    </Badge>
-                  </div>
+                  <CardTitle className="text-xl">{project.name}</CardTitle>
                   {project.description && (
                     <CardDescription>{project.description}</CardDescription>
                   )}
