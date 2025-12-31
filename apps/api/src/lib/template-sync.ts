@@ -917,14 +917,21 @@ export async function checkExistingSyncPR(
 
     if (response.ok) {
       const pulls: any = await response.json();
+      console.log('Checking for sync PR in repo:', repoFullName);
+      console.log('Found open PRs:', pulls.map((pr: any) => ({ number: pr.number, branch: pr.head.ref, title: pr.title })));
+
       // Find PRs with branch name starting with liteshow/template-sync
       const syncPR = pulls.find((pr: any) =>
         pr.head.ref.startsWith('liteshow/template-sync')
       );
 
       if (syncPR) {
+        console.log('Found sync PR:', syncPR.html_url);
         return syncPR.html_url;
       }
+      console.log('No sync PR found');
+    } else {
+      console.error('Failed to fetch PRs:', response.status, response.statusText);
     }
   } catch (error) {
     console.error('Error checking for existing PR:', error);
