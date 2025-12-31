@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @liteshow/dashboard build",
+  "buildCommand": "pnpm turbo build --filter=@liteshow/dashboard",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "apps/dashboard/.next",
-  "framework": "nextjs"
+  "framework": null
 }
