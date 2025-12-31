@@ -12,6 +12,7 @@ import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { syncTemplateToRepo } from '../lib/template-sync';
+import { getGitHubTokenForProject } from '../lib/github-token';
 
 const projectRoutes = new Hono();
 
