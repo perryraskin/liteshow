@@ -3,6 +3,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroBlock from '../components/blocks/HeroBlock.astro';
 import CtaBlock from '../components/blocks/CtaBlock.astro';
 import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
+import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
+import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
+import FaqBlock from '../components/blocks/FaqBlock.astro';
 import { getPage } from '../lib/content-api';
 
 const page = await getPage('index');
@@ -39,6 +42,12 @@ if (!page) {
         );
       case 'markdown':
         return <MarkdownBlock markdown={block.content.markdown as string} />;
+      case 'features':
+        return <FeaturesBlock content={block.content} />;
+      case 'testimonials':
+        return <TestimonialsBlock content={block.content} />;
+      case 'faq':
+        return <FaqBlock content={block.content} />;
       default:
         return null;
     }
