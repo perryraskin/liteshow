@@ -602,19 +602,58 @@ const blockComponents: Record<string, any> = {
   </BaseLayout>
 ) : (
   <BaseLayout
-    title="Welcome"
-    description="Welcome to your site"
+    title={siteSettings?.siteTitle || "Welcome"}
+    description={siteSettings?.siteDescription}
     siteSettings={siteSettings}
   >
-    <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div class="text-center p-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          Welcome to Your Site
-        </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
-          No pages have been published yet. Create and publish pages in your LiteShow dashboard to get started.
-        </p>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+    <main class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+          <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            {siteSettings?.siteTitle || "Welcome to Your Site"}
+          </h1>
+          {siteSettings?.siteDescription && (
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+              {siteSettings.siteDescription}
+            </p>
+          )}
+        </div>
+
+        {allPages.length > 0 ? (
+          <div class="space-y-4">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+              Pages
+            </h2>
+            <div class="grid gap-4 md:grid-cols-2">
+              {allPages.map((page: any) => (
+                <a
+                  href={\`/\${page.slug}\`}
+                  class="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
+                >
+                  <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    {page.title}
+                  </h3>
+                  {page.description && (
+                    <p class="text-gray-600 dark:text-gray-300">
+                      {page.description}
+                    </p>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+              No pages have been published yet.
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Create and publish pages in your LiteShow dashboard to get started.
+            </p>
+          </div>
+        )}
+
+        <div class="text-center mt-12 text-sm text-gray-500 dark:text-gray-400">
           Built with <span class="font-semibold">LiteShow</span> - AI-first, Git-powered CMS
         </div>
       </div>
@@ -1054,18 +1093,6 @@ const { title, faqs } = content;
 
 [build.environment]
   NODE_VERSION = "20"
-
-# Redirect root to home page
-[[redirects]]
-  from = "/"
-  to = "/home"
-  status = 302
-
-# Catch-all 404
-[[redirects]]
-  from = "/*"
-  to = "/404"
-  status = 404
 `,
       },
       {
