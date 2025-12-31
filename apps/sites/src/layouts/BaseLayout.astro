@@ -1,11 +1,26 @@
 ---
+import type { SiteSettings } from '../lib/content-api';
+
 interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  siteSettings?: SiteSettings | null;
 }
 
-const { title, description, ogImage } = Astro.props;
+const { title, description, ogImage, siteSettings } = Astro.props;
+
+// Format the page title with site title if available
+const fullTitle = siteSettings?.siteTitle
+  ? `${title} - ${siteSettings.siteTitle}`
+  : title;
+
+// Use site description as fallback if page description not provided
+const metaDescription = description || siteSettings?.siteDescription;
+
+// Use custom favicon if provided, otherwise default
+const faviconUrl = siteSettings?.faviconUrl || '/favicon.svg';
+const faviconType = siteSettings?.faviconUrl ? 'image/png' : 'image/svg+xml';
 ---
 
 <!doctype html>
@@ -13,7 +28,7 @@ const { title, description, ogImage } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type={faviconType} href={faviconUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,19 +36,19 @@ const { title, description, ogImage } = Astro.props;
       rel="stylesheet"
     />
 
-    <title>{title}</title>
-    {description && <meta name="description" content={description} />}
+    <title>{fullTitle}</title>
+    {metaDescription && <meta name="description" content={metaDescription} />}
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    {description && <meta property="og:description" content={description} />}
+    <meta property="og:title" content={fullTitle} />
+    {metaDescription && <meta property="og:description" content={metaDescription} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content={title} />
-    {description && <meta property="twitter:description" content={description} />}
+    <meta property="twitter:title" content={fullTitle} />
+    {metaDescription && <meta property="twitter:description" content={metaDescription} />}
     {ogImage && <meta property="twitter:image" content={ogImage} />}
   </head>
   <body class="antialiased">

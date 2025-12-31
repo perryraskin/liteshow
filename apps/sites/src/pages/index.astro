@@ -1,31 +1,68 @@
 ---
-// Index page - redirect to home or show a default landing
-import { getAllPages } from '../lib/content-api';
+// Index page - render home page content directly or show a default landing
+import { getAllPages, getPageBySlug, getSiteSettings } from '../lib/content-api';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroBlock from '../components/blocks/HeroBlock.astro';
+import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
+import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
+import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
+import CtaBlock from '../components/blocks/CtaBlock.astro';
+import FaqBlock from '../components/blocks/FaqBlock.astro';
+
+// Fetch site settings
+const siteSettings = await getSiteSettings();
 
 // Fetch all published pages
 const allPages = await getAllPages();
 
-// Try to find a page with slug 'home' or 'index'
-const homePage = allPages.find(p => p.slug === 'home');
-if (homePage) {
-  return Astro.redirect('/home');
-}
+// Try to find a page with slug 'home'
+const homePageData = allPages.find(p => p.slug === 'home');
 
-const indexPage = allPages.find(p => p.slug === 'index');
-if (indexPage) {
-  return Astro.redirect('/index');
-}
+// If home page exists, fetch its full content and render it
+if (homePageData) {
+  const homePage = await getPageBySlug('home');
 
-// If no home/index page, redirect to first published page
-if (allPages.length > 0) {
-  return Astro.redirect('/' + allPages[0].slug);
-}
-
-// Otherwise show a placeholder
+  if (homePage) {
+    const blockComponents: Record<string, any> = {
+      hero: HeroBlock,
+      features: FeaturesBlock,
+      testimonials: TestimonialsBlock,
+      markdown: MarkdownBlock,
+      cta: CtaBlock,
+      faq: FaqBlock,
+    };
 ---
 
-<BaseLayout title="Welcome" description="Welcome to your site">
+<BaseLayout
+  title={homePage.title}
+  description={homePage.metaDescription || homePage.description || undefined}
+  ogImage={homePage.ogImage || undefined}
+  siteSettings={siteSettings}
+>
+  <main>
+    {homePage.blocks.map((block: any) => {
+      const Component = blockComponents[block.type];
+      if (!Component) {
+        console.warn(`Unknown block type: ${block.type}`);
+        return null;
+      }
+      return <Component content={block.content} />;
+    })}
+  </main>
+</BaseLayout>
+
+---
+  }
+}
+
+// If no home page, show a placeholder
+---
+
+<BaseLayout
+  title="Welcome"
+  description="Welcome to your site"
+  siteSettings={siteSettings}
+>
   <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
     <div class="text-center p-8">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">

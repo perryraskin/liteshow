@@ -122,4 +122,38 @@ publicContentRoutes.get('/sites/:slug/pages/:pageSlug', async (c) => {
   }
 });
 
+// GET /public/sites/:slug/settings - Get site settings (title, favicon, etc.)
+publicContentRoutes.get('/sites/:slug/settings', async (c) => {
+  try {
+    const projectSlug = c.req.param('slug');
+    console.log(`[public-content] Fetching settings for project: ${projectSlug}`);
+
+    // Find project by slug
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.slug, projectSlug),
+      columns: {
+        siteTitle: true,
+        siteDescription: true,
+        faviconUrl: true,
+        slug: true,
+        name: true,
+      },
+    });
+
+    if (!project) {
+      console.log(`[public-content] Project not found for slug: ${projectSlug}`);
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    return c.json({
+      siteTitle: project.siteTitle || project.name,
+      siteDescription: project.siteDescription || `Welcome to ${project.name}`,
+      faviconUrl: project.faviconUrl || null,
+    });
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
+    return c.json({ error: 'Failed to fetch site settings' }, 500);
+  }
+});
+
 export default publicContentRoutes;

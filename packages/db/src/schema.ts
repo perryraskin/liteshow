@@ -91,6 +91,11 @@ export const projects = pgTable('projects', {
   // Project settings
   isPublished: boolean('is_published').default(false).notNull(),
 
+  // Site settings (for Astro site customization)
+  siteTitle: text('site_title'), // e.g., "Joe Shmoe" - appears as "Home - Joe Shmoe"
+  siteDescription: text('site_description'), // Meta description for SEO
+  faviconUrl: text('favicon_url'), // URL to favicon image
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

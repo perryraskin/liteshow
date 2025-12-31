@@ -6,7 +6,7 @@ import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
 import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
 import CtaBlock from '../components/blocks/CtaBlock.astro';
 import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getAllPages, getPageBySlug } from '../lib/content-api';
+import { getAllPages, getPageBySlug, getSiteSettings } from '../lib/content-api';
 
 // Generate static paths at build time
 export async function getStaticPaths() {
@@ -21,6 +21,9 @@ export async function getStaticPaths() {
 
 const { pageId } = Astro.props;
 const { slug } = Astro.params;
+
+// Fetch site settings
+const siteSettings = await getSiteSettings();
 
 // Fetch page with blocks from API
 const page = await getPageBySlug(slug as string);
@@ -43,6 +46,7 @@ const blockComponents: Record<string, any> = {
   title={page.metaTitle || page.title}
   description={page.metaDescription || page.description || undefined}
   ogImage={page.ogImage || undefined}
+  siteSettings={siteSettings}
 >
   <main>
     {page.blocks.map((block: any) => {

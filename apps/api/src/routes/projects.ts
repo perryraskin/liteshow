@@ -416,6 +416,12 @@ export interface PageWithBlocks extends Page {
   }>;
 }
 
+export interface SiteSettings {
+  siteTitle: string;
+  siteDescription: string;
+  faviconUrl: string | null;
+}
+
 /**
  * Fetch all published pages for the project
  */
@@ -456,18 +462,52 @@ export async function getPageBySlug(slug: string): Promise<PageWithBlocks | null
     return null;
   }
 }
+
+/**
+ * Fetch site settings (title, description, favicon)
+ */
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  try {
+    const response = await fetch(\`\${API_URL}/public/sites/\${PROJECT_SLUG}/settings\`);
+
+    if (!response.ok) {
+      console.error(\`Failed to fetch site settings: \${response.status} \${response.statusText}\`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
+    return null;
+  }
+}
 `,
       },
       {
         path: 'src/layouts/BaseLayout.astro',
         content: `---
+import type { SiteSettings } from '../lib/content-api';
+
 interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  siteSettings?: SiteSettings | null;
 }
 
-const { title, description, ogImage } = Astro.props;
+const { title, description, ogImage, siteSettings } = Astro.props;
+
+// Format the page title with site title if available
+const fullTitle = siteSettings?.siteTitle
+  ? \\\`\\\${title} - \\\${siteSettings.siteTitle}\\\`
+  : title;
+
+// Use site description as fallback if page description not provided
+const metaDescription = description || siteSettings?.siteDescription;
+
+// Use custom favicon if provided, otherwise default
+const faviconUrl = siteSettings?.faviconUrl || '/favicon.svg';
+const faviconType = siteSettings?.faviconUrl ? 'image/png' : 'image/svg+xml';
 ---
 
 <!doctype html>
@@ -475,7 +515,7 @@ const { title, description, ogImage } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type={faviconType} href={faviconUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -483,19 +523,19 @@ const { title, description, ogImage } = Astro.props;
       rel="stylesheet"
     />
 
-    <title>{title}</title>
-    {description && <meta name="description" content={description} />}
+    <title>{fullTitle}</title>
+    {metaDescription && <meta name="description" content={metaDescription} />}
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    {description && <meta property="og:description" content={description} />}
+    <meta property="og:title" content={fullTitle} />
+    {metaDescription && <meta property="og:description" content={metaDescription} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content={title} />
-    {description && <meta property="twitter:description" content={description} />}
+    <meta property="twitter:title" content={fullTitle} />
+    {metaDescription && <meta property="twitter:description" content={metaDescription} />}
     {ogImage && <meta property="twitter:image" content={ogImage} />}
   </head>
   <body class="antialiased">
@@ -507,33 +547,70 @@ const { title, description, ogImage } = Astro.props;
       {
         path: 'src/pages/index.astro',
         content: `---
-// Index page - redirect to home or show a default landing
-import { getAllPages } from '../lib/content-api';
+// Index page - render home page content directly or show a default landing
+import { getAllPages, getPageBySlug, getSiteSettings } from '../lib/content-api';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroBlock from '../components/blocks/HeroBlock.astro';
+import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
+import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
+import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
+import CtaBlock from '../components/blocks/CtaBlock.astro';
+import FaqBlock from '../components/blocks/FaqBlock.astro';
+
+// Fetch site settings
+const siteSettings = await getSiteSettings();
 
 // Fetch all published pages
 const allPages = await getAllPages();
 
-// Try to find a page with slug 'home' or 'index'
-const homePage = allPages.find(p => p.slug === 'home');
-if (homePage) {
-  return Astro.redirect('/home');
-}
+// Try to find a page with slug 'home'
+const homePageData = allPages.find(p => p.slug === 'home');
 
-const indexPage = allPages.find(p => p.slug === 'index');
-if (indexPage) {
-  return Astro.redirect('/index');
-}
+// If home page exists, fetch its full content and render it
+if (homePageData) {
+  const homePage = await getPageBySlug('home');
 
-// If no home/index page, redirect to first published page
-if (allPages.length > 0) {
-  return Astro.redirect('/' + allPages[0].slug);
-}
-
-// Otherwise show a placeholder
+  if (homePage) {
+    const blockComponents: Record<string, any> = {
+      hero: HeroBlock,
+      features: FeaturesBlock,
+      testimonials: TestimonialsBlock,
+      markdown: MarkdownBlock,
+      cta: CtaBlock,
+      faq: FaqBlock,
+    };
 ---
 
-<BaseLayout title="Welcome" description="Welcome to your site">
+<BaseLayout
+  title={homePage.title}
+  description={homePage.metaDescription || homePage.description || undefined}
+  ogImage={homePage.ogImage || undefined}
+  siteSettings={siteSettings}
+>
+  <main>
+    {homePage.blocks.map((block: any) => {
+      const Component = blockComponents[block.type];
+      if (!Component) {
+        console.warn(\\\`Unknown block type: \\\${block.type}\\\`);
+        return null;
+      }
+      return <Component content={block.content} />;
+    })}
+  </main>
+</BaseLayout>
+
+---
+  }
+}
+
+// If no home page, show a placeholder
+---
+
+<BaseLayout
+  title="Welcome"
+  description="Welcome to your site"
+  siteSettings={siteSettings}
+>
   <main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
     <div class="text-center p-8">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -560,7 +637,7 @@ import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
 import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
 import CtaBlock from '../components/blocks/CtaBlock.astro';
 import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getAllPages, getPageBySlug } from '../lib/content-api';
+import { getAllPages, getPageBySlug, getSiteSettings } from '../lib/content-api';
 
 // Generate static paths at build time
 export async function getStaticPaths() {
@@ -575,6 +652,9 @@ export async function getStaticPaths() {
 
 const { pageId } = Astro.props;
 const { slug } = Astro.params;
+
+// Fetch site settings
+const siteSettings = await getSiteSettings();
 
 // Fetch page with blocks from API
 const page = await getPageBySlug(slug as string);
@@ -597,6 +677,7 @@ const blockComponents: Record<string, any> = {
   title={page.metaTitle || page.title}
   description={page.metaDescription || page.description || undefined}
   ogImage={page.ogImage || undefined}
+  siteSettings={siteSettings}
 >
   <main>
     {page.blocks.map((block: any) => {

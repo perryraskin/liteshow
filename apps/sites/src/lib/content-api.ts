@@ -37,6 +37,12 @@ export interface PageWithBlocks extends Page {
   }>;
 }
 
+export interface SiteSettings {
+  siteTitle: string;
+  siteDescription: string;
+  faviconUrl: string | null;
+}
+
 /**
  * Fetch all published pages for the project
  */
@@ -74,6 +80,25 @@ export async function getPageBySlug(slug: string): Promise<PageWithBlocks | null
     return await response.json();
   } catch (error) {
     console.error('Error fetching page:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch site settings (title, description, favicon)
+ */
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  try {
+    const response = await fetch(`${API_URL}/public/sites/${PROJECT_SLUG}/settings`);
+
+    if (!response.ok) {
+      console.error(`Failed to fetch site settings: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
     return null;
   }
 }
