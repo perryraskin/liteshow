@@ -125,6 +125,15 @@ LiteShow is an AI-first, SEO-optimized, Git-powered CMS built with:
 
 ## Deployment
 
+**CRITICAL: Pre-Deployment Checks**
+
+Before deploying to any environment:
+1. **Always run build** - `pnpm build` to catch TypeScript/build errors
+2. **Always run linter** - Check for syntax and import errors
+3. **Never deploy without verifying** - Builds and linters catch issues that would otherwise break production
+
+These checks prevent runtime errors like missing imports, type errors, and syntax issues.
+
 **IMPORTANT: Vercel Deployment Strategy**
 
 - **NEVER** use `vercel --prod` or any Vercel CLI deployment commands
