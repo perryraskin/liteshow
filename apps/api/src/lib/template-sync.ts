@@ -207,13 +207,13 @@ export interface SiteSettings {
 
 export async function getAllPages(): Promise<Page[]> {
   try {
-    const response = await fetch(\`\${LITESHOW_API_URL}/public/\${PROJECT_SLUG}/pages\`);
+    const response = await fetch(\`\${LITESHOW_API_URL}/public/sites/\${PROJECT_SLUG}/pages\`);
     if (!response.ok) {
       console.error('Failed to fetch pages:', response.statusText);
       return [];
     }
     const data = await response.json();
-    return data.pages || [];
+    return data;
   } catch (error) {
     console.error('Error fetching pages:', error);
     return [];
@@ -222,13 +222,13 @@ export async function getAllPages(): Promise<Page[]> {
 
 export async function getPageBySlug(slug: string): Promise<Page | null> {
   try {
-    const response = await fetch(\`\${LITESHOW_API_URL}/public/\${PROJECT_SLUG}/pages/\${slug}\`);
+    const response = await fetch(\`\${LITESHOW_API_URL}/public/sites/\${PROJECT_SLUG}/pages/\${slug}\`);
     if (!response.ok) {
       console.error(\`Failed to fetch page \${slug}:\`, response.statusText);
       return null;
     }
     const data = await response.json();
-    return data.page;
+    return data;
   } catch (error) {
     console.error(\`Error fetching page \${slug}:\`, error);
     return null;
@@ -237,13 +237,13 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
   try {
-    const response = await fetch(\`\${LITESHOW_API_URL}/public/\${PROJECT_SLUG}/settings\`);
+    const response = await fetch(\`\${LITESHOW_API_URL}/public/sites/\${PROJECT_SLUG}/settings\`);
     if (!response.ok) {
       console.error('Failed to fetch site settings:', response.statusText);
       return null;
     }
     const data = await response.json();
-    return data.settings;
+    return data;
   } catch (error) {
     console.error('Error fetching site settings:', error);
     return null;
