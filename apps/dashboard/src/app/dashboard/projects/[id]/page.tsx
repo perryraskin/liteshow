@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -146,10 +147,12 @@ export default function ProjectPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Button variant="ghost" onClick={() => router.push('/dashboard')}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-              </Button>
+              <Link href="/dashboard" prefetch={true}>
+                <Button variant="ghost">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -203,14 +206,15 @@ export default function ProjectPage() {
                     <Github className="h-4 w-4" />
                     <span>No GitHub repository connected</span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/dashboard/projects/${project.id}/setup-github`)}
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    Setup GitHub
-                  </Button>
+                  <Link href={`/dashboard/projects/${project.id}/setup-github`} prefetch={true}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Github className="mr-2 h-4 w-4" />
+                      Setup GitHub
+                    </Button>
+                  </Link>
                 </div>
               )}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -368,27 +372,32 @@ export default function ProjectPage() {
                     {pages.length} {pages.length === 1 ? 'page' : 'pages'} in this project
                   </CardDescription>
                 </div>
-                <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
-                  Manage Pages
-                </Button>
+                <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
+                  <Button>
+                    Manage Pages
+                  </Button>
+                </Link>
               </div>
             </CardHeader>
             <CardContent>
               {pages.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No pages yet</p>
-                  <Button onClick={() => router.push(`/dashboard/projects/${project.id}/pages`)}>
-                    Create Your First Page
-                  </Button>
+                  <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
+                    <Button>
+                      Create Your First Page
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {pages.map((page: any) => (
-                    <div
+                    <Link
                       key={page.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/dashboard/projects/${project.id}/pages/${page.id}`)}
+                      href={`/dashboard/projects/${project.id}/pages/${page.id}`}
+                      prefetch={true}
                     >
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium">{page.title}</h3>
@@ -402,6 +411,7 @@ export default function ProjectPage() {
                         {new Date(page.updatedAt).toLocaleDateString()}
                       </div>
                     </div>
+                    </Link>
                   ))}
                 </div>
               )}

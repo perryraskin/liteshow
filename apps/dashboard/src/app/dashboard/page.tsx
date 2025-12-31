@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
@@ -159,10 +160,12 @@ function DashboardContent() {
               Manage your LiteShow sites
             </p>
           </div>
-          <Button onClick={() => router.push('/dashboard/projects/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
-          </Button>
+          <Link href="/dashboard/projects/new" prefetch={true}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
         </div>
 
         {projects.length === 0 ? (
@@ -171,32 +174,36 @@ function DashboardContent() {
               <CardDescription className="mb-4 text-center">
                 No projects yet. Create your first project to get started!
               </CardDescription>
-              <Button onClick={() => router.push('/dashboard/projects/new')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Project
-              </Button>
+              <Link href="/dashboard/projects/new" prefetch={true}>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Project
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card
+              <Link
                 key={project.id}
-                className="cursor-pointer hover:border-primary transition-colors"
-                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                href={`/dashboard/projects/${project.id}`}
+                prefetch={true}
               >
-                <CardHeader>
-                  <CardTitle className="text-xl">{project.name}</CardTitle>
-                  {project.description && (
-                    <CardDescription>{project.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    /{project.slug}
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="cursor-pointer hover:border-primary transition-colors">
+                  <CardHeader>
+                    <CardTitle className="text-xl">{project.name}</CardTitle>
+                    {project.description && (
+                      <CardDescription>{project.description}</CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      /{project.slug}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
