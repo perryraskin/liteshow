@@ -204,9 +204,9 @@ async function createGitHubRepository(slug: string, description: string, accessT
       throw new Error(`Failed to create GitHub repository: ${response.statusText}`);
     }
 
-    const repo = await response.json() as { name: string; html_url: string };
+    const repo = await response.json() as { name: string; full_name: string; html_url: string };
     return {
-      name: repo.name,
+      name: repo.full_name, // Use full_name (owner/repo) instead of just name
       url: repo.html_url,
     };
   } catch (error) {

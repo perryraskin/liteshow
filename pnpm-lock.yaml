@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@turbo/gen':
         specifier: ^1.11.2
-        version: 1.13.4(@types/node@20.19.27)(typescript@5.9.3)
+        version: 1.13.4(@types/node@22.19.3)(typescript@5.9.3)
       prettier:
         specifier: ^3.1.1
         version: 3.7.4
@@ -216,7 +216,7 @@ importers:
         version: 5.16.6(@types/node@20.19.27)(typescript@5.9.3)
       drizzle-orm:
         specifier: ^0.36.4
-        version: 0.36.4(@libsql/client@0.14.0)
+        version: 0.36.4(@libsql/client@0.14.0)(pg@8.16.3)
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -238,7 +238,7 @@ importers:
         version: link:../db
       better-auth:
         specifier: ^1.0.0
-        version: 1.4.9
+        version: 1.4.9(pg@8.16.3)
       hono:
         specifier: ^4.0.0
         version: 4.11.3
@@ -1394,7 +1394,7 @@ packages:
     dev: false
     optional: true
 
-  /@inquirer/external-editor@1.0.3(@types/node@20.19.27):
+  /@inquirer/external-editor@1.0.3(@types/node@22.19.3):
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -1403,7 +1403,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 20.19.27
+      '@types/node': 22.19.3
       chardet: 2.1.1
       iconv-lite: 0.7.1
     dev: true
@@ -2939,19 +2939,19 @@ packages:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
     dev: true
 
-  /@turbo/gen@1.13.4(@types/node@20.19.27)(typescript@5.9.3):
+  /@turbo/gen@1.13.4(@types/node@22.19.3)(typescript@5.9.3):
     resolution: {integrity: sha512-PK38N1fHhDUyjLi0mUjv0RbX0xXGwDLQeRSGsIlLcVpP1B5fwodSIwIYXc9vJok26Yne94BX5AGjueYsUT3uUw==}
     hasBin: true
     dependencies:
-      '@turbo/workspaces': 1.13.4(@types/node@20.19.27)
+      '@turbo/workspaces': 1.13.4(@types/node@22.19.3)
       chalk: 2.4.2
       commander: 10.0.1
       fs-extra: 10.1.0
-      inquirer: 8.2.7(@types/node@20.19.27)
+      inquirer: 8.2.7(@types/node@22.19.3)
       minimatch: 9.0.5
       node-plop: 0.26.3
       proxy-agent: 6.5.0
-      ts-node: 10.9.2(@types/node@20.19.27)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@22.19.3)(typescript@5.9.3)
       update-check: 1.5.4
       validate-npm-package-name: 5.0.1
     transitivePeerDependencies:
@@ -2962,7 +2962,7 @@ packages:
       - typescript
     dev: true
 
-  /@turbo/workspaces@1.13.4(@types/node@20.19.27):
+  /@turbo/workspaces@1.13.4(@types/node@22.19.3):
     resolution: {integrity: sha512-3uYg2b5TWCiupetbDFMbBFMHl33xQTvp5DNg0fZSYal73Z9AlFH9yWabHWMYw6ywmwM1evkYRpTVA2n7GgqT5A==}
     hasBin: true
     dependencies:
@@ -2972,7 +2972,7 @@ packages:
       fast-glob: 3.3.3
       fs-extra: 10.1.0
       gradient-string: 2.0.2
-      inquirer: 8.2.7(@types/node@20.19.27)
+      inquirer: 8.2.7(@types/node@22.19.3)
       js-yaml: 4.1.1
       ora: 4.1.1
       rimraf: 3.0.2
@@ -3097,7 +3097,6 @@ packages:
     resolution: {integrity: sha512-1N9SBnWYOJTrNZCdh/yJE+t910Y128BoyY+zBLWhL3r0TYzlTmFdXrPwHL9DyFZmlEXNQQolTZh3KHV31QDhyA==}
     dependencies:
       undici-types: 6.21.0
-    dev: false
 
   /@types/prop-types@15.7.15:
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -3495,7 +3494,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dev: true
 
-  /better-auth@1.4.9:
+  /better-auth@1.4.9(pg@8.16.3):
     resolution: {integrity: sha512-usSdjuyTzZwIvM8fjF8YGhPncxV3MAg3dHUO9uPUnf0yklXUSYISiH1+imk6/Z+UBqsscyyPRnbIyjyK97p7YA==}
     peerDependencies:
       '@lynx-js/react': '*'
@@ -3565,6 +3564,7 @@ packages:
       jose: 6.1.3
       kysely: 0.28.9
       nanostores: 1.1.0
+      pg: 8.16.3
       zod: 4.2.1
     dev: false
 
@@ -4251,7 +4251,7 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.36.4(@libsql/client@0.14.0):
+  /drizzle-orm@0.36.4(@libsql/client@0.14.0)(pg@8.16.3):
     resolution: {integrity: sha512-1OZY3PXD7BR00Gl61UUOFihslDldfH4NFRH2MbP54Yxi0G/PKn4HfO65JYZ7c16DeP3SpM3Aw+VXVG9j6CRSXA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
@@ -4344,6 +4344,7 @@ packages:
         optional: true
     dependencies:
       '@libsql/client': 0.14.0
+      pg: 8.16.3
     dev: false
 
   /drizzle-orm@0.45.1(@libsql/client@0.15.15)(pg@8.16.3)(postgres@3.4.7):
@@ -5287,11 +5288,11 @@ packages:
       through: 2.3.8
     dev: true
 
-  /inquirer@8.2.7(@types/node@20.19.27):
+  /inquirer@8.2.7(@types/node@22.19.3):
     resolution: {integrity: sha512-UjOaSel/iddGZJ5xP/Eixh6dY1XghiBw4XK13rCCIJcJfyhhoul/7KhLLUGtebEj6GDYM6Vnx/mVsjx2L/mFIA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@inquirer/external-editor': 1.0.3(@types/node@20.19.27)
+      '@inquirer/external-editor': 1.0.3(@types/node@22.19.3)
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
@@ -8169,7 +8170,7 @@ packages:
   /ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
-  /ts-node@10.9.2(@types/node@20.19.27)(typescript@5.9.3):
+  /ts-node@10.9.2(@types/node@22.19.3)(typescript@5.9.3):
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
     peerDependencies:
@@ -8188,7 +8189,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 20.19.27
+      '@types/node': 22.19.3
       acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
