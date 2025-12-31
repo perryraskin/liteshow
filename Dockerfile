@@ -58,6 +58,9 @@ COPY --from=builder /app/package.json ./
 # Copy workspace files
 COPY --from=builder /app/pnpm-workspace.yaml ./
 
+# Copy templates directory (needed for template-sync)
+COPY --from=builder /app/templates ./templates
+
 # Install tsx globally for running TypeScript
 RUN npm install -g tsx
 
