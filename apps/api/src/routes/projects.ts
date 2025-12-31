@@ -246,28 +246,31 @@ async function createDeploymentFiles(
 
 Built with [LiteShow](https://liteshow.io) - AI-first, Git-powered CMS
 
-## Quick Deploy
+## Deploy Your Site
 
-Choose your preferred hosting platform:
+### Netlify Deployment
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/${repoFullName}#LITESHOW_PROJECT_SLUG=${slug}&LITESHOW_API_URL=https://api.liteshow.io)
+1. Go to [Netlify](https://app.netlify.com/start)
+2. Click **"Import an existing project"**
+3. Select **GitHub** and choose this repository
+4. Configure build settings:
+   - **Build command:** \`pnpm install && pnpm build\`
+   - **Publish directory:** \`dist\`
+5. Add environment variables (see below)
+6. Click **Deploy site**
 
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/${repoFullName}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables)
+### Vercel Deployment
 
-**Your project slug:** \`${slug}\` (copy and paste when prompted during deployment)
+1. Go to [Vercel](https://vercel.com/new)
+2. Click **"Import Git Repository"**
+3. Select this repository from GitHub
+4. Configure project:
+   - **Build command:** \`pnpm install && pnpm build\`
+   - **Output directory:** \`dist\`
+5. Add environment variables (see below)
+6. Click **Deploy**
 
-After deploying, any content you publish in LiteShow will automatically trigger a rebuild.
-
-## Manual Setup
-
-If you prefer manual setup:
-
-1. Import this repo in your hosting platform
-2. Set build command: \`pnpm install && pnpm build\`
-3. Set publish directory: \`dist\`
-4. Add these **required** environment variables:
-   - \`LITESHOW_PROJECT_SLUG\` = \`${slug}\`
-   - \`LITESHOW_API_URL\` = \`https://api.liteshow.io\`
+After deploying, any content you publish in LiteShow will automatically trigger a rebuild via webhook.
 
 ## Environment Variables
 

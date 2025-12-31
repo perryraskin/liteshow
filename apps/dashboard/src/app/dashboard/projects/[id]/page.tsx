@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
@@ -225,13 +226,183 @@ export default function ProjectPage() {
           </Card>
         </div>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Site Configuration</CardTitle>
-            <CardDescription>
-              Use these credentials to run the Astro site locally
-            </CardDescription>
-          </CardHeader>
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="w-full justify-start mb-6">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="deployment">Deployment</TabsTrigger>
+            <TabsTrigger value="development">Development</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Pages</CardTitle>
+                      <CardDescription>
+                        {pages.length} {pages.length === 1 ? 'page' : 'pages'} in this project
+                      </CardDescription>
+                    </div>
+                    <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
+                      <Button>
+                        Manage Pages
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {pages.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No pages yet</p>
+                      <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
+                        <Button>
+                          Create Your First Page
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pages.map((page: any) => (
+                        <Link
+                          key={page.id}
+                          href={`/dashboard/projects/${project.id}/pages/${page.id}`}
+                          prefetch={true}
+                        >
+                          <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{page.title}</h3>
+                                <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
+                                  {page.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(page.updatedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="lg:col-span-1">
+                <ActivityFeed projectId={project.id} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="deployment">
+            {project.githubRepoUrl ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Rocket className="h-5 w-5" />
+                    <CardTitle>Deployment</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Deploy your site to your preferred hosting platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <p className="text-sm font-medium mb-3">Manual Import (Recommended)</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      The "Deploy to" buttons below create NEW repositories. Instead, manually import your existing repository:
+                    </p>
+                    <div className="bg-muted p-4 rounded-lg space-y-3 mb-4">
+                      <div>
+                        <p className="text-sm font-semibold mb-2">For Netlify:</p>
+                        <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                          <li>Go to <a href="https://app.netlify.com/start" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Netlify → Add new site</a></li>
+                          <li>Click "Import an existing project"</li>
+                          <li>Select GitHub and choose: <span className="font-mono">{project.githubRepoName || project.githubRepoUrl}</span></li>
+                          <li>Add environment variables below</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold mb-2">For Vercel:</p>
+                        <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                          <li>Go to <a href="https://vercel.com/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Vercel → Add New Project</a></li>
+                          <li>Import Git Repository and select: <span className="font-mono">{project.githubRepoName || project.githubRepoUrl}</span></li>
+                          <li>Add environment variables below</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium mb-2">Environment Variables</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Add these to your hosting platform's environment settings:
+                    </p>
+                    <div className="bg-muted p-3 rounded-md">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-xs font-mono break-all space-y-1">
+                          <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
+                          <div>LITESHOW_API_URL=https://api.liteshow.io</div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
+                            toast.success('Environment variables copied to clipboard');
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Your site will fetch content from the LiteShow API at build time. No database credentials needed.
+                    </p>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <a
+                      href={project.githubRepoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      View full deployment instructions on GitHub
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Github className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Connect a GitHub repository to enable deployment
+                  </p>
+                  <Link href={`/dashboard/projects/${project.id}/setup-github`} prefetch={true}>
+                    <Button>
+                      <Github className="mr-2 h-4 w-4" />
+                      Setup GitHub
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="development">
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Configuration</CardTitle>
+                <CardDescription>
+                  Use these credentials to run the Astro site locally
+                </CardDescription>
+              </CardHeader>
           <CardContent>
             <div className="bg-muted p-4 rounded-lg space-y-3">
               <div className="flex items-start gap-2">
@@ -271,157 +442,9 @@ export default function ProjectPage() {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-        {project.githubRepoUrl && (
-          <Card className="mb-8">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Rocket className="h-5 w-5" />
-                <CardTitle>Deployment</CardTitle>
-              </div>
-              <CardDescription>
-                Deploy your site to your preferred hosting platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <p className="text-sm font-medium mb-3">Quick Deploy</p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Click a button below to deploy your site. After connecting once, any content you publish will automatically trigger a rebuild.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <a
-                    href={`https://app.netlify.com/start/deploy?repository=${project.githubRepoUrl}#LITESHOW_PROJECT_SLUG=${project.slug}&LITESHOW_API_URL=https://api.liteshow.io`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="mr-2 h-3 w-3" />
-                      Deploy to Netlify
-                    </Button>
-                  </a>
-                  <a
-                    href={`https://vercel.com/new/clone?repository-url=${project.githubRepoUrl}&env=LITESHOW_PROJECT_SLUG,LITESHOW_API_URL&envDescription=Required%20environment%20variables`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="mr-2 h-3 w-3" />
-                      Deploy to Vercel
-                    </Button>
-                  </a>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  <strong>Netlify:</strong> Both environment variables auto-filled! Just click and deploy.<br />
-                  <strong>Vercel:</strong> Prompted to enter environment variables during setup (shown below).
-                </p>
-              </div>
-
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium mb-2">Environment Variables</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Add these to your hosting platform's environment settings:
-                </p>
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-xs font-mono break-all space-y-1">
-                      <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
-                      <div>LITESHOW_API_URL=https://api.liteshow.io</div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
-                        toast.success('Environment variables copied to clipboard');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Your site will fetch content from the LiteShow API at build time. No database credentials needed.
-                </p>
-              </div>
-
-              <div className="border-t pt-4">
-                <a
-                  href={project.githubRepoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  View full deployment instructions on GitHub
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Pages</CardTitle>
-                  <CardDescription>
-                    {pages.length} {pages.length === 1 ? 'page' : 'pages'} in this project
-                  </CardDescription>
-                </div>
-                <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
-                  <Button>
-                    Manage Pages
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {pages.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No pages yet</p>
-                  <Link href={`/dashboard/projects/${project.id}/pages`} prefetch={true}>
-                    <Button>
-                      Create Your First Page
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pages.map((page: any) => (
-                    <Link
-                      key={page.id}
-                      href={`/dashboard/projects/${project.id}/pages/${page.id}`}
-                      prefetch={true}
-                    >
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{page.title}</h3>
-                          <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
-                            {page.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">/{page.slug}</p>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(page.updatedAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="lg:col-span-1">
-            <ActivityFeed projectId={project.id} />
-          </div>
-        </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Danger Zone */}
         <Card className="border-destructive mt-12">
