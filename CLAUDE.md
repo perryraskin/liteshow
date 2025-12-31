@@ -123,6 +123,26 @@ LiteShow is an AI-first, SEO-optimized, Git-powered CMS built with:
 - Keep commits focused on single features/fixes
 - Run `pnpm build` before committing if touching core packages
 
+## Deployment
+
+**IMPORTANT: Vercel Deployment Strategy**
+
+- **NEVER** use `vercel --prod` or any Vercel CLI deployment commands
+- **ALWAYS** deploy to Vercel by pushing to GitHub
+- Vercel is configured with automatic deployments from the main branch
+- Push to GitHub → Vercel automatically builds and deploys
+- This ensures consistency and proper CI/CD workflow
+
+**Deployment Checklist:**
+1. Commit changes locally
+2. Push to GitHub: `git push`
+3. Vercel will automatically detect the push and deploy
+4. Monitor deployment at https://vercel.com/dashboard
+
+**API Deployment (Fly.io):**
+- API can be deployed directly via Fly.io CLI
+- Use: `flyctl deploy --config apps/api/fly.toml --app liteshow-api`
+
 ## Multi-Tenant Architecture
 
 Remember that LiteShow is multi-tenant:
