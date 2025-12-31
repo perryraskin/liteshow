@@ -1,6 +1,6 @@
 [build]
-  command = "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm build"
+  command = "pnpm install && pnpm build"
   publish = "dist"
 
-[[plugins]]
-  package = "@astrojs/netlify"
+[build.environment]
+  NODE_VERSION = "20"

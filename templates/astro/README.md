@@ -4,38 +4,56 @@ Built with [LiteShow](https://liteshow.io) - AI-first, SEO-optimized, Git-powere
 
 ## Deploy Your Site
 
-### Netlify Deployment
+This is a static Astro site that works on **any hosting platform**. Choose your preferred platform below.
 
-1. Go to [Netlify](https://app.netlify.com/start)
-2. Click **"Import an existing project"**
-3. Select **GitHub** and choose this repository
-4. Configure build settings:
-   - **Build command:** `pnpm install && pnpm build`
-   - **Publish directory:** `dist`
-5. Add environment variables (see below)
-6. Click **Deploy site**
+### ⚡ Vercel (Recommended)
 
-### Vercel Deployment
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
 
-1. Go to [Vercel](https://vercel.com/new)
-2. Click **"Import Git Repository"**
-3. Select this repository from GitHub
-4. Configure project:
+1. Click the deploy button above OR go to [Vercel](https://vercel.com/new)
+2. Import this repository from GitHub
+3. Vercel will auto-detect settings:
+   - **Framework:** Astro
    - **Build command:** `pnpm install && pnpm build`
    - **Output directory:** `dist`
-5. Add environment variables (see below)
-6. Click **Deploy**
+4. Add environment variables (see below)
+5. Click **Deploy**
 
-After deploying, any content you publish in LiteShow will automatically trigger a rebuild via webhook.
+### 📦 Netlify
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start)
+
+1. Click the deploy button above OR go to [Netlify](https://app.netlify.com/start)
+2. Import this repository from GitHub
+3. Netlify will auto-detect settings:
+   - **Build command:** `pnpm install && pnpm build`
+   - **Publish directory:** `dist`
+4. Add environment variables (see below)
+5. Click **Deploy site**
+
+### 🚀 Other Platforms
+
+This static site also works on:
+- **Cloudflare Pages** - Auto-detects Astro
+- **GitHub Pages** - Use `gh-pages` branch
+- **AWS S3 + CloudFront** - Upload `dist/` folder
+- **Any static host** - Just upload the `dist/` folder
 
 ## Environment Variables
 
-**Both environment variables are required for deployment:**
+Add these in your deployment platform's dashboard:
 
-- `TURSO_DATABASE_URL` - Your Turso database URL
-- `TURSO_AUTH_TOKEN` - Your Turso auth token
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `TURSO_DATABASE_URL` | `libsql://your-db.turso.io` | Your Turso database URL |
+| `TURSO_AUTH_TOKEN` | `eyJ...` | Your Turso auth token |
 
-These are provided by LiteShow and connect your site to your content database.
+**Where to get these values:**
+1. Go to your LiteShow project settings
+2. Copy the database URL and auth token
+3. Paste them into your hosting platform's environment variables
+
+**Important:** These values are fetched at **build time**, so you need to trigger a new deployment when you publish content in LiteShow.
 
 ## Local Development
 

@@ -10,7 +10,6 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/netlify": "^5.5.3",
     "@libsql/client": "^0.14.0",
     "astro": "^5.1.3"
   },

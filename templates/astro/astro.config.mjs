@@ -1,9 +1,8 @@
 import { defineConfig } from 'astro/config';
-import netlify from '@astrojs/netlify';
 
 // https://astro.build/config
+// Static output works on Netlify, Vercel, Cloudflare Pages, and any static host
 export default defineConfig({
-  output: 'server',
-  adapter: netlify(),
+  output: 'static',
   site: '{{SITE_URL}}',
 });
