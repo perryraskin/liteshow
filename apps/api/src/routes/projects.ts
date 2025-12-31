@@ -1530,6 +1530,54 @@ projectRoutes.post('/:id/link-github', async (c) => {
   }
 });
 
+// GET /api/projects/:id/sync-template/status - Check if template sync PR exists
+projectRoutes.get('/:id/sync-template/status', async (c) => {
+  try {
+    const user = await getUserFromToken(c.req.header('Authorization'));
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const projectId = c.req.param('id');
+
+    // Get project and verify ownership
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    if (!project.githubRepoUrl || !project.githubRepoName) {
+      return c.json({ hasPendingPR: false });
+    }
+
+    // Get GitHub token
+    const token = await getGitHubTokenForProject(project, user);
+    if (!token) {
+      return c.json({ hasPendingPR: false });
+    }
+
+    // Check for existing sync PR
+    const { checkExistingSyncPR } = await import('../lib/template-sync');
+    const prUrl = await checkExistingSyncPR(project.githubRepoName, token);
+
+    return c.json({
+      hasPendingPR: !!prUrl,
+      prUrl: prUrl || null,
+    });
+  } catch (error: any) {
+    console.error('Error checking sync PR status:', error);
+    return c.json({ hasPendingPR: false });
+  }
+});
+
 // POST /api/projects/:id/sync-template - Create PR with template updates
 projectRoutes.post('/:id/sync-template', async (c) => {
   try {

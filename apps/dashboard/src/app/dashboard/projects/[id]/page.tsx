@@ -83,6 +83,25 @@ export default function ProjectPage() {
           const pagesData = await pagesResponse.json();
           setPages(pagesData);
         }
+
+        // Check for existing sync PR
+        if (projectData.githubRepoUrl) {
+          const syncStatusResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/sync-template/status`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (syncStatusResponse.ok) {
+            const syncStatus = await syncStatusResponse.json();
+            if (syncStatus.hasPendingPR && syncStatus.prUrl) {
+              setSyncPrUrl(syncStatus.prUrl);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
