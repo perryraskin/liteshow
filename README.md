@@ -91,6 +91,10 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Support both OAuth (create-now) and GitHub App (link-existing) strategies
 - [x] Progressive permission flow with minimal initial scope
 - [x] Environment variable based GitHub App configuration
+- [x] Fixed markdown rendering in MarkdownBlock component (added `marked` parser)
+- [x] Enhanced toast notifications with descriptions and rich colors
+- [x] Fixed homepage to show page list when no /home page exists
+- [x] Removed problematic Netlify redirect rules from template
 
 ### Phase 3.4: Deployment Monitoring 📋
 - [ ] Monitor GitHub Deployments API for all platforms (Netlify, Vercel, Cloudflare Pages)
