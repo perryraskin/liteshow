@@ -160,6 +160,13 @@ export default function ProjectPage() {
         throw new Error(data.error || 'Failed to sync template');
       }
 
+      if (data.upToDate) {
+        toast.success('Template is up to date!', {
+          description: 'Your site is already using the latest template version.',
+        });
+        return;
+      }
+
       setSyncPrUrl(data.prUrl);
       toast.success('Template sync PR created!', {
         description: `${data.filesChanged} files updated. Review and merge in GitHub.`,

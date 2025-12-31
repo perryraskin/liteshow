@@ -1571,6 +1571,14 @@ projectRoutes.post('/:id/sync-template', async (c) => {
       );
     }
 
+    if (result.upToDate) {
+      return c.json({
+        success: true,
+        upToDate: true,
+        message: 'Your template is already up to date',
+      });
+    }
+
     return c.json({
       success: true,
       prUrl: result.prUrl,

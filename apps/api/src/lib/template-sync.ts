@@ -1151,7 +1151,10 @@ export async function syncTemplateToRepo(
   const changedFiles = detectChangedFiles(templateFiles, repoFiles);
 
   if (changedFiles.length === 0) {
-    throw new Error('No template changes detected');
+    return {
+      success: true,
+      upToDate: true,
+    };
   }
 
   // Get default branch
