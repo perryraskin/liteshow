@@ -319,6 +319,7 @@ This Astro site fetches your published content from the LiteShow API at build ti
   "dependencies": {
     "@astrojs/tailwind": "^5.1.0",
     "astro": "^5.16.6",
+    "marked": "^14.1.3",
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
@@ -975,6 +976,8 @@ const { headline, subheadline, buttonText, buttonUrl, backgroundColor } = conten
       {
         path: 'src/components/blocks/MarkdownBlock.astro',
         content: `---
+import { marked } from 'marked';
+
 interface Props {
   content: {
     markdown: string;
@@ -983,12 +986,15 @@ interface Props {
 
 const { content } = Astro.props;
 const { markdown } = content;
+
+// Parse markdown to HTML
+const htmlContent = await marked.parse(markdown || '');
 ---
 
 <section class="py-16 bg-white">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto prose prose-lg prose-blue">
-      <div set:html={markdown} class="text-gray-700 leading-relaxed" />
+      <div set:html={htmlContent} class="text-gray-700 leading-relaxed" />
     </div>
   </div>
 </section>

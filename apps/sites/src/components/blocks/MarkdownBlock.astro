@@ -1,4 +1,6 @@
 ---
+import { marked } from 'marked';
+
 interface Props {
   content: {
     markdown: string;
@@ -7,12 +9,15 @@ interface Props {
 
 const { content } = Astro.props;
 const { markdown } = content;
+
+// Parse markdown to HTML
+const htmlContent = await marked.parse(markdown || '');
 ---
 
 <section class="py-16 bg-white">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto prose prose-lg prose-blue">
-      <div set:html={markdown} class="text-gray-700 leading-relaxed" />
+      <div set:html={htmlContent} class="text-gray-700 leading-relaxed" />
     </div>
   </div>
 </section>
