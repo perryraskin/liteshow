@@ -324,27 +324,13 @@ export default function ProjectPage() {
                     <div className="text-xs font-mono break-all space-y-1">
                       <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
                       <div>LITESHOW_API_URL=https://api.liteshow.io</div>
-                      {project.tursoDbUrl && (
-                        <>
-                          <div>TURSO_DB_URL={project.tursoDbUrl}</div>
-                          <div>TURSO_DB_TOKEN=****** (see below)</div>
-                        </>
-                      )}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="shrink-0"
                       onClick={() => {
-                        const envVars = [
-                          `LITESHOW_PROJECT_SLUG=${project.slug}`,
-                          `LITESHOW_API_URL=https://api.liteshow.io`,
-                        ];
-                        if (project.tursoDbUrl) {
-                          envVars.push(`TURSO_DB_URL=${project.tursoDbUrl}`);
-                          envVars.push(`TURSO_DB_TOKEN=${project.tursoDbToken || ''}`);
-                        }
-                        navigator.clipboard.writeText(envVars.join('\n'));
+                        navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
                         toast.success('Environment variables copied to clipboard');
                       }}
                     >
@@ -353,8 +339,7 @@ export default function ProjectPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Your site will fetch content from the LiteShow API at build time.
-                  {project.tursoDbUrl && ' Turso credentials included for direct database access if needed.'}
+                  Your site will fetch content from the LiteShow API at build time. No database credentials needed.
                 </p>
               </div>
 
