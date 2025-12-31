@@ -44,8 +44,9 @@ These are provided by LiteShow and connect your site to your content database.
 cp .env.example .env
 
 # Edit .env and add your configuration
-# TURSO_DATABASE_URL={{TURSO_DATABASE_URL}}
-# TURSO_AUTH_TOKEN={{TURSO_AUTH_TOKEN}}
+# Get these values from your LiteShow project settings
+# TURSO_DATABASE_URL=libsql://your-database.turso.io
+# TURSO_AUTH_TOKEN=your-token-here
 
 # Install and run
 pnpm install
