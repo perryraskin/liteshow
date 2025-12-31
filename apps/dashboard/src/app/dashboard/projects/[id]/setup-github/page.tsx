@@ -27,7 +27,7 @@ export default function SetupGitHubPage() {
         router.push(`/auth/github/request-scope?scope=${requiredScope}&redirect=/dashboard/projects/${params.id}/setup-github/create?visibility=${repoVisibility}`);
       } else {
         // GitHub App flow - redirect to GitHub to install the app
-        const githubAppName = 'liteshow-io-dev';
+        const githubAppName = process.env.NEXT_PUBLIC_GITHUB_APP_NAME || 'liteshow-io';
         const installUrl = `https://github.com/apps/${githubAppName}/installations/new?state=${encodeURIComponent(JSON.stringify({ projectId: params.id }))}`;
         window.location.href = installUrl;
       }
