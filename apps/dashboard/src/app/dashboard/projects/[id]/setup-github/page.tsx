@@ -24,7 +24,8 @@ export default function SetupGitHubPage() {
       if (selectedOption === 'create-now') {
         // Request OAuth scopes and create repo
         const requiredScope = repoVisibility === 'private' ? 'repo' : 'public_repo';
-        router.push(`/auth/github/request-scope?scope=${requiredScope}&redirect=/dashboard/projects/${params.id}/setup-github/create?visibility=${repoVisibility}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        window.location.href = `${apiUrl}/auth/github/request-scope?scope=${requiredScope}&redirect=/dashboard/projects/${params.id}/setup-github/create?visibility=${repoVisibility}`;
       } else {
         // GitHub App flow - redirect to GitHub to install the app
         const githubAppName = process.env.NEXT_PUBLIC_GITHUB_APP_NAME || 'liteshow-io';
