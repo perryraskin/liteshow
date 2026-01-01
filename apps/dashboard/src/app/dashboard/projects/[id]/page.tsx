@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { DeploymentTab } from '@/components/DeploymentTab';
+import { DeploymentStatusIndicator } from '@/components/DeploymentStatusIndicator';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -339,7 +340,10 @@ export default function ProjectPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{project.name}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold">{project.name}</h1>
+            <DeploymentStatusIndicator projectId={project.id} />
+          </div>
           <p className="text-muted-foreground">{project.description || 'No description'}</p>
         </div>
 

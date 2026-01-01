@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Rocket, ExternalLink, Github, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDeploymentStatus } from '@/hooks/useDeploymentStatus';
 
 interface Deployment {
   id: string;
@@ -39,6 +40,16 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [localProject, setLocalProject] = useState(project);
+
+  // Use the deployment status hook for real-time polling
+  const {
+    status: deploymentStatus,
+    refresh: refreshStatus,
+  } = useDeploymentStatus({
+    projectId: project.id,
+    enabled: true,
+    pollingInterval: 10000, // Poll every 10 seconds
+  });
 
   useEffect(() => {
     setLocalProject(project);
@@ -88,7 +99,9 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
         description: 'Your site is being built. This usually takes 2-3 minutes.',
       });
 
+      // Refresh both deployments and status
       fetchDeployments();
+      refreshStatus();
     } catch (error) {
       console.error('Error deploying:', error);
       toast.error('Failed to start deployment');
@@ -169,32 +182,32 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
               <CardTitle>Deployment Status</CardTitle>
               <CardDescription>GitHub Pages deployment via GitHub Actions</CardDescription>
             </div>
-            {getStatusBadge(localProject.deploymentStatus || 'not_deployed')}
+            {getStatusBadge(deploymentStatus.status)}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {localProject.deploymentUrl && (
+          {deploymentStatus.url && (
             <div>
               <Label className="text-sm font-medium">Live URL</Label>
               <div className="flex items-center gap-2 mt-1">
                 <a
-                  href={localProject.deploymentUrl}
+                  href={deploymentStatus.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline flex items-center gap-1"
                 >
-                  {localProject.deploymentUrl}
+                  {deploymentStatus.url}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             </div>
           )}
 
-          {localProject.lastDeployedAt && (
+          {deploymentStatus.lastDeployedAt && (
             <div>
               <Label className="text-sm font-medium">Last Deployed</Label>
               <p className="text-sm text-muted-foreground mt-1">
-                {new Date(localProject.lastDeployedAt).toLocaleString()}
+                {new Date(deploymentStatus.lastDeployedAt).toLocaleString()}
               </p>
             </div>
           )}
