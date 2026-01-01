@@ -1120,7 +1120,21 @@ export async function createSyncBranch(
   const refData: any = await refResponse.json();
   const baseSha = refData.object.sha;
 
+  console.log('Base branch ref fetched successfully:', {
+    repoFullName,
+    baseBranch,
+    baseSha,
+    refType: refData.object.type,
+  });
+
   // Create new branch
+  console.log('Attempting to create branch:', {
+    url: `https://api.github.com/repos/${repoFullName}/git/refs`,
+    branchName,
+    ref: `refs/heads/${branchName}`,
+    sha: baseSha,
+  });
+
   const createResponse = await fetch(
     `https://api.github.com/repos/${repoFullName}/git/refs`,
     {

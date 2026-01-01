@@ -37,10 +37,49 @@ export async function getGitHubTokenForProject(
   // Default to OAuth if no auth type is set (backward compatibility)
   const authType = project.githubAuthType || 'oauth';
 
+  console.log('getGitHubTokenForProject:', {
+    authType,
+    hasGithubAccessToken: !!user.githubAccessToken,
+    tokenLength: user.githubAccessToken?.length || 0,
+    tokenPrefix: user.githubAccessToken?.substring(0, 4) + '...' || 'none',
+    hasInstallationId: !!project.githubInstallationId,
+  });
+
   if (authType === 'oauth') {
     if (!user.githubAccessToken) {
       throw new Error('User does not have a GitHub access token');
     }
+    // Test if token is valid by making a simple API call
+    const testResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${user.githubAccessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
+
+    // Check token scopes from response headers
+    const scopes = testResponse.headers.get('x-oauth-scopes') || 'none';
+
+    console.log('OAuth token test /user:', {
+      status: testResponse.status,
+      statusText: testResponse.statusText,
+      scopes,
+    });
+
+    if (!testResponse.ok) {
+      const errorBody = await testResponse.text();
+      console.error('OAuth token is invalid:', errorBody);
+      throw new Error(`GitHub OAuth token is invalid or expired (status ${testResponse.status})`);
+    }
+
+    // Warning if token doesn't have write permissions
+    if (!scopes.includes('repo') && !scopes.includes('public_repo')) {
+      console.warn('⚠️  OAuth token does not have repo write permissions!', {
+        currentScopes: scopes,
+        requiredScopes: 'repo or public_repo',
+      });
+    }
+
     return user.githubAccessToken;
   }
 
