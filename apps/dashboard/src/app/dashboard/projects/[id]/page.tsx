@@ -523,7 +523,7 @@ export default function ProjectPage() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-medium">{page.title}</h3>
-                                <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
+                                <Badge variant={page.status === 'saved' ? 'default' : 'secondary'}>
                                   {page.status}
                                 </Badge>
                               </div>

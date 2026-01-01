@@ -29,7 +29,7 @@ interface Page {
   title: string;
   description: string | null;
   status: string;
-  hasUnpublishedChanges: boolean;
+  deployed: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   ogImage: string | null;
@@ -335,12 +335,12 @@ export default function PageEditorPage() {
               </Button>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <Badge variant={page.status === 'published' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
+              <Badge variant={page.status === 'saved' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                 {page.status}
               </Badge>
-              {page.hasUnpublishedChanges && (
-                <Badge variant="outline" className="hidden sm:inline-flex border-yellow-500 text-yellow-600 dark:text-yellow-400">
-                  Unpublished Changes
+              {page.deployed && (
+                <Badge variant="outline" className="hidden sm:inline-flex border-green-500 text-green-600 dark:text-green-400">
+                  Deployed
                 </Badge>
               )}
               <VersionHistory
@@ -348,32 +348,24 @@ export default function PageEditorPage() {
                 pageId={params.pageId as string}
                 currentPageStatus={{
                   status: page.status,
-                  hasUnpublishedChanges: page.hasUnpublishedChanges
+                  deployed: page.deployed
                 }}
                 onRestore={fetchPage}
               />
               <Button
                 onClick={() => {
-                  // If published with unpublished changes, re-publish to trigger sync
-                  // Otherwise, toggle status
-                  if (page.status === 'published' && page.hasUnpublishedChanges) {
-                    handleUpdateStatus('published');
-                  } else {
-                    handleUpdateStatus(page.status === 'published' ? 'draft' : 'published');
-                  }
+                  // Toggle status between draft and saved
+                  handleUpdateStatus(page.status === 'saved' ? 'draft' : 'saved');
                 }}
                 disabled={isUpdatingStatus}
                 size="sm"
-                variant={page.hasUnpublishedChanges && page.status === 'published' ? 'default' : undefined}
               >
                 {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <span className="hidden sm:inline">
-                  {page.status === 'published'
-                    ? (page.hasUnpublishedChanges ? 'Publish Changes' : 'Unpublish')
-                    : 'Publish'}
+                  {page.status === 'saved' ? 'Mark as Draft' : 'Save'}
                 </span>
                 <span className="sm:hidden">
-                  {page.status === 'published' ? 'Draft' : 'Publish'}
+                  {page.status === 'saved' ? 'Draft' : 'Save'}
                 </span>
               </Button>
             </div>
