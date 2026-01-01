@@ -1,14 +1,14 @@
 /**
  * GitHub App JWT Generation
  *
- * Generates JSON Web Tokens for authenticating as the LiteShow GitHub App.
+ * Generates JSON Web Tokens for authenticating as the Liteshow GitHub App.
  * The JWT is used to obtain installation access tokens.
  */
 
 import jwt from 'jsonwebtoken';
 
 /**
- * Generates a JWT for the LiteShow GitHub App
+ * Generates a JWT for the Liteshow GitHub App
  * Valid for 10 minutes, used to authenticate API requests to GitHub
  *
  * @returns {string} Signed JWT token

@@ -1,7 +1,7 @@
 /**
- * LiteShow Content API Client
+ * Liteshow Content API Client
  *
- * Fetches published content from the LiteShow public API
+ * Fetches published content from the Liteshow public API
  */
 
 const API_URL = import.meta.env.LITESHOW_API_URL || 'http://localhost:8000';

@@ -1,6 +1,6 @@
 # @liteshow/api
 
-The backend API for LiteShow (FastAPI or Hono).
+The backend API for Liteshow (FastAPI or Hono).
 
 ## Development
 

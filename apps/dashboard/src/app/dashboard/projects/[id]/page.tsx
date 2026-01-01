@@ -280,7 +280,7 @@ export default function ProjectPage() {
       toast.success('Project deleted successfully', {
         description: data.githubRepoUrl
           ? 'The GitHub repository still exists and must be deleted manually if desired.'
-          : 'All project data has been removed from LiteShow.',
+          : 'All project data has been removed from Liteshow.',
         action: data.githubRepoUrl ? {
           label: 'Open GitHub Repo',
           onClick: () => window.open(`${data.githubRepoUrl}/settings`, '_blank')
@@ -438,7 +438,7 @@ export default function ProjectPage() {
                     )}
 
                     <p className="text-xs text-muted-foreground mt-2">
-                      This checks if your Astro site files (templates/components/config) are up to date with the latest LiteShow version. Your content is separate and not affected.
+                      This checks if your Astro site files (templates/components/config) are up to date with the latest Liteshow version. Your content is separate and not affected.
                     </p>
 
                     {syncStatus && syncStatus !== 'checking' && (
@@ -610,7 +610,7 @@ export default function ProjectPage() {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Your site will fetch content from the LiteShow API at build time. No database credentials needed.
+                      Your site will fetch content from the Liteshow API at build time. No database credentials needed.
                     </p>
                   </div>
 
@@ -779,7 +779,7 @@ export default function ProjectPage() {
               <div>
                 <p className="font-medium mb-1">Delete this project</p>
                 <p className="text-sm text-muted-foreground">
-                  Once deleted, this project and all its content will be gone forever. This will delete the database and remove the project from LiteShow. You'll need to manually delete the GitHub repository if desired.
+                  Once deleted, this project and all its content will be gone forever. This will delete the database and remove the project from Liteshow. You'll need to manually delete the GitHub repository if desired.
                 </p>
               </div>
               <Button
@@ -801,7 +801,7 @@ export default function ProjectPage() {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the project{' '}
-              <strong className="text-foreground">{project.name}</strong>, its Turso database, and all associated content from LiteShow. The GitHub repository will remain and must be deleted manually if desired.
+              <strong className="text-foreground">{project.name}</strong>, its Turso database, and all associated content from Liteshow. The GitHub repository will remain and must be deleted manually if desired.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">

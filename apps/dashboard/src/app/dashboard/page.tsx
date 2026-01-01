@@ -92,7 +92,7 @@ function DashboardContent() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <h1 className="text-xl font-bold">LiteShow</h1>
+                <h1 className="text-xl font-bold">Liteshow</h1>
               </div>
             </div>
           </div>
@@ -102,7 +102,7 @@ function DashboardContent() {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-3xl font-bold mb-2">Projects</h2>
-              <p className="text-muted-foreground">Manage your LiteShow sites</p>
+              <p className="text-muted-foreground">Manage your Liteshow sites</p>
             </div>
           </div>
 
@@ -138,7 +138,7 @@ function DashboardContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold">LiteShow</h1>
+              <h1 className="text-xl font-bold">Liteshow</h1>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
@@ -157,7 +157,7 @@ function DashboardContent() {
           <div>
             <h2 className="text-3xl font-bold mb-2">Projects</h2>
             <p className="text-muted-foreground">
-              Manage your LiteShow sites
+              Manage your Liteshow sites
             </p>
           </div>
           <Link href="/dashboard/projects/new" prefetch={true}>

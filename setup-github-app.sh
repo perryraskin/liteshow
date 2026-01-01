@@ -3,7 +3,7 @@
 # GitHub App Setup Helper Script
 # This script helps you configure your GitHub App credentials
 
-echo "🚀 GitHub App Setup for LiteShow"
+echo "🚀 GitHub App Setup for Liteshow"
 echo "================================"
 echo ""
 

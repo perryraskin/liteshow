@@ -1,7 +1,7 @@
 /**
  * Drizzle Schema for PostgreSQL Metadata Database
  *
- * This schema defines the central metadata for the LiteShow platform:
+ * This schema defines the central metadata for the Liteshow platform:
  * - Users (linked to GitHub accounts)
  * - Projects (one per user site)
  * - Domains (custom domain mappings)

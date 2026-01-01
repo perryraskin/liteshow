@@ -134,7 +134,7 @@ describe('OAuth Progressive Permissions', () => {
       expect(response.status).toBe(200);
 
       const body = await response.json();
-      expect(body.service).toBe('LiteShow API');
+      expect(body.service).toBe('Liteshow API');
       expect(body.status).toBe('running');
     });
   });

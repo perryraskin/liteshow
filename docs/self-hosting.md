@@ -1,6 +1,6 @@
 # Self-Hosting Guide
 
-This guide covers different ways to self-host LiteShow, from the easiest managed approach to full local control.
+This guide covers different ways to self-host Liteshow, from the easiest managed approach to full local control.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This guide covers different ways to self-host LiteShow, from the easiest managed
 
 ## Option 1: Managed Database (Recommended)
 
-This is the easiest and most cost-effective way to self-host LiteShow. You only need to manage the application servers while using managed services for databases.
+This is the easiest and most cost-effective way to self-host Liteshow. You only need to manage the application servers while using managed services for databases.
 
 ### Services You'll Need
 
@@ -67,7 +67,7 @@ turso db tokens create liteshow
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in the details:
-   - Application name: `LiteShow (Self-Hosted)`
+   - Application name: `Liteshow (Self-Hosted)`
    - Homepage URL: `https://your-domain.com` (or `http://localhost:3000` for local)
    - Authorization callback URL: `https://your-api-domain.com/api/auth/callback/github`
 4. Save the Client ID and generate a Client Secret

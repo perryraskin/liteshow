@@ -20,7 +20,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-4xl font-bold mb-2">Welcome to LiteShow</h2>
+          <h2 className="text-4xl font-bold mb-2">Welcome to Liteshow</h2>
           <p className="text-gray-600 dark:text-gray-400">
             Sign in with your GitHub account to get started
           </p>
@@ -44,7 +44,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-          By signing in, you agree to grant LiteShow access to create and manage repositories in your GitHub account.
+          By signing in, you agree to grant Liteshow access to create and manage repositories in your GitHub account.
         </p>
       </div>
     </div>

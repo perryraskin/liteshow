@@ -1,6 +1,6 @@
-# LiteShow Sites - Astro Frontend
+# Liteshow Sites - Astro Frontend
 
-Public-facing Astro site that renders content from LiteShow projects.
+Public-facing Astro site that renders content from Liteshow projects.
 
 ## Features
 

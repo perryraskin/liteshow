@@ -2,7 +2,7 @@
   "name": "@liteshow/sites",
   "version": "0.1.0",
   "private": true,
-  "description": "LiteShow Astro site generator",
+  "description": "Liteshow Astro site generator",
   "scripts": {
     "dev": "astro dev --port 4321",
     "build": "astro build",

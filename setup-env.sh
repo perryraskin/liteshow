@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Interactive Environment Variable Setup Script for LiteShow
+# Interactive Environment Variable Setup Script for Liteshow
 # This script helps you configure your .env file securely
 
 set -e
@@ -16,7 +16,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}   LiteShow Environment Setup${NC}"
+echo -e "${BLUE}   Liteshow Environment Setup${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

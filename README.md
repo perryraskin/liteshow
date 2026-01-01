@@ -1,8 +1,8 @@
-# LiteShow
+# Liteshow
 
 > AI-First, SEO-Optimized, Git-Powered CMS
 
-LiteShow is a content management system that combines a powerful AI content assistant with a robust, developer-friendly architecture, ensuring every site is perfectly optimized for SEO from day one.
+Liteshow is a content management system that combines a powerful AI content assistant with a robust, developer-friendly architecture, ensuring every site is perfectly optimized for SEO from day one.
 
 ---
 
@@ -72,7 +72,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Verified all builds and deployments working
 
 ### Phase 3.2: API Production Deployment ✅
-- [x] Deployed LiteShow API to Fly.io at `liteshow-api.fly.dev`
+- [x] Deployed Liteshow API to Fly.io at `liteshow-api.fly.dev`
 - [x] Configured custom domain `api.liteshow.io` (SSL pending)
 - [x] Set up GitHub integration for automated deployments
 - [x] Implemented lazy database initialization for improved startup
@@ -82,7 +82,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [x] Environment variables secured in Fly.io secrets
 
 ### Phase 3.3: GitHub App Integration ✅
-- [x] Create LiteShow GitHub App with repository permissions
+- [x] Create Liteshow GitHub App with repository permissions
 - [x] User installs GitHub App to grant fine-grained repository access
 - [x] GitHub App callback and installation flow
 - [x] Repository selection UI (list all accessible repos)
@@ -108,7 +108,7 @@ LiteShow is a content management system that combines a powerful AI content assi
 - [ ] SQLite database export/download feature
 - [ ] Option to BYO database (bring your own Turso/SQLite instance)
 - [ ] Migration tool to export project and all content
-- [ ] Documentation for running LiteShow infrastructure yourself
+- [ ] Documentation for running Liteshow infrastructure yourself
 
 ### Phase 4: AI Content Assistant 📋
 - [ ] Anthropic Claude API integration
@@ -180,7 +180,7 @@ This is a monorepo containing:
 
 ### Production API
 
-The LiteShow API is live and accessible at:
+The Liteshow API is live and accessible at:
 - **Primary**: `https://liteshow-api.fly.dev/`
 - **Custom Domain**: `https://api.liteshow.io/` (SSL certificate provisioning)
 

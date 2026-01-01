@@ -4,7 +4,7 @@ The GitHub App integration is now fully implemented! Here's how to set it up:
 
 ## What's Implemented ✅
 
-1. **GitHub App Installation Flow** - Users can install the LiteShow GitHub App
+1. **GitHub App Installation Flow** - Users can install the Liteshow GitHub App
 2. **Repository Selection** - After installation, users select which repo to link
 3. **Fine-grained Access** - Users control which repos the app can access
 4. **Backend Integration** - Full API support for GitHub App authentication
@@ -128,7 +128,7 @@ This usually means:
 
 Users need to grant the app access to repositories:
 1. Go to https://github.com/settings/installations
-2. Find your LiteShow app
+2. Find your Liteshow app
 3. Click "Configure"
 4. Under "Repository access", select repositories
 

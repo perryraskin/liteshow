@@ -3,7 +3,7 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LiteShow - AI-First CMS',
+  title: 'Liteshow - AI-First CMS',
   description: 'AI-First, SEO-Optimized, Git-Powered CMS',
 };
 

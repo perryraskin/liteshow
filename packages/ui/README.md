@@ -1,3 +1,3 @@
 # @liteshow/ui
 
-Shared React UI components for LiteShow applications.
+Shared React UI components for Liteshow applications.

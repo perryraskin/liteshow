@@ -131,7 +131,7 @@ function SelectRepoContent() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Select Repository</h1>
           <p className="text-muted-foreground">
-            Choose which repository to connect to this LiteShow project.
+            Choose which repository to connect to this Liteshow project.
           </p>
         </div>
 
@@ -163,7 +163,7 @@ function SelectRepoContent() {
               <Github className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="font-medium mb-2">No repositories available</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                The LiteShow GitHub App doesn't have access to any repositories yet.
+                The Liteshow GitHub App doesn't have access to any repositories yet.
               </p>
               <p className="text-sm text-muted-foreground">
                 Go to GitHub and grant the app access to your repositories, then refresh this page.
@@ -184,7 +184,7 @@ function SelectRepoContent() {
             <CardHeader>
               <CardTitle>Available Repositories</CardTitle>
               <CardDescription>
-                Select a repository to connect to this project. LiteShow will push content changes to this repository.
+                Select a repository to connect to this project. Liteshow will push content changes to this repository.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">

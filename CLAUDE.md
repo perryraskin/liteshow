@@ -1,10 +1,10 @@
-# LiteShow - Claude Instructions
+# Liteshow - Claude Instructions
 
-Project-specific instructions for AI assistants working on LiteShow.
+Project-specific instructions for AI assistants working on Liteshow.
 
 ## Project Overview
 
-LiteShow is an AI-first, SEO-optimized, Git-powered CMS built with:
+Liteshow is an AI-first, SEO-optimized, Git-powered CMS built with:
 - **Monorepo**: Turborepo with pnpm workspaces
 - **Frontend**: Next.js (dashboard), Astro (public sites)
 - **Backend**: Hono API
@@ -166,7 +166,7 @@ If astro check or build fails, DO NOT deploy until fixed. The template must buil
 
 ## Multi-Tenant Architecture
 
-Remember that LiteShow is multi-tenant:
+Remember that Liteshow is multi-tenant:
 - Each project gets its own Turso database
 - Projects are isolated by user ownership
 - GitHub repos are created per-project

@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-Built with [LiteShow](https://liteshow.io) - AI-first, SEO-optimized, Git-powered CMS
+Built with [Liteshow](https://liteshow.io) - AI-first, SEO-optimized, Git-powered CMS
 
 ## Deploy Your Site
 
@@ -45,15 +45,15 @@ Add these in your deployment platform's dashboard:
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `LITESHOW_API_URL` | `https://api.liteshow.io` | LiteShow API URL (use default unless custom) |
-| `LITESHOW_PROJECT_SLUG` | `your-project-slug` | Your project slug from LiteShow |
+| `LITESHOW_API_URL` | `https://api.liteshow.io` | Liteshow API URL (use default unless custom) |
+| `LITESHOW_PROJECT_SLUG` | `your-project-slug` | Your project slug from Liteshow |
 
 **Where to get these values:**
-1. Go to your LiteShow project settings
+1. Go to your Liteshow project settings
 2. Find your project slug in the deployment section
 3. Add these environment variables to your hosting platform
 
-**Important:** Content is fetched from the API at **build time**, so you need to trigger a new deployment when you publish content in LiteShow.
+**Important:** Content is fetched from the API at **build time**, so you need to trigger a new deployment when you publish content in Liteshow.
 
 ## Local Development
 
@@ -62,7 +62,7 @@ Add these in your deployment platform's dashboard:
 cp .env.example .env
 
 # Edit .env and add your configuration
-# Get your project slug from your LiteShow project settings
+# Get your project slug from your Liteshow project settings
 # LITESHOW_API_URL=https://api.liteshow.io
 # LITESHOW_PROJECT_SLUG=your-project-slug
 
@@ -75,7 +75,7 @@ Visit http://localhost:4321
 
 ## How It Works
 
-This Astro site fetches your published content from the LiteShow API at build time. The API securely connects to your project's database and serves your content - you just publish your content and deploy!
+This Astro site fetches your published content from the Liteshow API at build time. The API securely connects to your project's database and serves your content - you just publish your content and deploy!
 
 ## Project Structure
 
@@ -87,7 +87,7 @@ This Astro site fetches your published content from the LiteShow API at build ti
 │   ├── layouts/
 │   │   └── BaseLayout.astro
 │   ├── lib/
-│   │   └── content-api.ts  # LiteShow API client
+│   │   └── content-api.ts  # Liteshow API client
 │   └── pages/
 │       ├── index.astro     # Home page
 │       ├── [slug].astro    # Dynamic pages

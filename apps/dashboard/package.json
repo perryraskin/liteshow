@@ -2,7 +2,7 @@
   "name": "@liteshow/dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "LiteShow user dashboard",
+  "description": "Liteshow user dashboard",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3001",
     "build": "next build",

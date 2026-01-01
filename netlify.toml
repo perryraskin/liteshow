@@ -5,9 +5,9 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--version"
-  # Required: Your LiteShow project slug (e.g., "my-project")
+  # Required: Your Liteshow project slug (e.g., "my-project")
   LITESHOW_PROJECT_SLUG = ""
-  # Required: LiteShow API URL
+  # Required: Liteshow API URL
   LITESHOW_API_URL = "https://api.liteshow.io"
   # Optional: Turso database credentials (if using Turso for content storage)
   TURSO_DB_URL = ""

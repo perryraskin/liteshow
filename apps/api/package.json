@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "LiteShow backend API",
+  "description": "Liteshow backend API",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "echo 'No build needed - using tsx'",

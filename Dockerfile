@@ -1,4 +1,4 @@
-# LiteShow API - Fly.io Deployment
+# Liteshow API - Fly.io Deployment
 # Multi-stage build for optimized production image
 
 FROM node:20-alpine AS base

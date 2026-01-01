@@ -1,6 +1,6 @@
 # GitHub App Setup Guide
 
-This guide will help you create and configure a GitHub App for LiteShow.
+This guide will help you create and configure a GitHub App for Liteshow.
 
 ## Step 1: Create GitHub App
 
@@ -9,7 +9,7 @@ This guide will help you create and configure a GitHub App for LiteShow.
 3. Fill in the following details:
 
 ### Basic Information
-- **GitHub App name**: `LiteShow` (or `LiteShow Dev` for testing)
+- **GitHub App name**: `Liteshow` (or `Liteshow Dev` for testing)
 - **Homepage URL**: `https://liteshow.io` (or your dev URL)
 - **Callback URL**: `https://api.liteshow.io/auth/github-app/callback` (or `https://devpi-3008.shmob.xyz/auth/github-app/callback` for local dev)
 - **Setup URL** (optional): Leave blank
@@ -75,7 +75,7 @@ After setup:
 
 ## Step 6: Test the Installation
 
-1. In LiteShow, create a new project with "Link Later"
+1. In Liteshow, create a new project with "Link Later"
 2. Click "Setup GitHub"
 3. Choose "Connect with GitHub App"
 4. You should be redirected to install/configure the app
@@ -99,6 +99,6 @@ After setup:
 
 Once configured, users can:
 1. Create their own repository (public or private)
-2. Install the LiteShow GitHub App
+2. Install the Liteshow GitHub App
 3. Grant access to specific repositories
-4. Connect those repositories to LiteShow projects
+4. Connect those repositories to Liteshow projects

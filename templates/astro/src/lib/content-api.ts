@@ -1,7 +1,7 @@
 /**
  * Content API Client
  *
- * Fetches published content from the LiteShow API.
+ * Fetches published content from the Liteshow API.
  * This runs at build time to generate static pages.
  */
 

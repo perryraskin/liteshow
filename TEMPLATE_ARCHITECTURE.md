@@ -2,7 +2,7 @@
 
 ## Overview
 
-LiteShow uses a real Astro project as a template instead of TypeScript template strings. This provides better developer experience, syntax highlighting, and maintainability.
+Liteshow uses a real Astro project as a template instead of TypeScript template strings. This provides better developer experience, syntax highlighting, and maintainability.
 
 ## Structure
 

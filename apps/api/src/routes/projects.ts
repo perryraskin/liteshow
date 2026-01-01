@@ -193,7 +193,7 @@ async function createGitHubRepository(slug: string, description: string, accessT
       },
       body: JSON.stringify({
         name: `liteshow-${slug}`,
-        description: description || 'LiteShow content repository',
+        description: description || 'Liteshow content repository',
         private: isPrivate,
         auto_init: false,
       }),
@@ -246,7 +246,7 @@ async function createDeploymentFiles(
         path: 'README.md',
         content: `# ${projectName}
 
-Built with [LiteShow](https://liteshow.io) - AI-first, Git-powered CMS
+Built with [Liteshow](https://liteshow.io) - AI-first, Git-powered CMS
 
 ## Deploy Your Site
 
@@ -272,16 +272,16 @@ Built with [LiteShow](https://liteshow.io) - AI-first, Git-powered CMS
 5. Add environment variables (see below)
 6. Click **Deploy**
 
-After deploying, any content you publish in LiteShow will automatically trigger a rebuild via webhook.
+After deploying, any content you publish in Liteshow will automatically trigger a rebuild via webhook.
 
 ## Environment Variables
 
 **Both environment variables are required for deployment:**
 
 - \`LITESHOW_PROJECT_SLUG\` - Your project slug: \`${slug}\`
-- \`LITESHOW_API_URL\` - LiteShow API endpoint: \`https://api.liteshow.io\`
+- \`LITESHOW_API_URL\` - Liteshow API endpoint: \`https://api.liteshow.io\`
 
-The site fetches your published content from the LiteShow API at build time.
+The site fetches your published content from the Liteshow API at build time.
 
 ## Local Development
 
@@ -302,7 +302,7 @@ Visit http://localhost:4321
 
 ## How It Works
 
-This Astro site fetches your published content from the LiteShow API at build time. LiteShow handles all the database infrastructure - you just manage your content!
+This Astro site fetches your published content from the Liteshow API at build time. Liteshow handles all the database infrastructure - you just manage your content!
 `,
       },
       {
@@ -311,7 +311,7 @@ This Astro site fetches your published content from the LiteShow API at build ti
   "name": "liteshow-${slug}",
   "version": "0.1.0",
   "private": true,
-  "description": "${projectName} - Built with LiteShow",
+  "description": "${projectName} - Built with Liteshow",
   "scripts": {
     "dev": "astro dev --port 4321",
     "build": "astro build",
@@ -363,13 +363,13 @@ export default {
       },
       {
         path: '.env.example',
-        content: `# LiteShow Configuration
-# Get these values from your LiteShow project settings
+        content: `# Liteshow Configuration
+# Get these values from your Liteshow project settings
 
 # Your project's slug (required)
 LITESHOW_PROJECT_SLUG=your-project-slug
 
-# LiteShow API URL (optional - defaults to http://localhost:8000)
+# Liteshow API URL (optional - defaults to http://localhost:8000)
 # For production, this will be set automatically by your hosting platform
 # LITESHOW_API_URL=https://api.liteshow.io
 `,
@@ -381,9 +381,9 @@ LITESHOW_PROJECT_SLUG=your-project-slug
       {
         path: 'src/lib/content-api.ts',
         content: `/**
- * LiteShow Content API Client
+ * Liteshow Content API Client
  *
- * Fetches published content from the LiteShow public API
+ * Fetches published content from the Liteshow public API
  */
 
 const API_URL = import.meta.env.LITESHOW_API_URL || 'http://localhost:8000';
@@ -651,13 +651,13 @@ const blockComponents: Record<string, any> = {
               No pages have been published yet.
             </p>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Create and publish pages in your LiteShow dashboard to get started.
+              Create and publish pages in your Liteshow dashboard to get started.
             </p>
           </div>
         )}
 
         <div class="text-center mt-12 text-sm text-gray-500 dark:text-gray-400">
-          Built with <span class="font-semibold">LiteShow</span> - AI-first, Git-powered CMS
+          Built with <span class="font-semibold">Liteshow</span> - AI-first, Git-powered CMS
         </div>
       </div>
     </main>
@@ -1210,7 +1210,7 @@ projectRoutes.post('/', async (c) => {
     let shouldCreateGitHubRepo = false;
 
     if (strategy === 'create-now') {
-      // OAuth: LiteShow creates the repo
+      // OAuth: Liteshow creates the repo
       authType = 'oauth';
       shouldCreateGitHubRepo = true;
 
@@ -1253,7 +1253,7 @@ projectRoutes.post('/', async (c) => {
     let githubRepo: { name: string; url: string } | null = null;
 
     if (shouldCreateGitHubRepo) {
-      // LiteShow creates the repository via OAuth
+      // Liteshow creates the repository via OAuth
       console.log('Creating GitHub repository...');
       const isPrivate = repoVisibility === 'private';
       githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!, isPrivate);

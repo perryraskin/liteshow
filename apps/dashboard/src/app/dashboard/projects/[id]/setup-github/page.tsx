@@ -91,7 +91,7 @@ export default function SetupGitHubPage() {
                     <div>
                       <CardTitle className="text-lg">Create GitHub Repo Now</CardTitle>
                       <CardDescription className="mt-1">
-                        LiteShow creates and links the repository for you
+                        Liteshow creates and links the repository for you
                       </CardDescription>
                     </div>
                   </div>
@@ -166,7 +166,7 @@ export default function SetupGitHubPage() {
                 </ul>
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-xs text-muted-foreground">
-                    <strong>GitHub App:</strong> Install the LiteShow GitHub App and select which specific repositories to connect. You maintain full control over repository access.
+                    <strong>GitHub App:</strong> Install the Liteshow GitHub App and select which specific repositories to connect. You maintain full control over repository access.
                   </p>
                 </div>
               </CardContent>
@@ -178,7 +178,7 @@ export default function SetupGitHubPage() {
                 <div>
                   <h3 className="text-sm font-medium mb-3">Repository Visibility</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    LiteShow will create the GitHub repository for you.
+                    Liteshow will create the GitHub repository for you.
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

@@ -1,4 +1,4 @@
-# Vercel Deployment Guide for LiteShow Dashboard
+# Vercel Deployment Guide for Liteshow Dashboard
 
 ## Prerequisites
 
@@ -91,7 +91,7 @@ Then redeploy for the change to take effect.
 Update your GitHub OAuth App callback URL to include the production domain:
 
 1. Go to GitHub Settings → Developer settings → OAuth Apps
-2. Edit your LiteShow OAuth App
+2. Edit your Liteshow OAuth App
 3. Update Authorization callback URL to: `https://api.liteshow.io/auth/callback/github`
 
 ## Troubleshooting

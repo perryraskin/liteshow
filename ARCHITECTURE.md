@@ -1,6 +1,6 @@
-# LiteShow Architecture
+# Liteshow Architecture
 
-Living architecture documentation for the LiteShow monorepo. This diagram is updated as features are implemented.
+Living architecture documentation for the Liteshow monorepo. This diagram is updated as features are implemented.
 
 **Last Updated**: 2025-12-31 - GitHub App Integration Complete
 
@@ -248,7 +248,7 @@ liteshow/
 ## Authentication Methods
 
 ### OAuth Method (Simple)
-- **User Journey**: LiteShow creates repo for user
+- **User Journey**: Liteshow creates repo for user
 - **Scopes**:
   - Initial: `user:email`
   - On-demand: `public_repo` or `repo`

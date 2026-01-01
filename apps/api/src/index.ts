@@ -1,7 +1,7 @@
 /**
- * LiteShow API Server
+ * Liteshow API Server
  *
- * Hono-based backend API for LiteShow platform.
+ * Hono-based backend API for Liteshow platform.
  * Handles authentication, project management, and content operations.
  */
 
@@ -40,7 +40,7 @@ app.use(
 // Root route - simple status check
 app.get('/', (c) => {
   return c.json({
-    service: 'LiteShow API',
+    service: 'Liteshow API',
     version: '0.1.0',
     status: 'running',
     timestamp: new Date().toISOString(),
@@ -61,7 +61,7 @@ app.onError(errorHandler);
 
 const port = parseInt(process.env.API_PORT || process.env.PORT || '8080');
 
-console.log(`🚀 LiteShow API server starting on 0.0.0.0:${port}`);
+console.log(`🚀 Liteshow API server starting on 0.0.0.0:${port}`);
 console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   Database: ${process.env.DATABASE_URL ? 'configured' : 'missing'}`);
 

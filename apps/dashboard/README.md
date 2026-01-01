@@ -1,6 +1,6 @@
 # @liteshow/dashboard
 
-The Next.js user dashboard for LiteShow.
+The Next.js user dashboard for Liteshow.
 
 ## Development
 
