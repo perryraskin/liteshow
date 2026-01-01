@@ -167,6 +167,12 @@ This is a monorepo containing:
   - Health monitoring and auto-scaling
   - Environment variables managed via Fly.io secrets
 
+- **Templates**: Astro site templates stored in separate repository
+  - Repository: [`liteshowcms/templates`](https://github.com/liteshowcms/templates)
+  - Templates are fetched from GitHub at runtime via API
+  - No API redeployment needed when templates are updated
+  - Used for both initial project creation and template sync
+
 - **Dashboard**: Deployed to Vercel at `liteshow-dashboard.vercel.app`
   - Production deployments active and running
   - All API calls integrated with production API

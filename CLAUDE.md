@@ -172,6 +172,78 @@ Remember that Liteshow is multi-tenant:
 - GitHub repos are created per-project
 - Sites will be deployed with separate builds per project
 
+## Templates Architecture
+
+**IMPORTANT**: Astro site templates are stored in a separate repository, not in this monorepo.
+
+### Template Repository
+- **Location**: [`liteshowcms/templates`](https://github.com/liteshowcms/templates)
+- **Structure**: `/astro/` directory contains the full Astro site template
+
+### How Templates Work
+
+1. **Runtime Fetching**: The API fetches templates from GitHub at runtime using the GitHub API
+   - See `apps/api/src/lib/template-sync.ts` for implementation
+   - Function: `getTemplateFiles()` fetches from `liteshowcms/templates` repo
+   - Uses GitHub Contents API and raw.githubusercontent.com
+
+2. **No Redeployment Needed**: Template updates don't require API redeployment
+   - Templates are fetched fresh on each project creation
+   - Template sync feature pulls latest changes for existing projects
+   - This allows rapid template iteration without infrastructure changes
+
+3. **Template Variables**: Content is processed with project-specific variables
+   - `{{PROJECT_NAME}}` - Project display name
+   - `{{PROJECT_SLUG}}` - Project URL slug
+   - `{{TURSO_DATABASE_URL}}` - Turso database connection
+   - `{{TURSO_AUTH_TOKEN}}` - Turso authentication token
+   - `{{SITE_URL}}` - Deployment URL (set by platform)
+
+4. **Use Cases**:
+   - **Initial Creation**: Templates populate new GitHub repos on project creation
+   - **Template Sync**: `/projects/:id/sync-template` endpoint creates PR with latest changes
+   - Both use the same `getTemplateFiles()` function for consistency
+
+### Modifying Templates
+
+**DO NOT** modify templates in this monorepo - they don't exist here!
+
+To update templates, follow this workflow:
+
+1. **Check for local templates repo**:
+   ```bash
+   # Check if templates repo exists locally in sibling directory
+   ls ../liteshowcms/templates
+   ```
+
+2. **If it exists**: Work directly in `../liteshowcms/templates`
+
+3. **If it doesn't exist**: Clone to temporary location
+   ```bash
+   cd /tmp
+   git clone https://github.com/liteshowcms/templates.git
+   cd templates
+   ```
+
+4. **Make changes** in the `/astro/` directory
+
+5. **Test locally** (MANDATORY):
+   ```bash
+   cd astro
+   pnpm install
+   pnpm build  # This runs 'astro check && astro build'
+   ```
+
+6. **Commit and push** to the templates repo
+   - Changes are immediately available - no API redeployment needed
+   - All new projects and template syncs will use the updated templates
+
+**Important**: Always test the build succeeds. A broken template will break all user site deployments!
+
+### Deprecated Code
+
+The file `template-sync.ts` contains `getTemplateFilesOld()` - this is deprecated string-based template code kept for reference. Always use the new `getTemplateFiles()` function that fetches from GitHub.
+
 ## Common Gotchas
 
 1. **Turso Database URLs**: Format is `libsql://database-name.turso.io`, not `https://`
