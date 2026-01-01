@@ -35,7 +35,7 @@ This is a static Astro site that works on **any hosting platform**. Choose your 
 
 This static site also works on:
 - **Cloudflare Pages** - Auto-detects Astro
-- **GitHub Pages** - Use `gh-pages` branch
+- **GitHub Pages** - 1-click deployment coming soon!
 - **AWS S3 + CloudFront** - Upload `dist/` folder
 - **Any static host** - Just upload the `dist/` folder
 
