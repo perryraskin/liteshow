@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { DeploymentTab } from '@/components/DeploymentTab';
 import { DeploymentStatusIndicator } from '@/components/DeploymentStatusIndicator';
@@ -36,7 +36,6 @@ export default function ProjectPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showToken, setShowToken] = useState(false);
   const [siteTitle, setSiteTitle] = useState('');
   const [siteDescription, setSiteDescription] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
@@ -45,6 +44,7 @@ export default function ProjectPage() {
   const [syncPrUrl, setSyncPrUrl] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<'checking' | 'up-to-date' | 'needs-update' | 'pr-created' | 'pr-exists' | 'error' | 'auth-required' | null>(null);
   const [requiresReauth, setRequiresReauth] = useState(false);
+  const syncInProgressRef = useRef(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -150,12 +150,13 @@ export default function ProjectPage() {
   };
 
   const checkAndSyncTemplate = async () => {
-    // Prevent duplicate calls
-    if (syncStatus === 'checking') {
+    // Prevent duplicate calls using ref (synchronous)
+    if (syncInProgressRef.current) {
       console.log('Sync already in progress, skipping duplicate call');
       return;
     }
 
+    syncInProgressRef.current = true;
     setSyncStatus('checking');
     try {
       const token = localStorage.getItem('session_token');
@@ -223,6 +224,9 @@ export default function ProjectPage() {
     } catch (error: any) {
       console.error('Template sync check error:', error);
       setSyncStatus('error');
+    } finally {
+      // Reset the ref to allow future calls
+      syncInProgressRef.current = false;
     }
   };
 
@@ -548,7 +552,6 @@ export default function ProjectPage() {
           <TabsList className="w-full justify-start mb-6">
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="deployment">Deployment</TabsTrigger>
-            <TabsTrigger value="development">Development</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -619,58 +622,6 @@ export default function ProjectPage() {
 
           <TabsContent value="deployment">
             <DeploymentTab project={project} />
-          </TabsContent>
-
-          <TabsContent value="development">
-            <Card>
-              <CardHeader>
-                <CardTitle>Site Configuration</CardTitle>
-                <CardDescription>
-                  Use these credentials to run the Astro site locally
-                </CardDescription>
-              </CardHeader>
-          <CardContent>
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="flex-1 font-mono text-sm break-all">
-                  <div className="text-muted-foreground">TURSO_DB_URL</div>
-                  <div className="mt-1">{project.tursoDbUrl}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="flex-1 font-mono text-sm">
-                  <div className="text-muted-foreground">TURSO_DB_TOKEN</div>
-                  <div className={`mt-1 ${showToken ? 'break-all' : ''}`}>
-                    {showToken ? project.tursoDbToken : '•••••••••••••••••••••••••••••••••••'}
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowToken(!showToken)}
-                >
-                  {showToken ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
-                  {showToken ? 'Hide' : 'Show'} Token
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`TURSO_DB_URL=${project.tursoDbUrl}\nTURSO_DB_TOKEN=${project.tursoDbToken}`);
-                    toast.success('Copied to clipboard!', {
-                      description: 'Environment variables are ready to paste into your .env file.',
-                    });
-                  }}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy All
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="settings">
