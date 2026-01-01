@@ -134,6 +134,18 @@ Before deploying to any environment:
 
 These checks prevent runtime errors like missing imports, type errors, and syntax issues.
 
+**Astro Template Changes:**
+
+MANDATORY: When modifying files in `templates/astro/`, ALWAYS test locally before deploying:
+
+```bash
+cd templates/astro
+pnpm install
+pnpm build  # This runs 'astro check && astro build'
+```
+
+If astro check or build fails, DO NOT deploy until fixed. The template must build successfully or ALL user sites will fail to deploy.
+
 **IMPORTANT: Vercel Deployment Strategy**
 
 - **NEVER** use `vercel --prod` or any Vercel CLI deployment commands
