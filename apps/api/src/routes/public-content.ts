@@ -41,13 +41,13 @@ publicContentRoutes.get('/sites/:slug/pages', async (c) => {
 
     const projectDb = drizzle(tursoClient, { schema: { pages, blocks } });
 
-    // Fetch all published pages
-    const publishedPages = await projectDb
+    // Fetch all saved pages (ready for deployment)
+    const savedPages = await projectDb
       .select()
       .from(pages)
-      .where(eq(pages.status, 'published'));
+      .where(eq(pages.status, 'saved'));
 
-    return c.json(publishedPages);
+    return c.json(savedPages);
   } catch (error) {
     console.error('Error fetching published pages:', error);
     return c.json({ error: 'Failed to fetch pages' }, 500);
@@ -94,8 +94,8 @@ publicContentRoutes.get('/sites/:slug/pages/:pageSlug', async (c) => {
 
     const page = pageResults[0];
 
-    // Only serve published pages
-    if (page.status !== 'published') {
+    // Only serve saved pages (ready for deployment)
+    if (page.status !== 'saved') {
       return c.json({ error: 'Page not found' }, 404);
     }
 
