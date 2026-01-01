@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Header } from '@/components/Header';
 import { Plus } from 'lucide-react';
 
 interface Project {
@@ -88,15 +89,10 @@ function DashboardContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <nav className="bg-card border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <h1 className="text-xl font-bold">Liteshow</h1>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Header
+          breadcrumbs={[{ label: 'Liteshow' }]}
+          onSignOut={handleSignOut}
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-8">
@@ -134,23 +130,11 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold">Liteshow</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {session.user.email}
-              </span>
-              <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header
+        breadcrumbs={[{ label: 'Liteshow' }, { label: 'Projects' }]}
+        userEmail={session?.user?.email}
+        onSignOut={handleSignOut}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">

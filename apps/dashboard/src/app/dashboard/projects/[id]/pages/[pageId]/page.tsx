@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, FileText, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { Plus, FileText, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import HeroBlockEditor from '@/components/block-editors/HeroBlockEditor';
 import FeaturesBlockEditor from '@/components/block-editors/FeaturesBlockEditor';
 import TestimonialsBlockEditor from '@/components/block-editors/TestimonialsBlockEditor';
@@ -41,6 +42,8 @@ interface Page {
 export default function PageEditorPage() {
   const router = useRouter();
   const params = useParams();
+  const [session, setSession] = useState<any>(null);
+  const [project, setProject] = useState<any>(null);
   const [page, setPage] = useState<Page | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -50,8 +53,48 @@ export default function PageEditorPage() {
   const [editingBlock, setEditingBlock] = useState<Block | null>(null);
   const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
 
+  const handleSignOut = () => {
+    localStorage.removeItem('session_token');
+    router.push('/');
+  };
+
   useEffect(() => {
-    fetchPage();
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('session_token');
+
+        // Fetch session
+        const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+        const sessionData = await sessionResponse.json();
+        if (sessionData.user) {
+          setSession(sessionData);
+        }
+
+        // Fetch project
+        const projectResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const projectData = await projectResponse.json();
+        setProject(projectData);
+
+        // Fetch page
+        await fetchPage();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, [params.id, params.pageId]);
 
   const fetchPage = async () => {
@@ -264,22 +307,16 @@ export default function PageEditorPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !project || !page) {
     return (
       <div className="min-h-screen bg-background">
-        <nav className="bg-card border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <div className="h-9 w-32 bg-muted rounded-full animate-pulse"></div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-5 w-16 bg-muted rounded-full animate-pulse"></div>
-                <div className="h-9 w-24 bg-muted rounded-full animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Header
+          breadcrumbs={[
+            { label: 'Liteshow', href: '/dashboard' },
+            { label: 'Loading...' }
+          ]}
+          onSignOut={handleSignOut}
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
@@ -312,70 +349,60 @@ export default function PageEditorPage() {
     );
   }
 
-  if (!page) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Page not found</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                onClick={() => router.push(`/dashboard/projects/${params.id}/pages`)}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Pages
-              </Button>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              {page.status === 'draft' && (
-                <Badge variant="secondary" className="hidden sm:inline-flex">
-                  draft
-                </Badge>
-              )}
-              {page.hasUnpublishedChanges && page.status === 'saved' && (
-                <Badge variant="outline" className="hidden sm:inline-flex border-yellow-500 text-yellow-600 dark:text-yellow-400">
-                  Unsaved Changes
-                </Badge>
-              )}
-              <VersionHistory
-                projectId={params.id as string}
-                pageId={params.pageId as string}
-                currentPageStatus={{
-                  status: page.status,
-                  hasUnpublishedChanges: page.hasUnpublishedChanges
-                }}
-                onRestore={fetchPage}
-              />
-              <Button
-                onClick={() => {
-                  // Show "Save" when: draft OR (saved with unpublished changes)
-                  // Show "Mark as Draft" when: saved with NO unpublished changes
-                  const shouldSave = page.status === 'draft' || page.hasUnpublishedChanges;
-                  handleUpdateStatus(shouldSave ? 'saved' : 'draft');
-                }}
-                disabled={isUpdatingStatus}
-                size="sm"
-              >
-                {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <span className="hidden sm:inline">
-                  {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Mark as Draft'}
-                </span>
-                <span className="sm:hidden">
-                  {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Draft'}
-                </span>
-              </Button>
-            </div>
+      <Header
+        breadcrumbs={[
+          { label: 'Liteshow', href: '/dashboard' },
+          { label: 'Projects', href: '/dashboard' },
+          { label: project.name, href: `/dashboard/projects/${params.id}` },
+          { label: 'Pages', href: `/dashboard/projects/${params.id}/pages` },
+          { label: page.title }
+        ]}
+        userEmail={session?.user?.email}
+        onSignOut={handleSignOut}
+        rightContent={
+          <div className="flex items-center gap-2 sm:gap-4">
+            {page.status === 'draft' && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">
+                draft
+              </Badge>
+            )}
+            {page.hasUnpublishedChanges && page.status === 'saved' && (
+              <Badge variant="outline" className="hidden sm:inline-flex border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                Unsaved Changes
+              </Badge>
+            )}
+            <VersionHistory
+              projectId={params.id as string}
+              pageId={params.pageId as string}
+              currentPageStatus={{
+                status: page.status,
+                hasUnpublishedChanges: page.hasUnpublishedChanges
+              }}
+              onRestore={fetchPage}
+            />
+            <Button
+              onClick={() => {
+                // Show "Save" when: draft OR (saved with unpublished changes)
+                // Show "Mark as Draft" when: saved with NO unpublished changes
+                const shouldSave = page.status === 'draft' || page.hasUnpublishedChanges;
+                handleUpdateStatus(shouldSave ? 'saved' : 'draft');
+              }}
+              disabled={isUpdatingStatus}
+              size="sm"
+            >
+              {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <span className="hidden sm:inline">
+                {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Mark as Draft'}
+              </span>
+              <span className="sm:hidden">
+                {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Draft'}
+              </span>
+            </Button>
           </div>
-        </div>
-      </nav>
+        }
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

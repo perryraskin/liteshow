@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Plus, FileText, Loader2 } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { Plus, FileText, Loader2 } from 'lucide-react';
 
 interface Page {
   id: string;
@@ -23,6 +24,8 @@ interface Page {
 export default function PagesListPage() {
   const router = useRouter();
   const params = useParams();
+  const [session, setSession] = useState<any>(null);
+  const [project, setProject] = useState<any>(null);
   const [pages, setPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,8 +36,48 @@ export default function PagesListPage() {
     description: '',
   });
 
+  const handleSignOut = () => {
+    localStorage.removeItem('session_token');
+    router.push('/');
+  };
+
   useEffect(() => {
-    fetchPages();
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('session_token');
+
+        // Fetch session
+        const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+        const sessionData = await sessionResponse.json();
+        if (sessionData.user) {
+          setSession(sessionData);
+        }
+
+        // Fetch project
+        const projectResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const projectData = await projectResponse.json();
+        setProject(projectData);
+
+        // Fetch pages
+        await fetchPages();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, [params.id]);
 
   const fetchPages = async () => {
@@ -107,21 +150,16 @@ export default function PagesListPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !project) {
     return (
       <div className="min-h-screen bg-background">
-        <nav className="bg-card border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <Button variant="ghost" onClick={() => router.push(`/dashboard/projects/${params.id}`)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Project
-                </Button>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Header
+          breadcrumbs={[
+            { label: 'Liteshow', href: '/dashboard' },
+            { label: 'Loading...' }
+          ]}
+          onSignOut={handleSignOut}
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-8">
@@ -151,29 +189,27 @@ export default function PagesListPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Button variant="ghost" onClick={() => router.push(`/dashboard/projects/${params.id}`)}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Project
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-1">Pages</h1>
-            <p className="text-muted-foreground">Manage your site pages</p>
-          </div>
+      <Header
+        breadcrumbs={[
+          { label: 'Liteshow', href: '/dashboard' },
+          { label: 'Projects', href: '/dashboard' },
+          { label: project.name, href: `/dashboard/projects/${params.id}` },
+          { label: 'Pages' }
+        ]}
+        userEmail={session?.user?.email}
+        onSignOut={handleSignOut}
+        rightContent={
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Page
           </Button>
+        }
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-1">Pages</h1>
+          <p className="text-muted-foreground">Manage your site pages</p>
         </div>
 
         {pages.length === 0 ? (

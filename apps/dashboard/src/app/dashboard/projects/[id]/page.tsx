@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { DeploymentTab } from '@/components/DeploymentTab';
 import { DeploymentStatusIndicator } from '@/components/DeploymentStatusIndicator';
@@ -30,6 +31,7 @@ import { cn } from '@/lib/utils';
 export default function ProjectPage() {
   const router = useRouter();
   const params = useParams();
+  const [session, setSession] = useState<any>(null);
   const [project, setProject] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,10 +48,27 @@ export default function ProjectPage() {
   const [requiresReauth, setRequiresReauth] = useState(false);
   const syncInProgressRef = useRef(false);
 
+  const handleSignOut = () => {
+    localStorage.removeItem('session_token');
+    router.push('/');
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('session_token');
+
+        // Fetch session
+        const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+        const sessionData = await sessionResponse.json();
+        if (sessionData.user) {
+          setSession(sessionData);
+        }
 
         // Fetch project details
         const projectResponse = await fetch(
@@ -364,20 +383,15 @@ export default function ProjectPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" prefetch={true}>
-                <Button variant="ghost">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header
+        breadcrumbs={[
+          { label: 'Liteshow', href: '/dashboard' },
+          { label: 'Projects', href: '/dashboard' },
+          { label: project.name }
+        ]}
+        userEmail={session?.user?.email}
+        onSignOut={handleSignOut}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
