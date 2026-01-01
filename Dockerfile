@@ -40,12 +40,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install git for cloning templates
-RUN apk add --no-cache git
-
-# Clone templates repo
-RUN git clone --depth 1 https://github.com/liteshowcms/templates.git /app/templates
-
 # Copy packages (db and auth use source files, not built dist)
 COPY --from=builder /app/packages/db/src ./packages/db/src
 COPY --from=builder /app/packages/db/package.json ./packages/db/
