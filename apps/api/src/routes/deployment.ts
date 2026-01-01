@@ -449,6 +449,12 @@ deploymentRoutes.get('/status', async (c) => {
             githubToken
           );
 
+          console.log('GitHub deployment status:', {
+            status: githubStatus?.status,
+            conclusion: githubStatus?.conclusion,
+            url: githubStatus?.url,
+          });
+
           if (githubStatus) {
             // Map GitHub status to our status format
             let deploymentStatus = 'not_deployed';
@@ -459,6 +465,8 @@ deploymentRoutes.get('/status', async (c) => {
             } else if (githubStatus.conclusion === 'failure') {
               deploymentStatus = 'failed';
             }
+
+            console.log('Mapped deployment status:', deploymentStatus);
 
             // Update project if status changed
             if (deploymentStatus !== project.deploymentStatus) {
