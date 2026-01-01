@@ -10,7 +10,9 @@ import { eq, desc } from 'drizzle-orm';
 import {
   triggerDeployment,
   parseGitHubRepoUrl,
-  getLatestDeploymentStatus
+  getLatestDeploymentStatus,
+  enableGitHubPages,
+  setRepositorySecret
 } from '../lib/github-pages';
 import { getGitHubTokenForProject } from '../lib/github-token';
 
@@ -36,9 +38,9 @@ async function getUserFromToken(authHeader: string | undefined) {
  * POST /projects/:projectId/deployment/deploy
  * Trigger a new deployment to GitHub Pages
  */
-deploymentRoutes.post('/:projectId/deploy', async (c) => {
+deploymentRoutes.post('/deploy', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
 
     const user = await getUserFromToken(authHeader);
@@ -74,6 +76,25 @@ deploymentRoutes.post('/:projectId/deploy', async (c) => {
     const githubToken = await getGitHubTokenForProject(project, user);
 
     try {
+      // Enable GitHub Pages if not already enabled
+      // This is safe to call multiple times - it will return existing URL if already enabled
+      const pagesUrl = await enableGitHubPages(repoInfo.owner, repoInfo.repo, githubToken);
+      console.log('GitHub Pages enabled:', pagesUrl);
+
+      // Update deployment URL if we got one
+      if (pagesUrl && !project.deploymentUrl) {
+        await db
+          .update(projects)
+          .set({ deploymentUrl: pagesUrl })
+          .where(eq(projects.id, projectId));
+      }
+
+      // Set required GitHub Actions secrets for the build
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.liteshow.io';
+      await setRepositorySecret(repoInfo.owner, repoInfo.repo, githubToken, 'LITESHOW_API_URL', apiUrl);
+      await setRepositorySecret(repoInfo.owner, repoInfo.repo, githubToken, 'LITESHOW_PROJECT_SLUG', project.slug);
+      console.log('GitHub Actions secrets configured');
+
       // Trigger the GitHub Actions workflow
       await triggerDeployment(repoInfo.owner, repoInfo.repo, githubToken);
 
@@ -130,9 +151,9 @@ deploymentRoutes.post('/:projectId/deploy', async (c) => {
  * PATCH /projects/:projectId/deployment/settings
  * Update deployment settings (auto-deploy, etc.)
  */
-deploymentRoutes.patch('/:projectId/settings', async (c) => {
+deploymentRoutes.patch('/settings', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
     const body = await c.req.json();
 
@@ -177,9 +198,9 @@ deploymentRoutes.patch('/:projectId/settings', async (c) => {
  * GET /projects/:projectId/deployments
  * Get deployment history for a project
  */
-deploymentRoutes.get('/:projectId/deployments', async (c) => {
+deploymentRoutes.get('/deployments', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
 
     const user = await getUserFromToken(authHeader);
@@ -220,9 +241,9 @@ deploymentRoutes.get('/:projectId/deployments', async (c) => {
  * POST /projects/:projectId/deployment/sync-status
  * Sync deployment status from GitHub Actions
  */
-deploymentRoutes.post('/:projectId/sync-status', async (c) => {
+deploymentRoutes.post('/sync-status', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
 
     const user = await getUserFromToken(authHeader);
@@ -326,9 +347,9 @@ deploymentRoutes.post('/:projectId/sync-status', async (c) => {
  * PATCH /projects/:projectId/deployment/custom-domain
  * Update custom domain configuration
  */
-deploymentRoutes.patch('/:projectId/custom-domain', async (c) => {
+deploymentRoutes.patch('/custom-domain', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
     const body = await c.req.json();
 
@@ -385,10 +406,11 @@ deploymentRoutes.patch('/:projectId/custom-domain', async (c) => {
 /**
  * GET /projects/:projectId/deployment/status
  * Get current deployment status
+ * Automatically syncs from GitHub if status is "building"
  */
-deploymentRoutes.get('/:projectId/status', async (c) => {
+deploymentRoutes.get('/status', async (c) => {
   try {
-    const { projectId } = c.req.param();
+    const projectId = c.req.param('projectId');
     const authHeader = c.req.header('Authorization');
 
     const user = await getUserFromToken(authHeader);
@@ -408,6 +430,59 @@ deploymentRoutes.get('/:projectId/status', async (c) => {
 
     if (project.userId !== user.id) {
       return c.json({ error: 'Unauthorized' }, 403);
+    }
+
+    // If status is "building", sync from GitHub to check if it completed
+    if (project.deploymentStatus === 'building' && project.githubRepoUrl) {
+      try {
+        const repoInfo = parseGitHubRepoUrl(project.githubRepoUrl);
+        if (repoInfo) {
+          const githubToken = await getGitHubTokenForProject(project, user);
+          const githubStatus = await getLatestDeploymentStatus(
+            repoInfo.owner,
+            repoInfo.repo,
+            githubToken
+          );
+
+          if (githubStatus) {
+            // Map GitHub status to our status format
+            let deploymentStatus = 'not_deployed';
+            if (githubStatus.status === 'in_progress' || githubStatus.status === 'queued') {
+              deploymentStatus = 'building';
+            } else if (githubStatus.conclusion === 'success') {
+              deploymentStatus = 'live';
+            } else if (githubStatus.conclusion === 'failure') {
+              deploymentStatus = 'failed';
+            }
+
+            // Update project if status changed
+            if (deploymentStatus !== project.deploymentStatus) {
+              await db
+                .update(projects)
+                .set({
+                  deploymentStatus,
+                  lastDeployedAt: githubStatus.status === 'completed'
+                    ? new Date(githubStatus.createdAt)
+                    : project.lastDeployedAt,
+                })
+                .where(eq(projects.id, projectId));
+
+              // Return updated status
+              return c.json({
+                status: deploymentStatus,
+                url: project.deploymentUrl,
+                lastDeployedAt: githubStatus.status === 'completed'
+                  ? new Date(githubStatus.createdAt).toISOString()
+                  : project.lastDeployedAt,
+                lastCommit: project.lastDeploymentCommit,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error syncing deployment status:', error);
+        // Continue with cached status if sync fails
+      }
     }
 
     return c.json({
