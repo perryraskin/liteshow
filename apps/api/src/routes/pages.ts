@@ -9,12 +9,14 @@ import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { eq, asc } from 'drizzle-orm';
 import { db } from '@liteshow/db';
-import { projects, users } from '@liteshow/db';
+import { projects, users, deployments } from '@liteshow/db';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 import { randomUUID } from 'crypto';
 import { syncPageToGitHub, deletePageFromGitHub } from '../lib/git-sync';
 import { logPageActivity } from '../lib/activity-logger';
 import { createPageVersion, getPageVersions, restorePageVersion } from '../lib/versioning';
+import { triggerDeployment, parseGitHubRepoUrl } from '../lib/github-pages';
+import { getGitHubTokenForProject } from '../lib/github-token';
 
 const pagesRoutes = new Hono();
 
@@ -328,9 +330,9 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     // Determine if we'll trigger git sync
     const newStatus = status !== undefined ? status : existingPage[0].status;
     const hadUnpublishedChanges = existingPage[0].hasUnpublishedChanges;
-    const shouldSyncToGit = newStatus === 'published' && (
-      (oldStatus !== 'published') || // First-time publish
-      (hadUnpublishedChanges || hasContentChanges) // Publishing changes
+    const shouldSyncToGit = newStatus === 'saved' && (
+      (oldStatus !== 'saved') || // First-time save
+      (hadUnpublishedChanges || hasContentChanges) // Saving changes
     );
 
     // If we're about to sync to git, clear the unpublished flag
@@ -351,9 +353,9 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     console.log(`Page updated: ${pageId} in project ${projectId}`);
 
     // Log activity
-    if (oldStatus !== 'published' && newStatus === 'published') {
-      // Log page published
-      await logPageActivity('page_published', projectId, user.id, pageId, {
+    if (oldStatus !== 'saved' && newStatus === 'saved') {
+      // Log page saved
+      await logPageActivity('page_saved', projectId, user.id, pageId, {
         title: updatedPage[0].title,
         slug: updatedPage[0].slug,
       });
@@ -366,7 +368,7 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
     }
 
     if (shouldSyncToGit) {
-      console.log(`Page status changed to published, syncing to GitHub...`);
+      console.log(`Page status changed to saved, syncing to GitHub...`);
 
       try {
         // Fetch blocks for the page
@@ -387,6 +389,38 @@ pagesRoutes.put('/:projectId/pages/:pageId', async (c) => {
         );
 
         console.log(`Successfully synced page to GitHub`);
+
+        // If auto-deploy is enabled, trigger deployment
+        console.log(`Checking auto-deploy: autoDeployOnSave=${project.autoDeployOnSave}, githubRepoUrl=${project.githubRepoUrl}`);
+        if (project.autoDeployOnSave) {
+          console.log(`Auto-deploy enabled, triggering deployment...`);
+          try {
+            const repoInfo = parseGitHubRepoUrl(project.githubRepoUrl);
+            if (repoInfo) {
+              const githubToken = await getGitHubTokenForProject(project, user);
+              await triggerDeployment(repoInfo.owner, repoInfo.repo, githubToken);
+              console.log(`Successfully triggered auto-deployment`);
+
+              // Create deployment record
+              await db.insert(deployments).values({
+                projectId,
+                status: 'in_progress',
+                commitMessage: `Auto-deploy: saved page "${updatedPage[0].title}"`,
+              });
+
+              // Update project deployment status
+              await db
+                .update(projects)
+                .set({ deploymentStatus: 'building' })
+                .where(eq(projects.id, projectId));
+
+              console.log(`Created deployment record and updated project status to building`);
+            }
+          } catch (deployError) {
+            console.error('Failed to trigger auto-deployment:', deployError);
+            // Don't fail the update if deployment trigger fails
+          }
+        }
       } catch (syncError) {
         console.error('Failed to sync to GitHub:', syncError);
         // Don't fail the update if sync fails - log and continue
@@ -428,7 +462,7 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
     }
 
     const pageSlug = existingPage[0].slug;
-    const wasPublished = existingPage[0].status === 'published';
+    const wasSaved = existingPage[0].status === 'saved';
 
     // Delete page (blocks will be cascade deleted)
     await client.delete(pages).where(eq(pages.id, pageId));
@@ -441,9 +475,9 @@ pagesRoutes.delete('/:projectId/pages/:pageId', async (c) => {
       slug: pageSlug,
     });
 
-    // If page was published, delete from GitHub
-    if (wasPublished) {
-      console.log(`Deleting published page from GitHub...`);
+    // If page was saved, delete from GitHub
+    if (wasSaved) {
+      console.log(`Deleting saved page from GitHub...`);
       try {
         await deletePageFromGitHub(project, pageSlug, user);
         console.log(`Successfully deleted page from GitHub`);

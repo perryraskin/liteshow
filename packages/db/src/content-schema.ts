@@ -19,7 +19,7 @@ export const pages = sqliteTable('pages', {
   title: text('title').notNull(),
   description: text('description'),
   status: text('status').notNull().default('draft'), // 'draft', 'saved'
-  deployed: integer('deployed', { mode: 'boolean' }).notNull().default(false), // Whether page is currently deployed
+  hasUnpublishedChanges: integer('has_unpublished_changes', { mode: 'boolean' }).notNull().default(false), // Whether page has unpublished changes
 
   // SEO metadata
   metaTitle: text('meta_title'),

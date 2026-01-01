@@ -108,7 +108,7 @@ export async function syncPageToGitHub(
   // Create or update the file
   const commitMessage = fileSha
     ? `Update page: ${page.title}`
-    : `Publish page: ${page.title}`;
+    : `Save page: ${page.title}`;
 
   const updatePayload: any = {
     message: commitMessage,

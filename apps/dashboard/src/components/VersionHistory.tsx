@@ -21,7 +21,7 @@ interface VersionHistoryProps {
   pageId: string;
   currentPageStatus?: {
     status: string;
-    deployed: boolean;
+    hasUnpublishedChanges: boolean;
   };
   onRestore?: () => void;
 }
@@ -116,14 +116,14 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
         title: data.page?.title || 'Untitled',
         blockCount: data.blocks?.length || 0,
         status: data.page?.status || 'unknown',
-        deployed: data.page?.deployed || false,
+        hasUnpublishedChanges: data.page?.hasUnpublishedChanges || false,
       };
     } catch {
       return {
         title: 'Unknown',
         blockCount: 0,
         status: 'unknown',
-        deployed: false,
+        hasUnpublishedChanges: false,
       };
     }
   };

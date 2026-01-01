@@ -101,6 +101,22 @@ Liteshow is an AI-first, SEO-optimized, Git-powered CMS built with:
 - Maintain dark mode compatibility
 - Mobile-first responsive design
 
+### Python Scripts
+- **ALWAYS use Python** for database migration and utility scripts
+- Place all scripts in the `/scripts` folder at project root
+- Use the existing virtual environment: `scripts/venv`
+- Follow the pattern of existing scripts (see `check_pages.py`, `check_deployment_status.py`)
+- Scripts should:
+  - Include a shebang: `#!/usr/bin/env python3`
+  - Have a docstring explaining usage
+  - Load environment variables from `scripts/.env` using `python-dotenv`
+  - Use `psycopg2` for PostgreSQL connections
+  - Use `requests` library for HTTP/Turso API calls
+  - Include proper error handling and user-friendly output
+  - Be made executable: `chmod +x scripts/your_script.py`
+- Required dependencies are in `scripts/requirements.txt`
+- To run: `cd scripts && source venv/bin/activate && python your_script.py`
+
 ## Testing Requirements
 
 - Test new API endpoints with example requests

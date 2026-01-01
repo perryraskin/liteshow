@@ -201,9 +201,9 @@ export default function PagesListPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
                     <CardTitle className="text-lg">{page.title}</CardTitle>
-                    <Badge variant={page.status === 'published' ? "default" : "secondary"}>
-                      {page.status}
-                    </Badge>
+                    {page.status === 'draft' && (
+                      <Badge variant="secondary">draft</Badge>
+                    )}
                   </div>
                   <CardDescription>/{page.slug}</CardDescription>
                 </CardHeader>

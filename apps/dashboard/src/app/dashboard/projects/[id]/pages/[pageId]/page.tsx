@@ -29,7 +29,7 @@ interface Page {
   title: string;
   description: string | null;
   status: string;
-  deployed: boolean;
+  hasUnpublishedChanges: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   ogImage: string | null;
@@ -340,9 +340,9 @@ export default function PageEditorPage() {
                   draft
                 </Badge>
               )}
-              {page.deployed && (
-                <Badge variant="outline" className="hidden sm:inline-flex border-green-500 text-green-600 dark:text-green-400">
-                  Deployed
+              {page.hasUnpublishedChanges && page.status === 'saved' && (
+                <Badge variant="outline" className="hidden sm:inline-flex border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                  Unsaved Changes
                 </Badge>
               )}
               <VersionHistory
@@ -350,24 +350,26 @@ export default function PageEditorPage() {
                 pageId={params.pageId as string}
                 currentPageStatus={{
                   status: page.status,
-                  deployed: page.deployed
+                  hasUnpublishedChanges: page.hasUnpublishedChanges
                 }}
                 onRestore={fetchPage}
               />
               <Button
                 onClick={() => {
-                  // Toggle status between draft and saved
-                  handleUpdateStatus(page.status === 'saved' ? 'draft' : 'saved');
+                  // Show "Save" when: draft OR (saved with unpublished changes)
+                  // Show "Mark as Draft" when: saved with NO unpublished changes
+                  const shouldSave = page.status === 'draft' || page.hasUnpublishedChanges;
+                  handleUpdateStatus(shouldSave ? 'saved' : 'draft');
                 }}
                 disabled={isUpdatingStatus}
                 size="sm"
               >
                 {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <span className="hidden sm:inline">
-                  {page.status === 'saved' ? 'Mark as Draft' : 'Save'}
+                  {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Mark as Draft'}
                 </span>
                 <span className="sm:hidden">
-                  {page.status === 'saved' ? 'Draft' : 'Save'}
+                  {page.status === 'draft' || page.hasUnpublishedChanges ? 'Save' : 'Draft'}
                 </span>
               </Button>
             </div>

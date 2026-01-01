@@ -36,8 +36,8 @@ function formatActivityText(activity: Activity): string {
       return `created page "${metadata?.title || 'Untitled'}"`;
     case 'page_updated':
       return `updated page "${metadata?.title || 'Untitled'}"`;
-    case 'page_published':
-      return `published page "${metadata?.title || 'Untitled'}"`;
+    case 'page_saved':
+      return `saved page "${metadata?.title || 'Untitled'}"`;
     case 'page_deleted':
       return `deleted page "${metadata?.title || 'Untitled'}"`;
     case 'block_created':
@@ -61,7 +61,7 @@ function getActivityIcon(action: string): string {
   if (action.includes('created')) return '✨';
   if (action.includes('updated')) return '✏️';
   if (action.includes('deleted')) return '🗑️';
-  if (action.includes('published')) return '🚀';
+  if (action.includes('saved')) return '💾';
   if (action.includes('reordered')) return '🔄';
   if (action.includes('git_sync')) return '📦';
   return '📝';

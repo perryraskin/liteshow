@@ -11,7 +11,7 @@ export type ActivityAction =
   | 'page_created'
   | 'page_updated'
   | 'page_deleted'
-  | 'page_published'
+  | 'page_saved'
   | 'block_created'
   | 'block_updated'
   | 'block_deleted'
@@ -67,7 +67,7 @@ export async function logActivity({
  * Helper: Log page activity
  */
 export async function logPageActivity(
-  action: Extract<ActivityAction, 'page_created' | 'page_updated' | 'page_deleted' | 'page_published'>,
+  action: Extract<ActivityAction, 'page_created' | 'page_updated' | 'page_deleted' | 'page_saved'>,
   projectId: string,
   userId: string,
   pageId: string,
