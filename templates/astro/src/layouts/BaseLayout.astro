@@ -3,9 +3,10 @@ interface Props {
   title: string;
   description?: string;
   keywords?: string;
+  faviconUrl?: string | null;
 }
 
-const { title, description, keywords } = Astro.props;
+const { title, description, keywords, faviconUrl } = Astro.props;
 ---
 
 <!doctype html>
@@ -16,7 +17,11 @@ const { title, description, keywords } = Astro.props;
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     {keywords && <meta name="keywords" content={keywords} />}
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {faviconUrl ? (
+      <link rel="icon" type="image/png" href={faviconUrl} />
+    ) : (
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    )}
   </head>
   <body>
     <slot />

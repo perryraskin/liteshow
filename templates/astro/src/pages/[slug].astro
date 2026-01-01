@@ -6,7 +6,7 @@ import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
 import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
 import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
 import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getPage, getAllPages } from '../lib/content-api';
+import { getPage, getAllPages, getSiteSettings } from '../lib/content-api';
 
 // Generate static paths for all published pages at build time
 export async function getStaticPaths() {
@@ -27,12 +27,15 @@ const page = await getPage(slug);
 if (!page) {
   return Astro.redirect('/404');
 }
+
+const siteSettings = await getSiteSettings();
 ---
 
 <BaseLayout
   title={page.seo_title || page.title}
   description={page.seo_description}
   keywords={page.seo_keywords}
+  faviconUrl={siteSettings?.faviconUrl}
 >
   {page.blocks.map((block) => {
     switch (block.type) {

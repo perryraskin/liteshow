@@ -1,13 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getAllPages } from '../lib/content-api';
+import { getAllPages, getSiteSettings } from '../lib/content-api';
 
 const pages = await getAllPages();
+const siteSettings = await getSiteSettings();
 ---
 
 <BaseLayout
   title="{{PROJECT_NAME}}"
   description="Welcome to {{PROJECT_NAME}}"
+  faviconUrl={siteSettings?.faviconUrl}
 >
   <section class="py-20 bg-white">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
