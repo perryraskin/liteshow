@@ -8,7 +8,7 @@ Liteshow is a content management system that combines a powerful AI content assi
 
 ## 🚧 MVP Development Progress
 
-**Current Status**: Phase 3.3 Complete ✅ | GitHub App Integration Fully Functional 🚀
+**Current Status**: Phase 3.4 Complete ✅ | GitHub Pages Deployment Fully Functional 🚀
 
 ### Phase 1: Core Infrastructure & Authentication ✅
 - [x] Database setup with Drizzle ORM (PostgreSQL + Turso)
@@ -96,12 +96,17 @@ Liteshow is a content management system that combines a powerful AI content assi
 - [x] Fixed homepage to show page list when no /home page exists
 - [x] Removed problematic Netlify redirect rules from template
 
-### Phase 3.4: Deployment Monitoring 📋
-- [ ] Monitor GitHub Deployments API for all platforms (Netlify, Vercel, Cloudflare Pages)
-- [ ] Display deployment status in dashboard (Building / Success / Failed / Not Deployed)
-- [ ] Show deployment history with timestamps and commit SHAs
-- [ ] Quick link to deployed site from dashboard
-- [ ] Support for multiple deployments (preview/production)
+### Phase 3.4: GitHub Pages Deployment ✅
+- [x] Renamed "Publish/Published" to "Save/Saved" throughout the application
+- [x] Added deployment infrastructure to database schema
+- [x] Created Deployment tab UI with status, settings, and history
+- [x] Implemented GitHub Actions workflow for automated deployments
+- [x] Created deployment API routes (deploy, settings, history, status, sync)
+- [x] Integrated GitHub API to trigger and monitor deployments
+- [x] Added real-time deployment status polling with useDeploymentStatus hook
+- [x] Created deployment status indicator in project header
+- [x] Implemented custom domain configuration UI and API
+- [x] DNS instructions with CNAME record details
 
 ### Phase 3.5: Advanced Deployment Options 📋
 - [ ] Self-hosting mode (direct Turso connection for users who want full control)
