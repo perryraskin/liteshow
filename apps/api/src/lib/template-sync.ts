@@ -1105,7 +1105,15 @@ export async function createSyncBranch(
   );
 
   if (!refResponse.ok) {
-    throw new Error(`Failed to get base branch ref: ${refResponse.statusText}`);
+    const errorBody = await refResponse.text();
+    console.error('GitHub API error fetching base branch:', {
+      status: refResponse.status,
+      statusText: refResponse.statusText,
+      repoFullName,
+      baseBranch,
+      body: errorBody,
+    });
+    throw new Error(`Failed to get base branch ref: ${refResponse.status} ${refResponse.statusText} - ${errorBody}`);
   }
 
   const refData: any = await refResponse.json();
@@ -1129,7 +1137,15 @@ export async function createSyncBranch(
   );
 
   if (!createResponse.ok) {
-    throw new Error(`Failed to create branch: ${createResponse.statusText}`);
+    const errorBody = await createResponse.text();
+    console.error('GitHub API error creating branch:', {
+      status: createResponse.status,
+      statusText: createResponse.statusText,
+      repoFullName,
+      branchName,
+      body: errorBody,
+    });
+    throw new Error(`Failed to create branch: ${createResponse.status} ${createResponse.statusText} - ${errorBody}`);
   }
 
   return branchName;
