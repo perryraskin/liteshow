@@ -14,7 +14,7 @@ This is a static Astro site that works on **any hosting platform**. Choose your 
 2. Import this repository from GitHub
 3. Vercel will auto-detect settings:
    - **Framework:** Astro
-   - **Build command:** `pnpm install && pnpm build`
+   - **Build command:** `npm install && npm run build`
    - **Output directory:** `dist`
 4. Add environment variables (see below)
 5. Click **Deploy**
@@ -26,7 +26,7 @@ This is a static Astro site that works on **any hosting platform**. Choose your 
 1. Click the deploy button above OR go to [Netlify](https://app.netlify.com/start)
 2. Import this repository from GitHub
 3. Netlify will auto-detect settings:
-   - **Build command:** `pnpm install && pnpm build`
+   - **Build command:** `npm install && npm run build`
    - **Publish directory:** `dist`
 4. Add environment variables (see below)
 5. Click **Deploy site**
@@ -67,8 +67,8 @@ cp .env.example .env
 # LITESHOW_PROJECT_SLUG=your-project-slug
 
 # Install and run
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Visit http://localhost:4321
