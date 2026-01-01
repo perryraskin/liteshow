@@ -1097,7 +1097,7 @@ export async function createSyncBranch(
 }
 
 /**
- * Update files in the sync branch
+ * Update files in the sync branch with a single commit
  */
 export async function updateFilesInBranch(
   repoFullName: string,
@@ -1105,36 +1105,139 @@ export async function updateFilesInBranch(
   changedFiles: ChangedFile[],
   token: string
 ): Promise<void> {
-  for (const file of changedFiles) {
-    const content = Buffer.from(file.content).toString('base64');
-
-    const body: any = {
-      message: `Update ${file.path}`,
-      content,
-      branch: branchName,
-    };
-
-    if (file.oldSha) {
-      body.sha = file.oldSha;
+  // Get the branch ref to find the latest commit SHA
+  const refResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/ref/heads/${branchName}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
     }
+  );
 
-    const response = await fetch(
-      `https://api.github.com/repos/${repoFullName}/contents/${file.path}`,
+  if (!refResponse.ok) {
+    throw new Error(`Failed to get branch ref: ${await refResponse.text()}`);
+  }
+
+  const refData: any = await refResponse.json();
+  const baseCommitSha = refData.object.sha;
+
+  // Get the base commit to find its tree SHA
+  const commitResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/commits/${baseCommitSha}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    }
+  );
+
+  if (!commitResponse.ok) {
+    throw new Error(`Failed to get commit: ${await commitResponse.text()}`);
+  }
+
+  const commitData: any = await commitResponse.json();
+  const baseTreeSha = commitData.tree.sha;
+
+  // Create blobs for all changed files
+  const tree: any[] = [];
+  for (const file of changedFiles) {
+    const blobResponse = await fetch(
+      `https://api.github.com/repos/${repoFullName}/git/blobs`,
       {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          content: Buffer.from(file.content).toString('base64'),
+          encoding: 'base64',
+        }),
       }
     );
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Failed to update ${file.path}: ${error}`);
+    if (!blobResponse.ok) {
+      throw new Error(`Failed to create blob for ${file.path}: ${await blobResponse.text()}`);
     }
+
+    const blobData: any = await blobResponse.json();
+    tree.push({
+      path: file.path,
+      mode: '100644',
+      type: 'blob',
+      sha: blobData.sha,
+    });
+  }
+
+  // Create a new tree with all the changed files
+  const treeResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/trees`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree,
+      }),
+    }
+  );
+
+  if (!treeResponse.ok) {
+    throw new Error(`Failed to create tree: ${await treeResponse.text()}`);
+  }
+
+  const treeData: any = await treeResponse.json();
+
+  // Create a single commit with all changes
+  const newCommitResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/commits`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `chore: sync with latest Liteshow template\n\nUpdated ${changedFiles.length} file(s):\n${changedFiles.map(f => `- ${f.path}`).join('\n')}`,
+        tree: treeData.sha,
+        parents: [baseCommitSha],
+      }),
+    }
+  );
+
+  if (!newCommitResponse.ok) {
+    throw new Error(`Failed to create commit: ${await newCommitResponse.text()}`);
+  }
+
+  const newCommitData: any = await newCommitResponse.json();
+
+  // Update the branch ref to point to the new commit
+  const updateRefResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/refs/heads/${branchName}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sha: newCommitData.sha,
+      }),
+    }
+  );
+
+  if (!updateRefResponse.ok) {
+    throw new Error(`Failed to update ref: ${await updateRefResponse.text()}`);
   }
 }
 
