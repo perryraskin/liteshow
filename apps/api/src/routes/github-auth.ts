@@ -2,6 +2,16 @@
  * Simple GitHub OAuth Implementation
  */
 
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load env vars before anything else - from apps/api directory
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const apiDir = resolve(__dirname, '../..');
+config({ path: resolve(apiDir, '.env') });
+config({ path: resolve(apiDir, '.env.local'), override: true });
+
 import { Hono } from 'hono';
 import { db } from '@liteshow/db';
 import { users } from '@liteshow/db';
@@ -13,6 +23,12 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
 const CALLBACK_URL = `${process.env.BETTER_AUTH_URL}/callback/github`;
 const FRONTEND_URL = process.env.NEXT_PUBLIC_APP_URL!;
+
+console.log('🔐 Auth routes loaded:');
+console.log('  GITHUB_CLIENT_ID:', GITHUB_CLIENT_ID ? '✓ SET' : '✗ UNDEFINED');
+console.log('  GITHUB_CLIENT_SECRET:', GITHUB_CLIENT_SECRET ? '✓ SET' : '✗ UNDEFINED');
+console.log('  BETTER_AUTH_URL:', process.env.BETTER_AUTH_URL || '✗ UNDEFINED');
+console.log('  CALLBACK_URL:', CALLBACK_URL);
 
 // Initiate GitHub OAuth (minimal scope - just profile)
 authRoutes.get('/github', (c) => {

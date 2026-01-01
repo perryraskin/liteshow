@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
+import { VibeKanbanWrapper } from '@/components/vibe-kanban-wrapper';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <VibeKanbanWrapper />
         {children}
         <Toaster
           position="top-right"

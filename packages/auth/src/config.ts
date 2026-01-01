@@ -5,6 +5,18 @@
  * for managing repositories on behalf of users.
  */
 
+// Load environment variables FIRST, before any other imports
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../../../apps/api/.env') });
+
+console.log('🔐 Better Auth config loaded');
+console.log('🔐 BETTER_AUTH_URL:', process.env.BETTER_AUTH_URL);
+console.log('🔐 GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID ? 'SET' : 'UNDEFINED');
+
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@liteshow/db';
