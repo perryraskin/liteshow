@@ -6,9 +6,18 @@ import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
 import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
 import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
 import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getPage } from '../lib/content-api';
+import { getPage, getAllPages } from '../lib/content-api';
 
-const page = await getPage('index');
+// Try to fetch 'index' page first, if not found use the first published page
+let page = await getPage('index');
+
+if (!page) {
+  const allPages = await getAllPages();
+  if (allPages.length > 0) {
+    // Use the first published page as homepage
+    page = allPages[0];
+  }
+}
 
 if (!page) {
   return Astro.redirect('/404');
