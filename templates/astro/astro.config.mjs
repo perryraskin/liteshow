@@ -4,5 +4,6 @@ import { defineConfig } from 'astro/config';
 // Static output works on Netlify, Vercel, Cloudflare Pages, and any static host
 export default defineConfig({
   output: 'static',
-  site: '{{SITE_URL}}',
+  // Site URL is optional - set via SITE_URL environment variable if needed for absolute URLs/sitemaps
+  ...(process.env.SITE_URL && { site: process.env.SITE_URL }),
 });
