@@ -54,8 +54,8 @@ export async function getLatestDeploymentStatus(
     }
 
     return {
-      status: latestRun.status, // 'queued', 'in_progress', 'completed'
-      conclusion: latestRun.conclusion, // 'success', 'failure', 'cancelled', etc.
+      status: latestRun.status || 'unknown', // 'queued', 'in_progress', 'completed'
+      conclusion: latestRun.conclusion || null, // 'success', 'failure', 'cancelled', etc.
       commitSha: latestRun.head_sha,
       url: latestRun.html_url,
       createdAt: latestRun.created_at,
@@ -86,12 +86,13 @@ export async function setRepositorySecret(
 
     // Encrypt the secret value using libsodium (sodium-plus package)
     const sodium = await import('sodium-plus');
-    const { SodiumPlus } = sodium;
+    const { SodiumPlus, CryptographyKey } = sodium;
     const sodiumInstance = await SodiumPlus.auto();
 
     const messageBytes = Buffer.from(secretValue);
     const keyBytes = Buffer.from(publicKey.key, 'base64');
-    const encryptedBytes = await sodiumInstance.crypto_box_seal(messageBytes, keyBytes);
+    const cryptoKey = new CryptographyKey(keyBytes);
+    const encryptedBytes = await sodiumInstance.crypto_box_seal(messageBytes, cryptoKey);
     const encryptedValue = encryptedBytes.toString('base64');
 
     // Set the secret
