@@ -1,4 +1,5 @@
 import { Octokit } from '@octokit/rest';
+import { SodiumPlus, CryptographyKey } from 'sodium-plus';
 
 /**
  * Trigger a GitHub Actions workflow deployment
@@ -85,7 +86,6 @@ export async function setRepositorySecret(
     });
 
     // Encrypt the secret value using libsodium (sodium-plus package)
-    const { SodiumPlus, CryptographyKey } = await import('sodium-plus');
     const sodiumInstance = await SodiumPlus.auto();
 
     const messageBytes = Buffer.from(secretValue);
