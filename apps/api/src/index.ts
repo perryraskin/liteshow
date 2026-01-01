@@ -23,6 +23,7 @@ import healthRoutes from './routes/health';
 import authRoutes from './routes/github-auth';
 import publicContentRoutes from './routes/public-content';
 import githubAppRoutes from './routes/github-app-routes';
+import deploymentRoutes from './routes/deployment';
 import { errorHandler } from './middleware/error';
 
 const app = new Hono();
@@ -53,6 +54,7 @@ app.route('/public', publicContentRoutes);
 app.route('/projects', projectRoutes);
 app.route('/projects', pagesRoutes);
 app.route('/projects', blocksRoutes);
+app.route('/projects/:projectId/deployment', deploymentRoutes);
 app.route('/github-app', githubAppRoutes);
 app.route('/health', healthRoutes);
 
