@@ -335,9 +335,11 @@ export default function PageEditorPage() {
               </Button>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <Badge variant={page.status === 'saved' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
-                {page.status}
-              </Badge>
+              {page.status === 'draft' && (
+                <Badge variant="secondary" className="hidden sm:inline-flex">
+                  draft
+                </Badge>
+              )}
               {page.deployed && (
                 <Badge variant="outline" className="hidden sm:inline-flex border-green-500 text-green-600 dark:text-green-400">
                   Deployed

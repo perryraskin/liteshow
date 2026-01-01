@@ -207,9 +207,11 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
                             Deployed
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
-                          {displayStatus}
-                        </Badge>
+                        {displayStatus === 'draft' && (
+                          <Badge variant="outline" className="text-xs">
+                            draft
+                          </Badge>
+                        )}
                       </div>
 
                       <p className="text-sm text-muted-foreground mb-2">
