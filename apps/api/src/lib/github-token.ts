@@ -69,7 +69,12 @@ export async function getGitHubTokenForProject(
     if (!testResponse.ok) {
       const errorBody = await testResponse.text();
       console.error('OAuth token is invalid:', errorBody);
-      throw new Error(`GitHub OAuth token is invalid or expired (status ${testResponse.status})`);
+
+      // Create a specific error type for authentication failures
+      const error = new Error(`GitHub OAuth token is invalid or expired (status ${testResponse.status})`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
     }
 
     // Warning if token doesn't have write permissions

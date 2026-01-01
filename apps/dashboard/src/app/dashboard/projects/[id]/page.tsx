@@ -43,7 +43,8 @@ export default function ProjectPage() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncPrUrl, setSyncPrUrl] = useState<string | null>(null);
-  const [syncStatus, setSyncStatus] = useState<'checking' | 'up-to-date' | 'needs-update' | 'pr-created' | 'pr-exists' | 'error' | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'checking' | 'up-to-date' | 'needs-update' | 'pr-created' | 'pr-exists' | 'error' | 'auth-required' | null>(null);
+  const [requiresReauth, setRequiresReauth] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,6 +101,13 @@ export default function ProjectPage() {
 
     fetchData();
   }, [params.id]);
+
+  const handleReauthenticate = () => {
+    // Redirect to GitHub OAuth to refresh token
+    // The redirect will come back to /dashboard after auth completes
+    const currentPath = encodeURIComponent(`/dashboard/projects/${params.id}`);
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github/request-scope?scope=repo&redirect=${currentPath}`;
+  };
 
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
@@ -178,6 +186,14 @@ export default function ProjectPage() {
 
       if (!syncResponse.ok) {
         console.error('Sync check error:', data);
+
+        // Check if re-authentication is required
+        if (data.requiresReauth || data.code === 'GITHUB_AUTH_REQUIRED' || syncResponse.status === 401) {
+          setSyncStatus('auth-required');
+          setRequiresReauth(true);
+          return;
+        }
+
         setSyncStatus('error');
         return;
       }
@@ -228,6 +244,21 @@ export default function ProjectPage() {
       }
 
       if (!response.ok) {
+        // Check if re-authentication is required
+        if (data.requiresReauth || data.code === 'GITHUB_AUTH_REQUIRED' || response.status === 401) {
+          setRequiresReauth(true);
+          setSyncStatus('auth-required');
+          toast.error('GitHub authentication required', {
+            description: 'Your GitHub access has expired. Please re-authenticate to continue.',
+            action: {
+              label: 'Re-authenticate',
+              onClick: () => handleReauthenticate()
+            },
+            duration: 10000,
+          });
+          return;
+        }
+
         throw new Error(data.error || 'Failed to sync template');
       }
 
@@ -429,6 +460,33 @@ export default function ProjectPage() {
                               <ExternalLink className="h-3 w-3" />
                             </a>
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {syncStatus === 'auth-required' && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                GitHub re-authentication required
+                              </div>
+                              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                Your GitHub access token has expired or been revoked. Please re-authenticate to continue using template sync and other GitHub features.
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={handleReauthenticate}
+                            className="w-full bg-amber-600 hover:bg-amber-700"
+                          >
+                            <Github className="mr-2 h-3 w-3" />
+                            Re-authenticate with GitHub
+                          </Button>
                         </div>
                       </div>
                     )}
