@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest } from 'lucide-react';
+import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
@@ -41,6 +41,7 @@ export default function ProjectPage() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncPrUrl, setSyncPrUrl] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'checking' | 'up-to-date' | 'needs-update' | 'pr-created' | 'pr-exists' | 'error' | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,23 +85,9 @@ export default function ProjectPage() {
           setPages(pagesData);
         }
 
-        // Check for existing sync PR
+        // Auto-check template sync status if GitHub is connected
         if (projectData.githubRepoUrl) {
-          const syncStatusResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/sync-template/status`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (syncStatusResponse.ok) {
-            const syncStatus = await syncStatusResponse.json();
-            if (syncStatus.hasPendingPR && syncStatus.prUrl) {
-              setSyncPrUrl(syncStatus.prUrl);
-            }
-          }
+          checkAndSyncTemplate();
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -149,6 +136,69 @@ export default function ProjectPage() {
       });
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const checkAndSyncTemplate = async () => {
+    setSyncStatus('checking');
+    try {
+      const token = localStorage.getItem('session_token');
+
+      // First check if there's already a pending PR
+      const statusResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/sync-template/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (statusResponse.ok) {
+        const status = await statusResponse.json();
+        if (status.hasPendingPR && status.prUrl) {
+          setSyncPrUrl(status.prUrl);
+          setSyncStatus('pr-exists');
+          return;
+        }
+      }
+
+      // No pending PR, run sync check and auto-create PR if needed
+      const syncResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/sync-template`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await syncResponse.json();
+
+      if (!syncResponse.ok) {
+        console.error('Sync check error:', data);
+        setSyncStatus('error');
+        return;
+      }
+
+      if (data.upToDate) {
+        setSyncStatus('up-to-date');
+        return;
+      }
+
+      // Changes detected and PR created
+      setSyncPrUrl(data.prUrl);
+      setSyncStatus('pr-created');
+      toast.success('Template updates available!', {
+        description: `${data.filesChanged} files updated. A PR has been created for review.`,
+        action: {
+          label: 'View PR',
+          onClick: () => window.open(data.prUrl, '_blank')
+        },
+        duration: 10000,
+      });
+    } catch (error: any) {
+      console.error('Template sync check error:', error);
+      setSyncStatus('error');
     }
   };
 
@@ -334,36 +384,75 @@ export default function ProjectPage() {
                     </a>
                   </div>
 
-                  {syncPrUrl && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
-                      <div className="flex items-start gap-2">
-                        <GitPullRequest className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">Template Sync PR Pending</div>
-                          <a
-                            href={syncPrUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 mt-1"
-                          >
-                            Review and merge in GitHub
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
+                  {/* Template Sync Status */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Astro Template Status</div>
+
+                    {syncStatus === 'checking' && (
+                      <div className="p-3 bg-muted border rounded-md">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Checking for template updates...</span>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSyncTemplate}
-                    disabled={isSyncing}
-                    className="w-full"
-                  >
-                    <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
-                    {isSyncing ? 'Syncing...' : 'Sync Template'}
-                  </Button>
+                    {syncStatus === 'up-to-date' && (
+                      <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          <span className="text-sm text-green-900 dark:text-green-100 font-medium">Template is up to date</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {(syncStatus === 'pr-created' || syncStatus === 'pr-exists') && syncPrUrl && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <div className="flex items-start gap-2">
+                          <GitPullRequest className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              {syncStatus === 'pr-created' ? 'Template updates available' : 'Template sync PR pending'}
+                            </div>
+                            <a
+                              href={syncPrUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 mt-1"
+                            >
+                              Review and merge in GitHub
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {syncStatus === 'error' && (
+                      <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          <span className="text-sm text-red-900 dark:text-red-100">Failed to check template status</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-2">
+                      This checks if your Astro site files (templates/components/config) are up to date with the latest LiteShow version. Your content is separate and not affected.
+                    </p>
+
+                    {syncStatus && syncStatus !== 'checking' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={checkAndSyncTemplate}
+                        className="w-full mt-2"
+                      >
+                        <RefreshCw className="mr-2 h-3 w-3" />
+                        Check Again
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
