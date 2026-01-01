@@ -1021,13 +1021,24 @@ export function detectChangedFiles(
 
     if (!repoFile) {
       // File doesn't exist in repo - it's new
+      console.log(`  NEW: ${templateFile.path}`);
       changedFiles.push({
         path: templateFile.path,
         content: templateFile.content,
       });
     } else {
       // File exists - check if content changed
-      if (templateFile.content.trim() !== repoFile.content.trim()) {
+      const templateContent = templateFile.content.trim();
+      const repoContent = repoFile.content.trim();
+
+      if (templateContent !== repoContent) {
+        console.log(`  CHANGED: ${templateFile.path}`);
+        // Show first difference for key files
+        if (templateFile.path === 'README.md' || templateFile.path.includes('deploy.yml')) {
+          console.log(`    Template length: ${templateContent.length}, Repo length: ${repoContent.length}`);
+          console.log(`    First 100 chars (template): ${templateContent.substring(0, 100)}`);
+          console.log(`    First 100 chars (repo): ${repoContent.substring(0, 100)}`);
+        }
         changedFiles.push({
           path: templateFile.path,
           content: templateFile.content,
@@ -1605,193 +1616,217 @@ Questions? [Contact Liteshow Support](https://liteshow.io/support)
 }
 
 /**
- * Main function to sync template to a project's repository
+ * Main function: Sync template files to a project's GitHub repository
+ * Uses local git clones to compare - no API caching issues!
  */
 export async function syncTemplateToRepo(
   projectId: string,
   userId: string
 ): Promise<SyncResult> {
-  // Get project
-  const project = await db.query.projects.findFirst({
-    where: eq(projects.id, projectId),
-  });
+  const tempBaseDir = `/tmp/liteshow-template-sync-${Date.now()}`;
 
-  if (!project || project.userId !== userId) {
-    throw new Error('Project not found');
-  }
-
-  if (!project.githubRepoUrl || !project.githubRepoName) {
-    throw new Error('GitHub repository not connected');
-  }
-
-  // Get user
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-  });
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  // Get GitHub token
-  const token = await getGitHubTokenForProject(project, user);
-  if (!token) {
-    throw new Error('Failed to get GitHub token');
-  }
-
-  // Get repo full name (owner/repo)
-  const repoFullName = project.githubRepoName;
-  const repoOwner = repoFullName.split('/')[0];
-
-  console.log('Syncing template for repo:', {
-    projectId,
-    repoFullName,
-    repoOwner,
-    githubAuthType: project.githubAuthType,
-    hasToken: !!token,
-  });
-
-  // Verify token ownership and permissions
-  console.log('Verifying GitHub token ownership...');
-  const userResponse = await fetch('https://api.github.com/user', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-    },
-  });
-
-  if (userResponse.ok) {
-    const userData = await userResponse.json();
-    console.log('GitHub token belongs to user:', {
-      login: userData.login,
-      id: userData.id,
-      type: userData.type, // User or Organization
+  try {
+    // Get project
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
     });
 
-    console.log('Repository access check:', {
-      repoOwner,
-      authenticatedUser: userData.login,
-      ownerMatch: repoOwner.toLowerCase() === userData.login.toLowerCase(),
+    if (!project || project.userId !== userId) {
+      throw new Error('Project not found');
+    }
+
+    if (!project.githubRepoUrl || !project.githubRepoName) {
+      throw new Error('GitHub repository not connected');
+    }
+
+    // Get user
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
     });
 
-    // Check repository permissions
-    const repoPermissionsResponse = await fetch(
-      `https://api.github.com/repos/${repoFullName}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      }
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get GitHub token
+    const token = await getGitHubTokenForProject(project, user);
+    if (!token) {
+      throw new Error('Failed to get GitHub token');
+    }
+
+    const repoFullName = project.githubRepoName;
+
+    console.log('\n=== TEMPLATE SYNC WITH LOCAL GIT COMPARISON ===');
+    console.log('Project:', projectId);
+    console.log('Repository:', repoFullName);
+    console.log('Temp dir:', tempBaseDir);
+
+    // Check if sync PR already exists via API (lightweight check)
+    const existingPrUrl = await checkExistingSyncPR(repoFullName, token);
+    if (existingPrUrl) {
+      console.log('Existing sync PR found:', existingPrUrl);
+      return {
+        success: false,
+        existingPrUrl,
+      };
+    }
+
+    const { promisify } = await import('util');
+    const execFile = promisify((await import('child_process')).execFile);
+
+    // 1. Clone templates repo
+    console.log('\n[1/4] Cloning templates repository...');
+    const templatesDir = `${tempBaseDir}/templates`;
+    await execFile('git', [
+      'clone',
+      '--depth', '1',
+      '--single-branch',
+      '--branch', 'main',
+      'https://github.com/liteshowcms/templates.git',
+      templatesDir
+    ]);
+    console.log('✅ Templates repo cloned');
+
+    // 2. Clone user's repo
+    console.log('\n[2/4] Cloning user repository...');
+    const userRepoDir = `${tempBaseDir}/user-repo`;
+    const cloneUrl = `https://x-access-token:${token}@github.com/${repoFullName}.git`;
+
+    await execFile('git', [
+      'clone',
+      '--depth', '1',
+      '--single-branch',
+      cloneUrl,
+      userRepoDir
+    ]);
+    console.log('✅ User repo cloned');
+
+    // Get default branch name
+    const { stdout: branchOutput } = await execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: userRepoDir });
+    const baseBranch = branchOutput.trim();
+    console.log('Base branch:', baseBranch);
+
+    // 3. Process template files with variable replacement
+    console.log('\n[3/4] Processing template files...');
+    const templateSourceDir = `${templatesDir}/astro`;
+    const variables = {
+      PROJECT_NAME: project.name,
+      PROJECT_SLUG: project.slug,
+      TURSO_DATABASE_URL: `libsql://${project.tursoDbUrl}`,
+      TURSO_AUTH_TOKEN: project.tursoDbToken || '{{TURSO_AUTH_TOKEN}}',
+      SITE_URL: '{{SITE_URL}}',
+    };
+
+    // Get list of template files
+    const { stdout: filesOutput } = await execFile('find', ['.', '-type', 'f'], { cwd: templateSourceDir });
+    const templateFiles = filesOutput
+      .split('\n')
+      .filter(f => f &&
+        !f.includes('.git/') &&        // Exclude .git/ directory but include .github/
+        !f.includes('node_modules') &&
+        !f.includes('.gitignore') &&
+        !f.includes('pnpm-lock.yaml') &&
+        !f.includes('package-lock.json')
+      )
+      .map(f => f.replace('./', ''));
+
+    console.log(`Found ${templateFiles.length} template files`);
+
+    // Copy and process each file
+    for (const file of templateFiles) {
+      const sourcePath = `${templateSourceDir}/${file}`;
+      const destPath = `${userRepoDir}/${file}`;
+
+      const content = await fs.readFile(sourcePath, 'utf8');
+      const processedContent = replaceTemplateVariables(content, variables);
+
+      await fs.mkdir(path.dirname(destPath), { recursive: true });
+      await fs.writeFile(destPath, processedContent, 'utf8');
+    }
+    console.log('✅ Files processed');
+
+    // 4. Check for changes using git
+    console.log('\n[4/4] Checking for changes...');
+    await execFile('git', ['add', '.'], { cwd: userRepoDir });
+
+    const { stdout: statusOutput } = await execFile('git', ['status', '--porcelain'], { cwd: userRepoDir });
+
+    if (!statusOutput.trim()) {
+      console.log('✅ No changes - template is up to date');
+      return {
+        success: true,
+        upToDate: true,
+      };
+    }
+
+    console.log('\n📝 Changes detected:');
+    console.log(statusOutput);
+
+    // Show diff summary
+    try {
+      const { stdout: diffOutput } = await execFile('git', ['diff', '--cached', '--stat'], { cwd: userRepoDir });
+      console.log('\nDiff summary:');
+      console.log(diffOutput);
+    } catch (e) {
+      // Ignore diff errors
+    }
+
+    // Create branch and push
+    const branchName = `liteshow/template-sync-${Date.now()}`;
+    console.log('\n[5/5] Creating branch and pushing...');
+
+    await execFile('git', ['config', 'user.name', 'Liteshow Bot'], { cwd: userRepoDir });
+    await execFile('git', ['config', 'user.email', 'bot@liteshow.io'], { cwd: userRepoDir });
+    await execFile('git', ['checkout', '-b', branchName], { cwd: userRepoDir });
+
+    const commitMessage = `chore: sync with latest Liteshow template\n\nUpdated from liteshowcms/templates`;
+    await execFile('git', ['commit', '-m', commitMessage], { cwd: userRepoDir });
+    await execFile('git', ['push', 'origin', branchName], { cwd: userRepoDir });
+
+    console.log('✅ Branch pushed');
+
+    // Count changed files for changelog
+    const changedFilesList = statusOutput.trim().split('\n');
+    const changeLog = changedFilesList
+      .map(line => {
+        const parts = line.trim().split(/\s+/);
+        const status = parts[0];
+        const file = parts[1];
+        if (status.includes('M')) return `- \`${file}\` (updated)`;
+        if (status.includes('A')) return `- \`${file}\` (new)`;
+        if (status.includes('D')) return `- \`${file}\` (removed)`;
+        return `- \`${file}\``;
+      })
+      .join('\n');
+
+    // Create PR
+    const prUrl = await createPullRequest(
+      repoFullName,
+      branchName,
+      baseBranch,
+      changedFilesList.length,
+      changeLog,
+      token
     );
 
-    if (repoPermissionsResponse.ok) {
-      const repoData = await repoPermissionsResponse.json();
-      console.log('Repository permissions:', {
-        permissions: repoData.permissions,
-        owner: repoData.owner?.login,
-        private: repoData.private,
-      });
-    } else {
-      console.error('Failed to check repository permissions:', {
-        status: repoPermissionsResponse.status,
-        statusText: repoPermissionsResponse.statusText,
-      });
-    }
-  } else {
-    console.error('Failed to get authenticated user info:', {
-      status: userResponse.status,
-      statusText: userResponse.statusText,
-    });
-  }
+    console.log('\n✅ Template sync complete!');
+    console.log('PR URL:', prUrl);
 
-  // Check if sync PR already exists
-  const existingPrUrl = await checkExistingSyncPR(repoFullName, token);
-  if (existingPrUrl) {
-    return {
-      success: false,
-      existingPrUrl,
-    };
-  }
-
-  // Get template files
-  const templateFiles = await getTemplateFiles(
-    project.name,
-    project.slug,
-    project.tursoDbUrl,
-    project.tursoDbToken
-  );
-
-  // Fetch existing files from repo
-  const repoPaths = templateFiles.map((f) => f.path);
-  const repoFiles = await fetchRepoFiles(repoFullName, repoPaths, token);
-
-  // Detect changed files
-  const changedFiles = detectChangedFiles(templateFiles, repoFiles);
-
-  if (changedFiles.length === 0) {
     return {
       success: true,
-      upToDate: true,
+      prUrl,
+      branchName,
+      filesChanged: changedFilesList.length,
     };
-  }
 
-  // Get default branch
-  const repoResponse = await fetch(
-    `https://api.github.com/repos/${repoFullName}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
+  } finally {
+    // Clean up
+    console.log('\n🧹 Cleaning up...');
+    try {
+      await fs.rm(tempBaseDir, { recursive: true, force: true });
+      console.log('✅ Cleanup complete');
+    } catch (error) {
+      console.error('⚠️  Cleanup failed:', error);
     }
-  );
-
-  if (!repoResponse.ok) {
-    const errorBody = await repoResponse.text();
-    console.error('GitHub API error fetching repo info:', {
-      status: repoResponse.status,
-      statusText: repoResponse.statusText,
-      repoFullName,
-      body: errorBody,
-    });
-
-    // Only 401/403 are auth issues. 404 means repo doesn't exist or is inaccessible
-    if (repoResponse.status === 401 || repoResponse.status === 403) {
-      const error = new Error(`GitHub authentication required. Unable to access repository (status ${repoResponse.status}). Please re-authenticate with GitHub.`);
-      (error as any).code = 'GITHUB_AUTH_REQUIRED';
-      (error as any).requiresReauth = true;
-      throw error;
-    }
-
-    throw new Error(`Failed to fetch repository info: ${repoResponse.status} ${repoResponse.statusText} - ${errorBody}`);
   }
-
-  const repoData: any = await repoResponse.json();
-  const baseBranch = repoData.default_branch || 'main';
-
-  // Sync template using git clone approach (replaces createSyncBranch + updateFilesInBranch)
-  const branchName = await syncTemplateWithGitClone(repoFullName, baseBranch, changedFiles, token);
-
-  // Generate changelog
-  const changeLog = changedFiles
-    .map((f) => `- \`${f.path}\`${f.oldSha ? ' (updated)' : ' (new)'}`)
-    .join('\n');
-
-  // Create PR
-  const prUrl = await createPullRequest(
-    repoFullName,
-    branchName,
-    baseBranch,
-    changedFiles.length,
-    changeLog,
-    token
-  );
-
-  return {
-    success: true,
-    prUrl,
-    branchName,
-    filesChanged: changedFiles.length,
-  };
 }
