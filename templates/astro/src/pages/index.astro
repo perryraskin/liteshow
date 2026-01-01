@@ -1,64 +1,61 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroBlock from '../components/blocks/HeroBlock.astro';
-import CtaBlock from '../components/blocks/CtaBlock.astro';
-import MarkdownBlock from '../components/blocks/MarkdownBlock.astro';
-import FeaturesBlock from '../components/blocks/FeaturesBlock.astro';
-import TestimonialsBlock from '../components/blocks/TestimonialsBlock.astro';
-import FaqBlock from '../components/blocks/FaqBlock.astro';
-import { getPage, getAllPages } from '../lib/content-api';
+import { getAllPages } from '../lib/content-api';
 
-// Try to fetch 'index' page first, if not found use the first published page
-let page = await getPage('index');
-
-if (!page) {
-  const allPages = await getAllPages();
-  if (allPages.length > 0) {
-    // Use the first published page as homepage
-    page = allPages[0];
-  }
-}
-
-if (!page) {
-  return Astro.redirect('/404');
-}
+const pages = await getAllPages();
 ---
 
 <BaseLayout
-  title={page.seo_title || page.title}
-  description={page.seo_description}
-  keywords={page.seo_keywords}
+  title="{{PROJECT_NAME}}"
+  description="Welcome to {{PROJECT_NAME}}"
 >
-  {page.blocks.map((block) => {
-    switch (block.type) {
-      case 'hero':
-        return (
-          <HeroBlock
-            headline={block.content.headline as string}
-            subheadline={block.content.subheadline as string}
-            ctaText={block.content.ctaText as string}
-            ctaUrl={block.content.ctaUrl as string}
-          />
-        );
-      case 'cta':
-        return (
-          <CtaBlock
-            headline={block.content.headline as string}
-            body={block.content.body as string}
-            buttonText={block.content.buttonText as string}
-            buttonUrl={block.content.buttonUrl as string}
-          />
-        );
-      case 'markdown':
-        return <MarkdownBlock markdown={block.content.markdown as string} />;
-      case 'features':
-        return <FeaturesBlock content={block.content as any} />;
-      case 'testimonials':
-        return <TestimonialsBlock content={block.content as any} />;
-      case 'faq':
-        return <FaqBlock content={block.content as any} />;
-      default:
-        return null;
-    }
-  })}
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <h1 class="text-4xl lg:text-5xl font-bold text-center mb-4 text-gray-900">
+      Welcome to {{PROJECT_NAME}}
+    </h1>
+
+    {pages.length === 0 ? (
+      <div class="text-center mt-12">
+        <p class="text-xl text-gray-600 mb-8">
+          No pages published yet. Create your first page in LiteShow!
+        </p>
+      </div>
+    ) : (
+      <div class="mt-12 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-900">Published Pages</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {pages.map((page) => (
+            <a
+              href={`/${page.slug}`}
+              class="block p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100"
+            >
+              <h3 class="text-xl font-semibold mb-2 text-gray-900">
+                {page.title}
+              </h3>
+              {page.seo_description && (
+                <p class="text-gray-600 line-clamp-2">
+                  {page.seo_description}
+                </p>
+              )}
+              <div class="mt-4 text-blue-600 font-medium flex items-center">
+                View page
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
 </BaseLayout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
