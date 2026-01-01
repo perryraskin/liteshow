@@ -1,5 +1,7 @@
 import { Octokit } from '@octokit/rest';
-import { SodiumPlus, CryptographyKey } from 'sodium-plus';
+import SodiumPlusModule from 'sodium-plus';
+
+const { SodiumPlus, CryptographyKey } = SodiumPlusModule;
 
 /**
  * Trigger a GitHub Actions workflow deployment
