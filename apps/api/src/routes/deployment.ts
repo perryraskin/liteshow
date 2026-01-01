@@ -323,6 +323,66 @@ deploymentRoutes.post('/:projectId/sync-status', async (c) => {
 });
 
 /**
+ * PATCH /projects/:projectId/deployment/custom-domain
+ * Update custom domain configuration
+ */
+deploymentRoutes.patch('/:projectId/custom-domain', async (c) => {
+  try {
+    const { projectId } = c.req.param();
+    const authHeader = c.req.header('Authorization');
+    const body = await c.req.json();
+
+    const user = await getUserFromToken(authHeader);
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { customDomain } = body;
+
+    // Verify project ownership
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, projectId));
+
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.userId !== user.id) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+
+    // Validate domain format if provided
+    if (customDomain) {
+      const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+      if (!domainRegex.test(customDomain)) {
+        return c.json({ error: 'Invalid domain format' }, 400);
+      }
+    }
+
+    // Update custom domain
+    const [updatedProject] = await db
+      .update(projects)
+      .set({
+        customDomain: customDomain || null,
+      })
+      .where(eq(projects.id, projectId))
+      .returning();
+
+    return c.json({
+      customDomain: updatedProject.customDomain,
+      message: customDomain
+        ? 'Custom domain configured successfully'
+        : 'Custom domain removed',
+    });
+  } catch (error) {
+    console.error('Update custom domain error:', error);
+    return c.json({ error: 'Failed to update custom domain' }, 500);
+  }
+});
+
+/**
  * GET /projects/:projectId/deployment/status
  * Get current deployment status
  */

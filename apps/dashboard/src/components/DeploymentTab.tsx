@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Rocket, ExternalLink, Github, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeploymentStatus } from '@/hooks/useDeploymentStatus';
@@ -32,6 +33,7 @@ interface DeploymentTabProps {
     deploymentUrl?: string;
     lastDeployedAt?: string;
     autoDeployOnSave?: boolean;
+    customDomain?: string;
   };
 }
 
@@ -40,6 +42,8 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [localProject, setLocalProject] = useState(project);
+  const [customDomain, setCustomDomain] = useState(project.customDomain || '');
+  const [isSavingDomain, setIsSavingDomain] = useState(false);
 
   // Use the deployment status hook for real-time polling
   const {
@@ -53,6 +57,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
 
   useEffect(() => {
     setLocalProject(project);
+    setCustomDomain(project.customDomain || '');
     fetchDeployments();
   }, [project]);
 
@@ -135,6 +140,42 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
     } catch (error) {
       console.error('Error updating auto-deploy:', error);
       toast.error('Failed to update settings');
+    }
+  };
+
+  const handleSaveCustomDomain = async () => {
+    setIsSavingDomain(true);
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${project.id}/deployment/custom-domain`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ customDomain: customDomain || null }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update custom domain');
+      }
+
+      const data = await response.json();
+      setLocalProject((prev) => ({ ...prev, customDomain: data.customDomain }));
+
+      toast.success('Custom domain updated', {
+        description: customDomain
+          ? 'Remember to configure your DNS records'
+          : 'Custom domain removed',
+      });
+    } catch (error) {
+      console.error('Error updating custom domain:', error);
+      toast.error('Failed to update custom domain');
+    } finally {
+      setIsSavingDomain(false);
     }
   };
 
@@ -252,6 +293,73 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
               onCheckedChange={handleToggleAutoDeploy}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Custom Domain */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom Domain</CardTitle>
+          <CardDescription>Use your own domain instead of GitHub Pages default</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="custom-domain">Domain Name</Label>
+            <div className="flex gap-2">
+              <Input
+                id="custom-domain"
+                type="text"
+                placeholder="www.example.com"
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                disabled={isSavingDomain}
+              />
+              <Button
+                onClick={handleSaveCustomDomain}
+                disabled={isSavingDomain}
+              >
+                {isSavingDomain ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter your custom domain (e.g., www.example.com or blog.example.com)
+            </p>
+          </div>
+
+          {customDomain && (
+            <div className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950 p-4 rounded">
+              <h4 className="font-medium mb-2">DNS Configuration Required</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                Add these DNS records to your domain provider:
+              </p>
+              <div className="space-y-2 text-sm font-mono">
+                <div className="bg-background p-2 rounded">
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span className="col-span-2">CNAME</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-muted-foreground">Name:</span>
+                    <span className="col-span-2">{customDomain.replace('www.', '')}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-muted-foreground">Value:</span>
+                    <span className="col-span-2">{localProject.githubRepoName?.split('/')[0]}.github.io</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                DNS changes can take up to 24 hours to propagate.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
