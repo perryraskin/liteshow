@@ -408,7 +408,10 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {getStatusBadge(deployment.status, deployment.deploymentUrl)}
+                      <Rocket className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {new Date(deployment.createdAt).toLocaleString()}
+                      </span>
                       {deployment.commitSha && (
                         <code className="text-xs text-muted-foreground">
                           {deployment.commitSha.substring(0, 7)}
@@ -416,16 +419,13 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
                       )}
                     </div>
                     {deployment.commitMessage && (
-                      <p className="text-sm">{deployment.commitMessage}</p>
+                      <p className="text-sm text-muted-foreground">{deployment.commitMessage}</p>
                     )}
                     {deployment.errorMessage && (
                       <p className="text-sm text-destructive mt-1">
-                        {deployment.errorMessage}
+                        Error: {deployment.errorMessage}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(deployment.createdAt).toLocaleString()}
-                    </p>
                   </div>
                   {deployment.deploymentUrl && (
                     <a
