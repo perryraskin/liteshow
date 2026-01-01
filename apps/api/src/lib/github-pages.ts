@@ -85,8 +85,7 @@ export async function setRepositorySecret(
     });
 
     // Encrypt the secret value using libsodium (sodium-plus package)
-    const sodium = await import('sodium-plus');
-    const { SodiumPlus, CryptographyKey } = sodium;
+    const { SodiumPlus, CryptographyKey } = await import('sodium-plus');
     const sodiumInstance = await SodiumPlus.auto();
 
     const messageBytes = Buffer.from(secretValue);
