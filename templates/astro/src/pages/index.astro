@@ -43,11 +43,11 @@ if (!page) {
       case 'markdown':
         return <MarkdownBlock markdown={block.content.markdown as string} />;
       case 'features':
-        return <FeaturesBlock content={block.content} />;
+        return <FeaturesBlock content={block.content as any} />;
       case 'testimonials':
-        return <TestimonialsBlock content={block.content} />;
+        return <TestimonialsBlock content={block.content as any} />;
       case 'faq':
-        return <FaqBlock content={block.content} />;
+        return <FaqBlock content={block.content as any} />;
       default:
         return null;
     }
