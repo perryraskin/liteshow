@@ -133,6 +133,7 @@ function DashboardContent() {
       <Header
         breadcrumbs={[{ label: 'Liteshow' }, { label: 'Projects' }]}
         userEmail={session?.user?.email}
+        userAvatar={session?.user?.image || session?.user?.avatarUrl}
         onSignOut={handleSignOut}
       />
 

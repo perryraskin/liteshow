@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,12 +26,13 @@ export interface BreadcrumbItem {
 interface HeaderProps {
   breadcrumbs: BreadcrumbItem[];
   userEmail?: string;
+  userAvatar?: string;
   onSignOut: () => void;
   rightContent?: React.ReactNode;
 }
 
-export function Header({ breadcrumbs, userEmail, onSignOut, rightContent }: HeaderProps) {
-  // Get initials from email for avatar
+export function Header({ breadcrumbs, userEmail, userAvatar, onSignOut, rightContent }: HeaderProps) {
+  // Get initials from email for avatar fallback
   const getInitials = (email?: string) => {
     if (!email) return '?';
     const name = email.split('@')[0];
@@ -76,6 +77,9 @@ export function Header({ breadcrumbs, userEmail, onSignOut, rightContent }: Head
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
                 <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-transparent hover:ring-primary/20 transition-all">
+                  {userAvatar && (
+                    <AvatarImage src={userAvatar} alt={userEmail || 'User avatar'} />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {getInitials(userEmail)}
                   </AvatarFallback>

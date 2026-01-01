@@ -390,6 +390,7 @@ export default function ProjectPage() {
           { label: project.name }
         ]}
         userEmail={session?.user?.email}
+        userAvatar={session?.user?.image || session?.user?.avatarUrl}
         onSignOut={handleSignOut}
       />
 

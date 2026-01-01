@@ -158,6 +158,7 @@ export default function PagesListPage() {
             { label: 'Liteshow', href: '/dashboard' },
             { label: 'Loading...' }
           ]}
+          userAvatar={session?.user?.image || session?.user?.avatarUrl}
           onSignOut={handleSignOut}
         />
 
@@ -197,6 +198,7 @@ export default function PagesListPage() {
           { label: 'Pages' }
         ]}
         userEmail={session?.user?.email}
+        userAvatar={session?.user?.image || session?.user?.avatarUrl}
         onSignOut={handleSignOut}
         rightContent={
           <Button onClick={() => setShowCreateModal(true)}>

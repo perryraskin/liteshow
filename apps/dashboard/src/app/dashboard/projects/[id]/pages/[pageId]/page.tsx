@@ -315,6 +315,7 @@ export default function PageEditorPage() {
             { label: 'Liteshow', href: '/dashboard' },
             { label: 'Loading...' }
           ]}
+          userAvatar={session?.user?.image || session?.user?.avatarUrl}
           onSignOut={handleSignOut}
         />
 
@@ -360,6 +361,7 @@ export default function PageEditorPage() {
           { label: page.title }
         ]}
         userEmail={session?.user?.email}
+        userAvatar={session?.user?.image || session?.user?.avatarUrl}
         onSignOut={handleSignOut}
         rightContent={
           <div className="flex items-center gap-2 sm:gap-4">
