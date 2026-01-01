@@ -1,7 +1,7 @@
 import { Octokit } from '@octokit/rest';
 import SodiumPlusModule from 'sodium-plus';
 
-const { SodiumPlus, CryptographyKey } = SodiumPlusModule;
+const { SodiumPlus, X25519PublicKey } = SodiumPlusModule;
 
 /**
  * Trigger a GitHub Actions workflow deployment
@@ -92,8 +92,8 @@ export async function setRepositorySecret(
 
     const messageBytes = Buffer.from(secretValue);
     const keyBytes = Buffer.from(publicKey.key, 'base64');
-    const cryptoKey = new CryptographyKey(keyBytes);
-    const encryptedBytes = await sodiumInstance.crypto_box_seal(messageBytes, cryptoKey);
+    const publicKeyObj = X25519PublicKey.from(keyBytes);
+    const encryptedBytes = await sodiumInstance.crypto_box_seal(messageBytes, publicKeyObj);
     const encryptedValue = encryptedBytes.toString('base64');
 
     // Set the secret
