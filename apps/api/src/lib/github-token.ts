@@ -60,12 +60,6 @@ export async function getGitHubTokenForProject(
     // Check token scopes from response headers
     const scopes = testResponse.headers.get('x-oauth-scopes') || 'none';
 
-    console.log('OAuth token test /user:', {
-      status: testResponse.status,
-      statusText: testResponse.statusText,
-      scopes,
-    });
-
     if (!testResponse.ok) {
       const errorBody = await testResponse.text();
       console.error('OAuth token is invalid:', errorBody);
@@ -76,6 +70,16 @@ export async function getGitHubTokenForProject(
       (error as any).requiresReauth = true;
       throw error;
     }
+
+    // Get the authenticated user's info
+    const userData = await testResponse.json();
+
+    console.log('OAuth token test /user:', {
+      status: testResponse.status,
+      statusText: testResponse.statusText,
+      authenticatedUser: userData.login,
+      scopes,
+    });
 
     // Warning if token doesn't have write permissions
     if (!scopes.includes('repo') && !scopes.includes('public_repo')) {

@@ -1114,6 +1114,15 @@ export async function createSyncBranch(
       baseBranch,
       body: errorBody,
     });
+
+    // Only 401/403 are auth issues. 404 means branch doesn't exist
+    if (refResponse.status === 401 || refResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${refResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
     throw new Error(`Failed to get base branch ref: ${refResponse.status} ${refResponse.statusText} - ${errorBody}`);
   }
 
@@ -1160,14 +1169,154 @@ export async function createSyncBranch(
       branchName,
       body: errorBody,
     });
-    throw new Error(`Failed to create branch: ${createResponse.status} ${createResponse.statusText} - ${errorBody}`);
+
+    // Parse the error to see if it's actually auth-related
+    let parsedError;
+    try {
+      parsedError = JSON.parse(errorBody);
+    } catch {}
+
+    // Only treat as auth error if it's genuinely auth/permission related
+    // 404 might mean the SHA doesn't exist, not auth issue
+    if (createResponse.status === 401 || createResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${createResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    // For 404, show the actual GitHub error message
+    const errorMsg = parsedError?.message || errorBody;
+    throw new Error(`Failed to create branch: ${createResponse.status} ${createResponse.statusText} - ${errorMsg}`);
+  }
+
+  const branchData: any = await createResponse.json();
+  console.log('✅ Branch created successfully:', {
+    ref: branchData.ref,
+    sha: branchData.object?.sha,
+    url: branchData.url,
+  });
+
+  // Verify branch exists immediately after creation
+  console.log('Verifying branch exists...');
+  const verifyResponse = await fetch(
+    `https://api.github.com/repos/${repoFullName}/git/ref/heads/${branchName}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    }
+  );
+  console.log(`Branch verification: ${verifyResponse.status} ${verifyResponse.statusText}`);
+  if (!verifyResponse.ok) {
+    const errorBody = await verifyResponse.text();
+    console.error('Branch verification failed:', errorBody);
   }
 
   return branchName;
 }
 
 /**
- * Update files in the sync branch with a single commit
+ * Sync template files using git clone approach
+ * This clones the repo, creates a branch, applies changes, and pushes
+ * Much more reliable than the GitHub API approach
+ */
+async function syncTemplateWithGitClone(
+  repoFullName: string,
+  baseBranch: string,
+  changedFiles: ChangedFile[],
+  token: string
+): Promise<string> {
+  const branchName = `liteshow/template-sync-${Date.now()}`;
+  const tempDir = `/tmp/liteshow-sync-${Date.now()}`;
+
+  console.log('\n=== SYNCING TEMPLATE WITH GIT CLONE ===');
+  console.log('Repository:', repoFullName);
+  console.log('Base branch:', baseBranch);
+  console.log('Files to update:', changedFiles.length);
+  console.log('Temp directory:', tempDir);
+  console.log('Branch name:', branchName);
+
+  try {
+    // 1. Clone the repository with token authentication
+    console.log('\n[1/6] Cloning repository...');
+    const cloneUrl = `https://x-access-token:${token}@github.com/${repoFullName}.git`;
+
+    const { spawn } = await import('child_process');
+    const { promisify } = await import('util');
+    const execFile = promisify((await import('child_process')).execFile);
+
+    // Clone with shallow depth for faster cloning
+    await execFile('git', [
+      'clone',
+      '--depth', '1',
+      '--single-branch',
+      '--branch', baseBranch,
+      cloneUrl,
+      tempDir
+    ]);
+    console.log('✅ Repository cloned successfully');
+
+    // 2. Configure git user (required for commits)
+    console.log('\n[2/6] Configuring git user...');
+    await execFile('git', ['config', 'user.name', 'Liteshow Bot'], { cwd: tempDir });
+    await execFile('git', ['config', 'user.email', 'bot@liteshow.io'], { cwd: tempDir });
+    console.log('✅ Git user configured');
+
+    // 3. Create and checkout new branch
+    console.log('\n[3/6] Creating new branch...');
+    await execFile('git', ['checkout', '-b', branchName], { cwd: tempDir });
+    console.log(`✅ Branch '${branchName}' created and checked out`);
+
+    // 4. Write template files to disk
+    console.log('\n[4/6] Writing template files...');
+    for (const file of changedFiles) {
+      const filePath = path.join(tempDir, file.path);
+      const fileDir = path.dirname(filePath);
+
+      // Create directory if it doesn't exist
+      await fs.mkdir(fileDir, { recursive: true });
+
+      // Write file content
+      await fs.writeFile(filePath, file.content, 'utf8');
+      console.log(`  ✓ ${file.path}`);
+    }
+    console.log(`✅ ${changedFiles.length} files written`);
+
+    // 5. Git add, commit
+    console.log('\n[5/6] Committing changes...');
+    await execFile('git', ['add', '.'], { cwd: tempDir });
+
+    const commitMessage = `chore: sync with latest Liteshow template\n\nUpdated ${changedFiles.length} file(s):\n${changedFiles.map(f => `- ${f.path}`).join('\n')}`;
+    await execFile('git', ['commit', '-m', commitMessage], { cwd: tempDir });
+    console.log('✅ Changes committed');
+
+    // 6. Push to remote
+    console.log('\n[6/6] Pushing to remote...');
+    await execFile('git', ['push', 'origin', branchName], { cwd: tempDir });
+    console.log('✅ Branch pushed to remote');
+
+    console.log('\n✅ Template sync completed successfully!');
+    return branchName;
+
+  } finally {
+    // Clean up temp directory
+    console.log('\n🧹 Cleaning up temp directory...');
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+      console.log('✅ Temp directory cleaned up');
+    } catch (error) {
+      console.error('⚠️  Failed to clean up temp directory:', error);
+      // Non-fatal - continue execution
+    }
+  }
+}
+
+/**
+ * OLD IMPLEMENTATION - Update files in the sync branch using GitHub Git Data API
+ * This creates blobs → tree → commit → updates ref in a single atomic operation
+ * DEPRECATED: Replaced with git clone approach due to mysterious 404 errors
  */
 export async function updateFilesInBranch(
   repoFullName: string,
@@ -1187,7 +1336,17 @@ export async function updateFilesInBranch(
   );
 
   if (!refResponse.ok) {
-    throw new Error(`Failed to get branch ref: ${await refResponse.text()}`);
+    const errorBody = await refResponse.text();
+
+    // Only 401/403 are auth issues
+    if (refResponse.status === 401 || refResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${refResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to get branch ref: ${errorBody}`);
   }
 
   const refData: any = await refResponse.json();
@@ -1205,45 +1364,71 @@ export async function updateFilesInBranch(
   );
 
   if (!commitResponse.ok) {
-    throw new Error(`Failed to get commit: ${await commitResponse.text()}`);
+    const errorBody = await commitResponse.text();
+
+    // Only 401/403 are auth issues
+    if (commitResponse.status === 401 || commitResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${commitResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to get commit: ${errorBody}`);
   }
 
   const commitData: any = await commitResponse.json();
   const baseTreeSha = commitData.tree.sha;
 
-  // Create blobs for all changed files
+  console.log('Retrieved base commit and tree:', {
+    repoFullName,
+    branchName,
+    baseCommitSha,
+    baseTreeSha,
+    commitUrl: commitData.html_url,
+  });
+
+  // SKIP blob creation - use inline content in tree instead
+  // GitHub allows us to provide content directly in tree items
   const tree: any[] = [];
+  console.log(`\n=== CREATING TREE WITH INLINE CONTENT ===`);
+  console.log(`Total changed files: ${changedFiles.length}`);
+  console.log(`Using inline content instead of pre-created blobs`);
+
   for (const file of changedFiles) {
-    const blobResponse = await fetch(
-      `https://api.github.com/repos/${repoFullName}/git/blobs`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: Buffer.from(file.content).toString('base64'),
-          encoding: 'base64',
-        }),
-      }
-    );
+    console.log(`\nPreparing tree item for: ${file.path}`);
+    console.log(`  Content length: ${file.content.length} bytes`);
 
-    if (!blobResponse.ok) {
-      throw new Error(`Failed to create blob for ${file.path}: ${await blobResponse.text()}`);
-    }
-
-    const blobData: any = await blobResponse.json();
-    tree.push({
+    const treeItem = {
       path: file.path,
       mode: '100644',
       type: 'blob',
-      sha: blobData.sha,
-    });
+      content: file.content, // Provide content directly instead of SHA
+    };
+    console.log(`  Tree item:`, JSON.stringify({ ...treeItem, content: `${file.content.substring(0, 50)}...` }, null, 2));
+    tree.push(treeItem);
   }
 
+  console.log(`\n✅ Prepared ${tree.length} tree items with inline content`);
+
   // Create a new tree with all the changed files
+  console.log(`\n=== CREATING TREE ===`);
+  console.log(`Repo: ${repoFullName}`);
+  console.log(`Base tree SHA: ${baseTreeSha}`);
+  console.log(`Number of tree items: ${tree.length}`);
+
+  // Use base_tree to preserve existing files
+  const treePayload: any = {
+    base_tree: baseTreeSha,
+    tree,
+  };
+
+  console.log(`\nTree payload (with inline content):`, JSON.stringify({
+    base_tree: treePayload.base_tree,
+    tree: tree.map(item => ({ ...item, content: item.content ? `${item.content.substring(0, 30)}...` : undefined }))
+  }, null, 2));
+  console.log(`\nPOST https://api.github.com/repos/${repoFullName}/git/trees`);
+
   const treeResponse = await fetch(
     `https://api.github.com/repos/${repoFullName}/git/trees`,
     {
@@ -1253,15 +1438,33 @@ export async function updateFilesInBranch(
         Accept: 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        base_tree: baseTreeSha,
-        tree,
-      }),
+      body: JSON.stringify(treePayload),
     }
   );
 
   if (!treeResponse.ok) {
-    throw new Error(`Failed to create tree: ${await treeResponse.text()}`);
+    const errorBody = await treeResponse.text();
+
+    console.error('GitHub tree creation failed!', {
+      status: treeResponse.status,
+      statusText: treeResponse.statusText,
+      errorBody,
+      payloadSent: JSON.stringify(treePayload, null, 2),
+      headers: {
+        'x-ratelimit-remaining': treeResponse.headers.get('x-ratelimit-remaining'),
+        'x-oauth-scopes': treeResponse.headers.get('x-oauth-scopes'),
+      }
+    });
+
+    // Only 401/403 are auth issues
+    if (treeResponse.status === 401 || treeResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${treeResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to create tree: ${errorBody}`);
   }
 
   const treeData: any = await treeResponse.json();
@@ -1285,7 +1488,17 @@ export async function updateFilesInBranch(
   );
 
   if (!newCommitResponse.ok) {
-    throw new Error(`Failed to create commit: ${await newCommitResponse.text()}`);
+    const errorBody = await newCommitResponse.text();
+
+    // Only 401/403 are auth issues
+    if (newCommitResponse.status === 401 || newCommitResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${newCommitResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to create commit: ${errorBody}`);
   }
 
   const newCommitData: any = await newCommitResponse.json();
@@ -1307,7 +1520,17 @@ export async function updateFilesInBranch(
   );
 
   if (!updateRefResponse.ok) {
-    throw new Error(`Failed to update ref: ${await updateRefResponse.text()}`);
+    const errorBody = await updateRefResponse.text();
+
+    // Only 401/403 are auth issues
+    if (updateRefResponse.status === 401 || updateRefResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${updateRefResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to update ref: ${errorBody}`);
   }
 }
 
@@ -1364,8 +1587,17 @@ Questions? [Contact Liteshow Support](https://liteshow.io/support)
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to create PR: ${error}`);
+    const errorBody = await response.text();
+
+    // Only 401/403 are auth issues
+    if (response.status === 401 || response.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${response.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
+    throw new Error(`Failed to create PR: ${errorBody}`);
   }
 
   const data: any = await response.json();
@@ -1409,12 +1641,69 @@ export async function syncTemplateToRepo(
 
   // Get repo full name (owner/repo)
   const repoFullName = project.githubRepoName;
+  const repoOwner = repoFullName.split('/')[0];
+
   console.log('Syncing template for repo:', {
     projectId,
     repoFullName,
+    repoOwner,
     githubAuthType: project.githubAuthType,
     hasToken: !!token,
   });
+
+  // Verify token ownership and permissions
+  console.log('Verifying GitHub token ownership...');
+  const userResponse = await fetch('https://api.github.com/user', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github.v3+json',
+    },
+  });
+
+  if (userResponse.ok) {
+    const userData = await userResponse.json();
+    console.log('GitHub token belongs to user:', {
+      login: userData.login,
+      id: userData.id,
+      type: userData.type, // User or Organization
+    });
+
+    console.log('Repository access check:', {
+      repoOwner,
+      authenticatedUser: userData.login,
+      ownerMatch: repoOwner.toLowerCase() === userData.login.toLowerCase(),
+    });
+
+    // Check repository permissions
+    const repoPermissionsResponse = await fetch(
+      `https://api.github.com/repos/${repoFullName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (repoPermissionsResponse.ok) {
+      const repoData = await repoPermissionsResponse.json();
+      console.log('Repository permissions:', {
+        permissions: repoData.permissions,
+        owner: repoData.owner?.login,
+        private: repoData.private,
+      });
+    } else {
+      console.error('Failed to check repository permissions:', {
+        status: repoPermissionsResponse.status,
+        statusText: repoPermissionsResponse.statusText,
+      });
+    }
+  } else {
+    console.error('Failed to get authenticated user info:', {
+      status: userResponse.status,
+      statusText: userResponse.statusText,
+    });
+  }
 
   // Check if sync PR already exists
   const existingPrUrl = await checkExistingSyncPR(repoFullName, token);
@@ -1466,17 +1755,23 @@ export async function syncTemplateToRepo(
       repoFullName,
       body: errorBody,
     });
+
+    // Only 401/403 are auth issues. 404 means repo doesn't exist or is inaccessible
+    if (repoResponse.status === 401 || repoResponse.status === 403) {
+      const error = new Error(`GitHub authentication required. Unable to access repository (status ${repoResponse.status}). Please re-authenticate with GitHub.`);
+      (error as any).code = 'GITHUB_AUTH_REQUIRED';
+      (error as any).requiresReauth = true;
+      throw error;
+    }
+
     throw new Error(`Failed to fetch repository info: ${repoResponse.status} ${repoResponse.statusText} - ${errorBody}`);
   }
 
   const repoData: any = await repoResponse.json();
   const baseBranch = repoData.default_branch || 'main';
 
-  // Create sync branch
-  const branchName = await createSyncBranch(repoFullName, baseBranch, token);
-
-  // Update files in branch
-  await updateFilesInBranch(repoFullName, branchName, changedFiles, token);
+  // Sync template using git clone approach (replaces createSyncBranch + updateFilesInBranch)
+  const branchName = await syncTemplateWithGitClone(repoFullName, baseBranch, changedFiles, token);
 
   // Generate changelog
   const changeLog = changedFiles

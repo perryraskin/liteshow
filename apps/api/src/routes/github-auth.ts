@@ -50,9 +50,10 @@ authRoutes.get('/github/request-scope', (c) => {
   // Store redirect URL in state parameter
   const state = Buffer.from(redirect).toString('base64');
 
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=user:email%20${scope}&state=${state}`;
+  // Include workflow scope for GitHub Actions workflow file permissions
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=user:email%20${scope}%20workflow&state=${state}`;
 
-  console.log(`Requesting additional scope: ${scope}`);
+  console.log(`Requesting additional scopes: ${scope}, workflow`);
   return c.redirect(githubAuthUrl);
 });
 

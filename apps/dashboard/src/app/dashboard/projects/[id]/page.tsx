@@ -150,6 +150,12 @@ export default function ProjectPage() {
   };
 
   const checkAndSyncTemplate = async () => {
+    // Prevent duplicate calls
+    if (syncStatus === 'checking') {
+      console.log('Sync already in progress, skipping duplicate call');
+      return;
+    }
+
     setSyncStatus('checking');
     try {
       const token = localStorage.getItem('session_token');
