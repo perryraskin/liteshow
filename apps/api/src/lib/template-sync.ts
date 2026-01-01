@@ -87,20 +87,41 @@ function replaceTemplateVariables(
 }
 
 /**
- * Get template files for a project by reading from templates/astro/ directory
+ * Get template files for a project by fetching from GitHub
  */
 export async function getTemplateFiles(projectName: string, slug: string, tursoDbUrl: string, tursoAuthToken?: string): Promise<TemplateFile[]> {
-  // Determine template directory path
-  // In production (Fly.io), the app runs from /app/apps/api
-  // In development, it runs from the repo root
-  const templateDir = process.env.FLY_APP_NAME
-    ? path.join('/app', 'templates', 'astro')
-    : path.join(process.cwd(), '..', '..', 'templates', 'astro');
+  const GITHUB_REPO = 'liteshowcms/templates';
+  const GITHUB_BRANCH = 'main';
+  const TEMPLATE_DIR = 'astro';
 
-  console.log('Reading template files from:', templateDir);
+  console.log(`Fetching template files from GitHub: ${GITHUB_REPO}/${TEMPLATE_DIR}`);
 
-  // Read all files from template directory
-  const rawFiles = await readDirectoryRecursive(templateDir);
+  // Fetch the file tree from GitHub API
+  const treeUrl = `https://api.github.com/repos/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
+  const treeResponse = await fetch(treeUrl, {
+    headers: {
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'Liteshow-API',
+    },
+  });
+
+  if (!treeResponse.ok) {
+    throw new Error(`Failed to fetch template tree: ${treeResponse.statusText}`);
+  }
+
+  const treeData: any = await treeResponse.json();
+
+  // Filter files that are in the astro directory
+  const templateFiles = treeData.tree.filter((item: any) =>
+    item.type === 'blob' &&
+    item.path.startsWith(`${TEMPLATE_DIR}/`) &&
+    !item.path.includes('.gitignore') &&
+    !item.path.includes('pnpm-lock.yaml') &&
+    !item.path.includes('package-lock.json') &&
+    !item.path.includes('node_modules/')
+  );
+
+  console.log(`Found ${templateFiles.length} template files`);
 
   // Template variables to replace
   const variables = {
@@ -111,12 +132,30 @@ export async function getTemplateFiles(projectName: string, slug: string, tursoD
     SITE_URL: '{{SITE_URL}}', // Will be set by deployment platform
   };
 
-  // Process each file
-  const files: TemplateFile[] = rawFiles.map(({ relativePath, content }) => ({
-    path: relativePath,
-    content: replaceTemplateVariables(content, variables),
-  }));
+  // Fetch each file's content from raw.githubusercontent.com
+  const files: TemplateFile[] = [];
+  for (const file of templateFiles) {
+    // Remove the template directory prefix from the path
+    const relativePath = file.path.replace(`${TEMPLATE_DIR}/`, '');
 
+    // Fetch raw file content
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${file.path}`;
+    const contentResponse = await fetch(rawUrl);
+
+    if (!contentResponse.ok) {
+      console.error(`Failed to fetch ${file.path}: ${contentResponse.statusText}`);
+      continue;
+    }
+
+    const content = await contentResponse.text();
+
+    files.push({
+      path: relativePath,
+      content: replaceTemplateVariables(content, variables),
+    });
+  }
+
+  console.log(`Successfully fetched and processed ${files.length} template files`);
   return files;
 }
 
