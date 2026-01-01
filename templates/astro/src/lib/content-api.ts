@@ -1,9 +1,12 @@
 import { createClient } from '@libsql/client';
 
-const turso = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL!,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN!,
-});
+// Only create client if env vars exist (they won't exist when building the template itself)
+const turso = import.meta.env.TURSO_DATABASE_URL && import.meta.env.TURSO_AUTH_TOKEN
+  ? createClient({
+      url: import.meta.env.TURSO_DATABASE_URL,
+      authToken: import.meta.env.TURSO_AUTH_TOKEN,
+    })
+  : null;
 
 export interface Block {
   id: string;
@@ -24,6 +27,11 @@ export interface Page {
 }
 
 export async function getPage(slug: string): Promise<Page | null> {
+  // Return null if no database client (template build without env vars)
+  if (!turso) {
+    return null;
+  }
+
   try {
     // Get page
     const pageResult = await turso.execute({
@@ -67,6 +75,11 @@ export async function getPage(slug: string): Promise<Page | null> {
 }
 
 export async function getAllPages(): Promise<Page[]> {
+  // Return empty array if no database client (template build without env vars)
+  if (!turso) {
+    return [];
+  }
+
   try {
     const pagesResult = await turso.execute({
       sql: 'SELECT * FROM pages WHERE status = ?',
