@@ -185,9 +185,9 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
 
                 // For current version, use live page status; for historical, use snapshot
                 const displayStatus = isCurrent && currentPageStatus ? currentPageStatus.status : preview.status;
-                const displayDeployed = isCurrent && currentPageStatus
-                  ? currentPageStatus.deployed
-                  : preview.deployed;
+                const displayHasChanges = isCurrent && currentPageStatus
+                  ? currentPageStatus.hasUnpublishedChanges
+                  : preview.hasUnpublishedChanges;
 
                 return (
                   <div
@@ -202,9 +202,9 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
                             Current
                           </Badge>
                         )}
-                        {isCurrent && displayDeployed && (
-                          <Badge variant="outline" className="text-xs border-green-500 text-green-600 dark:text-green-400">
-                            Deployed
+                        {isCurrent && displayHasChanges && (
+                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                            Unsaved Changes
                           </Badge>
                         )}
                         {displayStatus === 'draft' && (
