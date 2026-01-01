@@ -45,15 +45,15 @@ Add these in your deployment platform's dashboard:
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `TURSO_DATABASE_URL` | `libsql://your-db.turso.io` | Your Turso database URL |
-| `TURSO_AUTH_TOKEN` | `eyJ...` | Your Turso auth token |
+| `LITESHOW_API_URL` | `https://api.liteshow.io` | LiteShow API URL (use default unless custom) |
+| `LITESHOW_PROJECT_SLUG` | `your-project-slug` | Your project slug from LiteShow |
 
 **Where to get these values:**
 1. Go to your LiteShow project settings
-2. Copy the database URL and auth token
-3. Paste them into your hosting platform's environment variables
+2. Find your project slug in the deployment section
+3. Add these environment variables to your hosting platform
 
-**Important:** These values are fetched at **build time**, so you need to trigger a new deployment when you publish content in LiteShow.
+**Important:** Content is fetched from the API at **build time**, so you need to trigger a new deployment when you publish content in LiteShow.
 
 ## Local Development
 
@@ -62,9 +62,9 @@ Add these in your deployment platform's dashboard:
 cp .env.example .env
 
 # Edit .env and add your configuration
-# Get these values from your LiteShow project settings
-# TURSO_DATABASE_URL=libsql://your-database.turso.io
-# TURSO_AUTH_TOKEN=your-token-here
+# Get your project slug from your LiteShow project settings
+# LITESHOW_API_URL=https://api.liteshow.io
+# LITESHOW_PROJECT_SLUG=your-project-slug
 
 # Install and run
 pnpm install
@@ -75,7 +75,7 @@ Visit http://localhost:4321
 
 ## How It Works
 
-This Astro site fetches your published content from your Turso database at build time. LiteShow handles all the database infrastructure and content management - you just publish your content and deploy!
+This Astro site fetches your published content from the LiteShow API at build time. The API securely connects to your project's database and serves your content - you just publish your content and deploy!
 
 ## Project Structure
 
@@ -87,7 +87,7 @@ This Astro site fetches your published content from your Turso database at build
 │   ├── layouts/
 │   │   └── BaseLayout.astro
 │   ├── lib/
-│   │   └── content-api.ts  # Turso database client
+│   │   └── content-api.ts  # LiteShow API client
 │   └── pages/
 │       ├── index.astro     # Home page
 │       ├── [slug].astro    # Dynamic pages

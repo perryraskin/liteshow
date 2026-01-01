@@ -1,12 +1,12 @@
-import { createClient } from '@libsql/client';
+/**
+ * Content API Client
+ *
+ * Fetches published content from the LiteShow API.
+ * This runs at build time to generate static pages.
+ */
 
-// Only create client if env vars exist (they won't exist when building the template itself)
-const turso = import.meta.env.TURSO_DATABASE_URL && import.meta.env.TURSO_AUTH_TOKEN
-  ? createClient({
-      url: import.meta.env.TURSO_DATABASE_URL,
-      authToken: import.meta.env.TURSO_AUTH_TOKEN,
-    })
-  : null;
+const API_URL = import.meta.env.LITESHOW_API_URL || 'https://api.liteshow.io';
+const PROJECT_SLUG = import.meta.env.LITESHOW_PROJECT_SLUG;
 
 export interface Block {
   id: string;
@@ -26,96 +26,71 @@ export interface Page {
   blocks: Block[];
 }
 
+/**
+ * Fetch a specific published page by slug
+ */
 export async function getPage(slug: string): Promise<Page | null> {
-  // Return null if no database client (template build without env vars)
-  if (!turso) {
+  // Return null if no project slug configured (template build)
+  if (!PROJECT_SLUG) {
+    console.warn('[content-api] No LITESHOW_PROJECT_SLUG configured - returning null');
     return null;
   }
 
   try {
-    // Get page
-    const pageResult = await turso.execute({
-      sql: 'SELECT * FROM pages WHERE slug = ? AND status = ?',
-      args: [slug, 'published'],
-    });
+    const url = `${API_URL}/public/sites/${PROJECT_SLUG}/pages/${slug}`;
+    console.log(`[content-api] Fetching page: ${url}`);
 
-    if (pageResult.rows.length === 0) {
-      return null;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log(`[content-api] Page not found: ${slug}`);
+        return null;
+      }
+      throw new Error(`Failed to fetch page: ${response.statusText}`);
     }
 
-    const pageRow = pageResult.rows[0];
-
-    // Get blocks
-    const blocksResult = await turso.execute({
-      sql: 'SELECT * FROM blocks WHERE page_id = ? ORDER BY "order" ASC',
-      args: [pageRow.id as string],
-    });
-
-    const blocks: Block[] = blocksResult.rows.map((row) => ({
-      id: row.id as string,
-      type: row.type as string,
-      content: JSON.parse(row.content as string),
-      order: row.order as number,
-    }));
-
-    return {
-      id: pageRow.id as string,
-      title: pageRow.title as string,
-      slug: pageRow.slug as string,
-      status: pageRow.status as 'draft' | 'published',
-      seo_title: pageRow.seo_title as string | undefined,
-      seo_description: pageRow.seo_description as string | undefined,
-      seo_keywords: pageRow.seo_keywords as string | undefined,
-      blocks,
-    };
+    const page = await response.json();
+    return page as Page;
   } catch (error) {
-    console.error('Error fetching page:', error);
+    console.error(`[content-api] Error fetching page "${slug}":`, error);
     return null;
   }
 }
 
+/**
+ * Fetch all published pages for this project
+ */
 export async function getAllPages(): Promise<Page[]> {
-  // Return empty array if no database client (template build without env vars)
-  if (!turso) {
+  // Return empty array if no project slug configured (template build)
+  if (!PROJECT_SLUG) {
+    console.warn('[content-api] No LITESHOW_PROJECT_SLUG configured - returning empty array');
     return [];
   }
 
   try {
-    const pagesResult = await turso.execute({
-      sql: 'SELECT * FROM pages WHERE status = ?',
-      args: ['published'],
-    });
+    const url = `${API_URL}/public/sites/${PROJECT_SLUG}/pages`;
+    console.log(`[content-api] Fetching all pages: ${url}`);
 
-    const pages: Page[] = [];
+    const response = await fetch(url);
 
-    for (const pageRow of pagesResult.rows) {
-      const blocksResult = await turso.execute({
-        sql: 'SELECT * FROM blocks WHERE page_id = ? ORDER BY "order" ASC',
-        args: [pageRow.id as string],
-      });
-
-      const blocks: Block[] = blocksResult.rows.map((row) => ({
-        id: row.id as string,
-        type: row.type as string,
-        content: JSON.parse(row.content as string),
-        order: row.order as number,
-      }));
-
-      pages.push({
-        id: pageRow.id as string,
-        title: pageRow.title as string,
-        slug: pageRow.slug as string,
-        status: pageRow.status as 'draft' | 'published',
-        seo_title: pageRow.seo_title as string | undefined,
-        seo_description: pageRow.seo_description as string | undefined,
-        seo_keywords: pageRow.seo_keywords as string | undefined,
-        blocks,
-      });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pages: ${response.statusText}`);
     }
 
-    return pages;
+    const pages = await response.json();
+
+    // Fetch blocks for each page
+    const pagesWithBlocks = await Promise.all(
+      pages.map(async (page: Page) => {
+        const fullPage = await getPage(page.slug);
+        return fullPage || page;
+      })
+    );
+
+    return pagesWithBlocks;
   } catch (error) {
-    console.error('Error fetching pages:', error);
+    console.error('[content-api] Error fetching pages:', error);
     return [];
   }
 }
