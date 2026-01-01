@@ -93,6 +93,11 @@ deploymentRoutes.post('/deploy', async (c) => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.liteshow.io';
       await setRepositorySecret(repoInfo.owner, repoInfo.repo, githubToken, 'LITESHOW_API_URL', apiUrl);
       await setRepositorySecret(repoInfo.owner, repoInfo.repo, githubToken, 'LITESHOW_PROJECT_SLUG', project.slug);
+
+      // Set BASE_PATH based on whether a custom domain is configured
+      // Custom domains are at root (/), GitHub Pages subpaths use /repo-name/
+      const basePath = project.customDomain ? '/' : `/${repoInfo.repo}/`;
+      await setRepositorySecret(repoInfo.owner, repoInfo.repo, githubToken, 'BASE_PATH', basePath);
       console.log('GitHub Actions secrets configured');
 
       // Trigger the GitHub Actions workflow
