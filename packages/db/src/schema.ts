@@ -96,6 +96,15 @@ export const projects = pgTable('projects', {
   siteDescription: text('site_description'), // Meta description for SEO
   faviconUrl: text('favicon_url'), // URL to favicon image
 
+  // Deployment settings
+  deploymentPlatform: text('deployment_platform').default('github-pages'),
+  deploymentStatus: text('deployment_status'), // 'live', 'building', 'failed', 'not_deployed'
+  deploymentUrl: text('deployment_url'),
+  lastDeployedAt: timestamp('last_deployed_at'),
+  lastDeploymentCommit: text('last_deployment_commit'),
+  autoDeployOnSave: boolean('auto_deploy_on_save').default(false).notNull(),
+  customDomain: text('custom_domain'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -129,6 +138,22 @@ export const activityLogs = pgTable('activity_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Deployments table - tracking deployment history
+export const deployments = pgTable('deployments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+
+  // Deployment details
+  status: text('status').notNull(), // 'queued', 'in_progress', 'success', 'failure'
+  commitSha: text('commit_sha'),
+  commitMessage: text('commit_message'),
+  deploymentUrl: text('deployment_url'),
+  errorMessage: text('error_message'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -158,6 +183,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   domains: many(domains),
   activityLogs: many(activityLogs),
+  deployments: many(deployments),
 }));
 
 export const domainsRelations = relations(domains, ({ one }) => ({
@@ -178,6 +204,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const deploymentsRelations = relations(deployments, ({ one }) => ({
+  project: one(projects, {
+    fields: [deployments.projectId],
+    references: [projects.id],
+  }),
+}));
+
 // Export types for TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -193,3 +226,5 @@ export type Domain = typeof domains.$inferSelect;
 export type NewDomain = typeof domains.$inferInsert;
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
+export type Deployment = typeof deployments.$inferSelect;
+export type NewDeployment = typeof deployments.$inferInsert;

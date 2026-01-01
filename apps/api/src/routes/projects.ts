@@ -774,6 +774,16 @@ projectRoutes.post('/:id/sync-template', async (c) => {
     });
   } catch (error: any) {
     console.error('Template sync error:', error);
+
+    // Check if it's an authentication error
+    if (error.code === 'GITHUB_AUTH_REQUIRED' || error.requiresReauth) {
+      return c.json({
+        error: error.message || 'GitHub authentication required',
+        requiresReauth: true,
+        code: 'GITHUB_AUTH_REQUIRED'
+      }, 401);
+    }
+
     return c.json({ error: error.message || 'Failed to sync template' }, 500);
   }
 });

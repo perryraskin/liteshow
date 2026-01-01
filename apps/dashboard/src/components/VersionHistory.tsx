@@ -21,7 +21,7 @@ interface VersionHistoryProps {
   pageId: string;
   currentPageStatus?: {
     status: string;
-    hasUnpublishedChanges: boolean;
+    deployed: boolean;
   };
   onRestore?: () => void;
 }
@@ -116,14 +116,14 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
         title: data.page?.title || 'Untitled',
         blockCount: data.blocks?.length || 0,
         status: data.page?.status || 'unknown',
-        hasUnpublishedChanges: data.page?.hasUnpublishedChanges || false,
+        deployed: data.page?.deployed || false,
       };
     } catch {
       return {
         title: 'Unknown',
         blockCount: 0,
         status: 'unknown',
-        hasUnpublishedChanges: false,
+        deployed: false,
       };
     }
   };
@@ -185,9 +185,9 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
 
                 // For current version, use live page status; for historical, use snapshot
                 const displayStatus = isCurrent && currentPageStatus ? currentPageStatus.status : preview.status;
-                const displayHasUnpublishedChanges = isCurrent && currentPageStatus
-                  ? currentPageStatus.hasUnpublishedChanges
-                  : preview.hasUnpublishedChanges;
+                const displayDeployed = isCurrent && currentPageStatus
+                  ? currentPageStatus.deployed
+                  : preview.deployed;
 
                 return (
                   <div
@@ -202,19 +202,14 @@ export function VersionHistory({ projectId, pageId, currentPageStatus, onRestore
                             Current
                           </Badge>
                         )}
-                        {isCurrent && !displayHasUnpublishedChanges && (
+                        {isCurrent && displayDeployed && (
+                          <Badge variant="outline" className="text-xs border-green-500 text-green-600 dark:text-green-400">
+                            Deployed
+                          </Badge>
+                        )}
+                        {displayStatus === 'draft' && (
                           <Badge variant="outline" className="text-xs">
-                            {displayStatus}
-                          </Badge>
-                        )}
-                        {isCurrent && displayHasUnpublishedChanges && (
-                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600 dark:text-yellow-400">
-                            Unpublished Changes
-                          </Badge>
-                        )}
-                        {!isCurrent && displayHasUnpublishedChanges && (
-                          <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600 dark:text-yellow-400">
-                            Had Draft Changes
+                            draft
                           </Badge>
                         )}
                       </div>

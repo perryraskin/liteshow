@@ -18,8 +18,8 @@ export const pages = sqliteTable('pages', {
   slug: text('slug').notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
-  status: text('status').notNull().default('draft'), // 'draft', 'published'
-  hasUnpublishedChanges: integer('has_unpublished_changes', { mode: 'boolean' }).notNull().default(false),
+  status: text('status').notNull().default('draft'), // 'draft', 'saved'
+  deployed: integer('deployed', { mode: 'boolean' }).notNull().default(false), // Whether page is currently deployed
 
   // SEO metadata
   metaTitle: text('meta_title'),
