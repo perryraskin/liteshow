@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Github, Database, Rocket, Copy, ExternalLink, Trash2, AlertTriangle, Eye, EyeOff, Settings as SettingsIcon, RefreshCw, GitPullRequest, CheckCircle2, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { DeploymentTab } from '@/components/DeploymentTab';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -549,102 +550,7 @@ export default function ProjectPage() {
           </TabsContent>
 
           <TabsContent value="deployment">
-            {project.githubRepoUrl ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Rocket className="h-5 w-5" />
-                    <CardTitle>Deployment</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Deploy your site to your preferred hosting platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <p className="text-sm font-medium mb-3">Manual Import (Recommended)</p>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      The "Deploy to" buttons below create NEW repositories. Instead, manually import your existing repository:
-                    </p>
-                    <div className="bg-muted p-4 rounded-lg space-y-3 mb-4">
-                      <div>
-                        <p className="text-sm font-semibold mb-2">For Netlify:</p>
-                        <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                          <li>Go to <a href="https://app.netlify.com/start" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Netlify → Add new site</a></li>
-                          <li>Click "Import an existing project"</li>
-                          <li>Select GitHub and choose: <span className="font-mono">{project.githubRepoName || project.githubRepoUrl}</span></li>
-                          <li>Add environment variables below</li>
-                        </ol>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold mb-2">For Vercel:</p>
-                        <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                          <li>Go to <a href="https://vercel.com/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Vercel → Add New Project</a></li>
-                          <li>Import Git Repository and select: <span className="font-mono">{project.githubRepoName || project.githubRepoUrl}</span></li>
-                          <li>Add environment variables below</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <p className="text-sm font-medium mb-2">Environment Variables</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Add these to your hosting platform's environment settings:
-                    </p>
-                    <div className="bg-muted p-3 rounded-md">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="text-xs font-mono break-all space-y-1">
-                          <div>LITESHOW_PROJECT_SLUG={project.slug}</div>
-                          <div>LITESHOW_API_URL=https://api.liteshow.io</div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="shrink-0"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`LITESHOW_PROJECT_SLUG=${project.slug}\nLITESHOW_API_URL=https://api.liteshow.io`);
-                            toast.success('Environment variables copied to clipboard');
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Your site will fetch content from the Liteshow API at build time. No database credentials needed.
-                    </p>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <a
-                      href={project.githubRepoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      View full deployment instructions on GitHub
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Github className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Connect a GitHub repository to enable deployment
-                  </p>
-                  <Link href={`/dashboard/projects/${project.id}/setup-github`} prefetch={true}>
-                    <Button>
-                      <Github className="mr-2 h-4 w-4" />
-                      Setup GitHub
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
+            <DeploymentTab project={project} />
           </TabsContent>
 
           <TabsContent value="development">

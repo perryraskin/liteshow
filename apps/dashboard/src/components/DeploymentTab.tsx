@@ -1,6 +1,5 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,18 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Rocket, ExternalLink, Github, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Project {
-  id: string;
-  name: string;
-  githubRepoUrl?: string;
-  githubRepoName?: string;
-  deploymentPlatform?: string;
-  deploymentStatus?: string;
-  deploymentUrl?: string;
-  lastDeployedAt?: string;
-  autoDeployOnSave: boolean;
-}
 
 interface Deployment {
   id: string;
@@ -33,38 +20,38 @@ interface Deployment {
   completedAt?: string;
 }
 
-export default function DeploymentPage() {
-  const params = useParams();
-  const [project, setProject] = useState<Project | null>(null);
+interface DeploymentTabProps {
+  project: {
+    id: string;
+    name: string;
+    githubRepoUrl?: string;
+    githubRepoName?: string;
+    deploymentPlatform?: string;
+    deploymentStatus?: string;
+    deploymentUrl?: string;
+    lastDeployedAt?: string;
+    autoDeployOnSave?: boolean;
+  };
+}
+
+export function DeploymentTab({ project }: DeploymentTabProps) {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
+  const [localProject, setLocalProject] = useState(project);
 
   useEffect(() => {
-    fetchData();
-  }, [params.id]);
+    setLocalProject(project);
+    fetchDeployments();
+  }, [project]);
 
-  const fetchData = async () => {
+  const fetchDeployments = async () => {
     try {
       const token = localStorage.getItem('session_token');
 
-      // Fetch project
-      const projectRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (projectRes.ok) {
-        const projectData = await projectRes.json();
-        setProject(projectData);
-      }
-
       // Fetch deployment history
       const deploymentsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/deployments`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${project.id}/deployments`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -81,41 +68,12 @@ export default function DeploymentPage() {
     }
   };
 
-  const handleEnableGitHubPages = async () => {
-    setIsEnabling(true);
-    try {
-      const token = localStorage.getItem('session_token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/deployment/enable`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to enable GitHub Pages');
-      }
-
-      toast.success('GitHub Pages enabled!', {
-        description: 'Your site will be deployed on the next save.',
-      });
-
-      fetchData();
-    } catch (error) {
-      console.error('Error enabling GitHub Pages:', error);
-      toast.error('Failed to enable GitHub Pages');
-    } finally {
-      setIsEnabling(false);
-    }
-  };
-
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/deployment/deploy`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${project.id}/deployment/deploy`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -126,13 +84,11 @@ export default function DeploymentPage() {
         throw new Error('Failed to trigger deployment');
       }
 
-      const data = await response.json();
-
       toast.success('Deployment started!', {
         description: 'Your site is being built. This usually takes 2-3 minutes.',
       });
 
-      fetchData();
+      fetchDeployments();
     } catch (error) {
       console.error('Error deploying:', error);
       toast.error('Failed to start deployment');
@@ -145,7 +101,7 @@ export default function DeploymentPage() {
     try {
       const token = localStorage.getItem('session_token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}/deployment/settings`,
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${project.id}/deployment/settings`,
         {
           method: 'PATCH',
           headers: {
@@ -160,7 +116,7 @@ export default function DeploymentPage() {
         throw new Error('Failed to update settings');
       }
 
-      setProject((prev) => prev ? { ...prev, autoDeployOnSave: enabled } : null);
+      setLocalProject((prev) => ({ ...prev, autoDeployOnSave: enabled }));
 
       toast.success(enabled ? 'Auto-deploy enabled' : 'Auto-deploy disabled');
     } catch (error) {
@@ -186,7 +142,7 @@ export default function DeploymentPage() {
     return <div className="p-8">Loading...</div>;
   }
 
-  if (!project?.githubRepoUrl) {
+  if (!localProject?.githubRepoUrl) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
@@ -194,7 +150,7 @@ export default function DeploymentPage() {
           <p className="text-muted-foreground mb-4">
             Connect a GitHub repository to enable deployment
           </p>
-          <Button onClick={() => window.location.href = `/dashboard/projects/${params.id}/setup-github`}>
+          <Button onClick={() => window.location.href = `/dashboard/projects/${localProject.id}/setup-github`}>
             <Github className="mr-2 h-4 w-4" />
             Setup GitHub
           </Button>
@@ -213,32 +169,32 @@ export default function DeploymentPage() {
               <CardTitle>Deployment Status</CardTitle>
               <CardDescription>GitHub Pages deployment via GitHub Actions</CardDescription>
             </div>
-            {getStatusBadge(project.deploymentStatus || 'not_deployed')}
+            {getStatusBadge(localProject.deploymentStatus || 'not_deployed')}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {project.deploymentUrl && (
+          {localProject.deploymentUrl && (
             <div>
               <Label className="text-sm font-medium">Live URL</Label>
               <div className="flex items-center gap-2 mt-1">
                 <a
-                  href={project.deploymentUrl}
+                  href={localProject.deploymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline flex items-center gap-1"
                 >
-                  {project.deploymentUrl}
+                  {localProject.deploymentUrl}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             </div>
           )}
 
-          {project.lastDeployedAt && (
+          {localProject.lastDeployedAt && (
             <div>
               <Label className="text-sm font-medium">Last Deployed</Label>
               <p className="text-sm text-muted-foreground mt-1">
-                {new Date(project.lastDeployedAt).toLocaleString()}
+                {new Date(localProject.lastDeployedAt).toLocaleString()}
               </p>
             </div>
           )}
@@ -246,7 +202,7 @@ export default function DeploymentPage() {
           <div className="pt-4">
             <Button
               onClick={handleDeploy}
-              disabled={isDeploying || project.deploymentStatus === 'building'}
+              disabled={isDeploying || localProject.deploymentStatus === 'building'}
             >
               {isDeploying ? (
                 <>
@@ -279,7 +235,7 @@ export default function DeploymentPage() {
               </p>
             </div>
             <Switch
-              checked={project.autoDeployOnSave}
+              checked={localProject.autoDeployOnSave || false}
               onCheckedChange={handleToggleAutoDeploy}
             />
           </div>
