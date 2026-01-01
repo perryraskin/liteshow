@@ -36,7 +36,7 @@ export function useDeploymentStatus({
 
   const fetchStatus = useCallback(async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('session_token');
       if (!token) {
         setError('Not authenticated');
         return;

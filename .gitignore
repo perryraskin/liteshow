@@ -45,3 +45,6 @@ coverage/
 .cache/
 .temp/
 .vercel
+
+# Scripts
+scripts/venv/

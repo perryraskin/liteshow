@@ -480,6 +480,34 @@ deploymentRoutes.get('/status', async (c) => {
                 })
                 .where(eq(projects.id, projectId));
 
+              // Also update the latest in_progress deployment record
+              const latestDeployment = await db.query.deployments.findFirst({
+                where: (deployments, { and, eq }) => and(
+                  eq(deployments.projectId, projectId),
+                  eq(deployments.status, 'in_progress')
+                ),
+                orderBy: (deployments, { desc }) => [desc(deployments.createdAt)],
+              });
+
+              if (latestDeployment) {
+                const deploymentUpdateStatus =
+                  deploymentStatus === 'live' ? 'success' :
+                  deploymentStatus === 'failed' ? 'failure' :
+                  'in_progress';
+
+                await db
+                  .update(deployments)
+                  .set({
+                    status: deploymentUpdateStatus,
+                    completedAt: githubStatus.status === 'completed' ? new Date() : null,
+                    commitSha: githubStatus.commitSha,
+                    deploymentUrl: deploymentUpdateStatus === 'success' ? project.deploymentUrl : null,
+                  })
+                  .where(eq(deployments.id, latestDeployment.id));
+
+                console.log('Updated deployment record:', latestDeployment.id, 'to', deploymentUpdateStatus);
+              }
+
               // Return updated status
               return c.json({
                 status: deploymentStatus,

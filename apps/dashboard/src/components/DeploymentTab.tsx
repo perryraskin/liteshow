@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +44,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
   const [localProject, setLocalProject] = useState(project);
   const [customDomain, setCustomDomain] = useState(project.customDomain || '');
   const [isSavingDomain, setIsSavingDomain] = useState(false);
+  const fetchingRef = useRef(false);
 
   // Use the deployment status hook for real-time polling
   const {
@@ -62,6 +63,13 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
   }, [project]);
 
   const fetchDeployments = async () => {
+    // Prevent duplicate calls from React Strict Mode
+    if (fetchingRef.current) {
+      console.log('Fetch already in progress, skipping duplicate call');
+      return;
+    }
+
+    fetchingRef.current = true;
     try {
       const token = localStorage.getItem('session_token');
 
@@ -81,6 +89,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
       console.error('Error fetching deployment data:', error);
     } finally {
       setIsLoading(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -179,9 +188,25 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, url?: string) => {
     switch (status) {
       case 'live':
+        if (url) {
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex"
+            >
+              <Badge className="bg-green-500 cursor-pointer hover:bg-green-600 transition-colors">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Live
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </Badge>
+            </a>
+          );
+        }
         return <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" />Live</Badge>;
       case 'building':
         return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Building</Badge>;
@@ -223,7 +248,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
               <CardTitle>Deployment Status</CardTitle>
               <CardDescription>GitHub Pages deployment via GitHub Actions</CardDescription>
             </div>
-            {getStatusBadge(deploymentStatus.status)}
+            {getStatusBadge(deploymentStatus.status, deploymentStatus.url)}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -256,7 +281,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
           <div className="pt-4">
             <Button
               onClick={handleDeploy}
-              disabled={isDeploying || localProject.deploymentStatus === 'building'}
+              disabled={isDeploying || deploymentStatus.status === 'building'}
             >
               {isDeploying ? (
                 <>
@@ -383,7 +408,7 @@ export function DeploymentTab({ project }: DeploymentTabProps) {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {getStatusBadge(deployment.status)}
+                      {getStatusBadge(deployment.status, deployment.deploymentUrl)}
                       {deployment.commitSha && (
                         <code className="text-xs text-muted-foreground">
                           {deployment.commitSha.substring(0, 7)}

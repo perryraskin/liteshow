@@ -55,6 +55,8 @@ app.route('/projects', projectRoutes);
 app.route('/projects', pagesRoutes);
 app.route('/projects', blocksRoutes);
 app.route('/projects/:projectId/deployment', deploymentRoutes);
+// Also mount deployments at /projects/:projectId for GET /deployments route
+app.route('/projects/:projectId', deploymentRoutes);
 app.route('/github-app', githubAppRoutes);
 app.route('/health', healthRoutes);
 

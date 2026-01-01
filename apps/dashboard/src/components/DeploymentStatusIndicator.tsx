@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Clock, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useDeploymentStatus } from '@/hooks/useDeploymentStatus';
 
@@ -65,6 +65,24 @@ export function DeploymentStatusIndicator({ projectId, compact = false }: Deploy
 
   const config = getStatusConfig();
   const Icon = config.icon;
+
+  // If live status with URL, make badge clickable
+  if (status.status === 'live' && status.url) {
+    return (
+      <a
+        href={status.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex"
+      >
+        <Badge variant={config.variant} className={`${config.className} cursor-pointer transition-colors`}>
+          <Icon className={`h-3 w-3 mr-1 ${config.iconClassName || ''}`} />
+          {config.text}
+          <ExternalLink className="h-3 w-3 ml-1" />
+        </Badge>
+      </a>
+    );
+  }
 
   return (
     <Badge variant={config.variant} className={config.className}>
