@@ -2,7 +2,7 @@
   "name": "liteshow",
   "version": "0.1.0",
   "private": true,
-  "description": "AI-First, SEO-Optimized, Git-Powered CMS",
+  "description": "Developer-First, SEO-Optimized, Git-Powered CMS",
   "workspaces": [
     "apps/*",
     "packages/*"

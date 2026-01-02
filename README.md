@@ -1,6 +1,6 @@
 # Liteshow
 
-> AI-First, SEO-Optimized, Git-Powered CMS
+> Developer-First, SEO-Optimized, Git-Powered CMS
 
 Liteshow is a content management system that combines a powerful AI content assistant with a robust, developer-friendly architecture, ensuring every site is perfectly optimized for SEO from day one.
 

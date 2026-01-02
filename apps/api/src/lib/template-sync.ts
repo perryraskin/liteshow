@@ -174,7 +174,7 @@ export function getTemplateFilesOld(projectName: string, slug: string, tursoDbUr
     path: 'README.md',
     content: `# ${projectName}
 
-Built with [Liteshow](https://liteshow.io) - AI-First, Git-Powered CMS
+Built with [Liteshow](https://liteshow.io) - Developer-First, Git-Powered CMS
 
 ## Quick Start
 

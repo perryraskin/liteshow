@@ -7,7 +7,7 @@ export default function Home() {
         <div className="text-center">
           <h1 className="text-6xl font-bold mb-4">Liteshow</h1>
           <p className="text-xl mb-8 text-gray-600 dark:text-gray-400">
-            AI-First, SEO-Optimized, Git-Powered CMS
+            Developer-First, SEO-Optimized, Git-Powered CMS
           </p>
           <div className="flex gap-4 justify-center">
             <Link
