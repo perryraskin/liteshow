@@ -1704,9 +1704,14 @@ export async function syncTemplateToRepo(
     ]);
     console.log('✅ User repo cloned');
 
-    // Get default branch name
-    const { stdout: branchOutput } = await execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: userRepoDir });
-    const baseBranch = branchOutput.trim();
+    // Get default branch name (fallback to 'main' if repo is empty)
+    let baseBranch = 'main';
+    try {
+      const { stdout: branchOutput } = await execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: userRepoDir });
+      baseBranch = branchOutput.trim();
+    } catch (error) {
+      console.log('⚠️  Repository appears to be empty, using default branch: main');
+    }
     console.log('Base branch:', baseBranch);
 
     // 3. Process template files with variable replacement
