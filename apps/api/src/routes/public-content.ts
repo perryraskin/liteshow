@@ -7,13 +7,29 @@
 
 import { Hono } from 'hono';
 import { db } from '@liteshow/db';
-import { projects } from '@liteshow/db';
-import { eq } from 'drizzle-orm';
+import { projects, users } from '@liteshow/db';
+import { eq, count } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { pages, blocks } from '@liteshow/db/src/content-schema';
 
 const publicContentRoutes = new Hono();
+
+// GET /public/stats/users - Get total user count
+publicContentRoutes.get('/stats/users', async (c) => {
+  try {
+    const result = await db.select({ count: count() }).from(users);
+    const totalUsers = result[0]?.count || 0;
+
+    return c.json({
+      total: totalUsers,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    return c.json({ error: 'Failed to fetch user count' }, 500);
+  }
+});
 
 // GET /public/sites/:slug/pages - Get all published pages for a project
 publicContentRoutes.get('/sites/:slug/pages', async (c) => {
