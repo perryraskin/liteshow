@@ -440,16 +440,16 @@ projectRoutes.post('/', async (c) => {
       } else if (authType === 'github_app') {
         // GitHub App - repository already exists and is selected by user
         console.log('Linking to existing GitHub repository...');
-        // The githubRepoId format is "owner/repo"
+        // The githubRepoId format is "owner/repo" - store it directly
         githubRepo = {
-          name: githubRepoId.split('/')[1],
+          name: githubRepoId, // Store full owner/repo to match OAuth behavior
           url: `https://github.com/${githubRepoId}`,
         };
 
         // Update project with GitHub App info
         await db.update(projects)
           .set({
-            githubRepoName: githubRepo.name,
+            githubRepoName: githubRepo.name, // Now contains full owner/repo
             githubRepoUrl: githubRepo.url,
             updatedAt: new Date(),
           })
@@ -681,13 +681,13 @@ projectRoutes.post('/:id/link-github', async (c) => {
       console.log(`Linking GitHub App repository: ${githubRepoId}`);
 
       // Extract repo name and URL from full_name (e.g., "owner/repo")
-      const repoName = githubRepoId.split('/')[1];
+      // Store the full owner/repo format to match OAuth behavior
       const repoUrl = `https://github.com/${githubRepoId}`;
 
       // Update project with GitHub App info
       await db.update(projects)
         .set({
-          githubRepoName: repoName,
+          githubRepoName: githubRepoId, // Store full owner/repo
           githubRepoUrl: repoUrl,
           githubAuthType: 'github_app',
           githubInstallationId: githubInstallationId,
