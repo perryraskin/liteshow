@@ -1654,7 +1654,10 @@ export async function syncTemplateToRepo(
       throw new Error('Failed to get GitHub token');
     }
 
-    const repoFullName = project.githubRepoName;
+    // Extract owner/repo from URL (e.g., "https://github.com/owner/repo" -> "owner/repo")
+    const repoFullName = project.githubRepoUrl
+      ? project.githubRepoUrl.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '')
+      : project.githubRepoName;
 
     console.log('\n=== TEMPLATE SYNC WITH LOCAL GIT COMPARISON ===');
     console.log('Project:', projectId);

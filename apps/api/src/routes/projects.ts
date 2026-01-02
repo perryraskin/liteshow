@@ -747,7 +747,11 @@ projectRoutes.get('/:id/sync-template/status', async (c) => {
 
     // Check for existing sync PR
     const { checkExistingSyncPR } = await import('../lib/template-sync');
-    const prUrl = await checkExistingSyncPR(project.githubRepoName, token);
+    // Extract owner/repo from URL (e.g., "https://github.com/owner/repo" -> "owner/repo")
+    const repoFullName = project.githubRepoUrl
+      .replace(/^https?:\/\/github\.com\//, '')
+      .replace(/\.git$/, '');
+    const prUrl = await checkExistingSyncPR(repoFullName, token);
 
     return c.json({
       hasPendingPR: !!prUrl,
