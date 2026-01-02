@@ -119,7 +119,7 @@ async function initializeContentSchema(dbUrl: string, authToken: string) {
 }
 
 // Helper: Create Turso database
-async function createTursoDatabase(slug: string) {
+async function createTursoDatabase(projectId: string) {
   const tursoApiToken = process.env.TURSO_API_TOKEN;
   const tursoOrg = process.env.TURSO_ORG || 'perryraskin'; // Default org name
 
@@ -136,7 +136,7 @@ async function createTursoDatabase(slug: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: `liteshow-${slug}`,
+        name: `liteshow-${projectId}`,
         group: 'liteshow',
       }),
     });
@@ -377,63 +377,105 @@ projectRoutes.post('/', async (c) => {
 
     console.log(`Creating project "${name}" (${slug}) for user ${user.id} with strategy: ${strategy}`);
 
-    // Step 1: Create Turso database
-    console.log('Creating Turso database...');
-    const tursoDb = await createTursoDatabase(slug);
-
-    // Step 1.5: Initialize content schema
-    console.log('Initializing content schema...');
-    await initializeContentSchema(tursoDb.url, tursoDb.token);
-
-    // Step 2: Create or link GitHub repository (if applicable)
-    let githubRepo: { name: string; url: string } | null = null;
-
-    if (shouldCreateGitHubRepo) {
-      // Liteshow creates the repository via OAuth
-      console.log('Creating GitHub repository...');
-      const isPrivate = repoVisibility === 'private';
-      githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!, isPrivate);
-
-      // Create deployment configuration files
-      console.log('Creating deployment configuration files...');
-      const repoFullName = githubRepo.url.replace('https://github.com/', '');
-      await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
-    } else if (authType === 'github_app') {
-      // GitHub App - repository already exists and is selected by user
-      console.log('Linking to existing GitHub repository...');
-      // The githubRepoId format is "owner/repo"
-      githubRepo = {
-        name: githubRepoId.split('/')[1],
-        url: `https://github.com/${githubRepoId}`,
-      };
-
-      // Note: We could create deployment files here too using the GitHub App token,
-      // but for now we'll let users do that manually since they own the repo
-    } else {
-      // link-later strategy - no GitHub repo yet
-      console.log('Skipping GitHub repository setup (will be linked later)');
-    }
-
-    // Step 3: Store project in PostgreSQL
-    console.log('Storing project metadata...');
+    // Step 1: Insert project record first to get the project ID
+    console.log('Creating project record...');
     const [newProject] = await db.insert(projects).values({
       userId: user.id,
       name,
       slug,
       description: description || null,
-      tursoDbUrl: tursoDb.url,
-      tursoDbToken: tursoDb.token,
-      githubRepoName: githubRepo?.name || null,
-      githubRepoUrl: githubRepo?.url || null,
+      tursoDbUrl: null, // Will be set after Turso creation
+      tursoDbToken: null, // Will be set after Turso creation
+      githubRepoName: null, // Will be set after GitHub creation if applicable
+      githubRepoUrl: null,
       githubAuthType: authType,
       githubInstallationId: githubInstallationId || null,
       githubRepoId: githubRepoId || null,
       isPublished: false,
     }).returning();
 
-    console.log(`Project created successfully: ${newProject.id}`);
+    console.log(`Project record created with ID: ${newProject.id}`);
 
-    return c.json(newProject, 201);
+    try {
+      // Step 2: Create Turso database using project ID
+      console.log('Creating Turso database...');
+      const tursoDb = await createTursoDatabase(newProject.id);
+
+      // Step 2.5: Initialize content schema
+      console.log('Initializing content schema...');
+      await initializeContentSchema(tursoDb.url, tursoDb.token);
+
+      // Step 3: Update project with Turso credentials
+      console.log('Updating project with Turso credentials...');
+      await db.update(projects)
+        .set({
+          tursoDbUrl: tursoDb.url,
+          tursoDbToken: tursoDb.token,
+          updatedAt: new Date(),
+        })
+        .where(eq(projects.id, newProject.id));
+
+      // Step 4: Create or link GitHub repository (if applicable)
+      let githubRepo: { name: string; url: string } | null = null;
+
+      if (shouldCreateGitHubRepo) {
+        // Liteshow creates the repository via OAuth
+        console.log('Creating GitHub repository...');
+        const isPrivate = repoVisibility === 'private';
+        githubRepo = await createGitHubRepository(slug, description, user.githubAccessToken!, isPrivate);
+
+        // Create deployment configuration files
+        console.log('Creating deployment configuration files...');
+        const repoFullName = githubRepo.url.replace('https://github.com/', '');
+        await createDeploymentFiles(repoFullName, name, slug, tursoDb.url, user.githubAccessToken!);
+
+        // Update project with GitHub info
+        await db.update(projects)
+          .set({
+            githubRepoName: githubRepo.name,
+            githubRepoUrl: githubRepo.url,
+            updatedAt: new Date(),
+          })
+          .where(eq(projects.id, newProject.id));
+      } else if (authType === 'github_app') {
+        // GitHub App - repository already exists and is selected by user
+        console.log('Linking to existing GitHub repository...');
+        // The githubRepoId format is "owner/repo"
+        githubRepo = {
+          name: githubRepoId.split('/')[1],
+          url: `https://github.com/${githubRepoId}`,
+        };
+
+        // Update project with GitHub App info
+        await db.update(projects)
+          .set({
+            githubRepoName: githubRepo.name,
+            githubRepoUrl: githubRepo.url,
+            updatedAt: new Date(),
+          })
+          .where(eq(projects.id, newProject.id));
+
+        // Note: We could create deployment files here too using the GitHub App token,
+        // but for now we'll let users do that manually since they own the repo
+      } else {
+        // link-later strategy - no GitHub repo yet
+        console.log('Skipping GitHub repository setup (will be linked later)');
+      }
+
+      console.log(`Project created successfully: ${newProject.id}`);
+
+      // Fetch updated project to return
+      const updatedProject = await db.query.projects.findFirst({
+        where: eq(projects.id, newProject.id),
+      });
+
+      return c.json(updatedProject, 201);
+    } catch (error: any) {
+      // Rollback: delete the project record if Turso or GitHub creation fails
+      console.error('Failed to complete project setup, rolling back...', error);
+      await db.delete(projects).where(eq(projects.id, newProject.id));
+      throw error;
+    }
   } catch (error: any) {
     console.error('Create project error:', error);
     return c.json({ error: error.message || 'Failed to create project' }, 500);
@@ -868,7 +910,7 @@ projectRoutes.delete('/:id', async (c) => {
     try {
       const tursoApiToken = process.env.TURSO_API_TOKEN;
       const tursoOrg = process.env.TURSO_ORG || 'perryraskin';
-      const dbName = `liteshow-${project.slug}`;
+      const dbName = `liteshow-${project.id}`;
 
       console.log(`Deleting Turso database: ${dbName}`);
 

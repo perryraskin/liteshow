@@ -77,9 +77,9 @@ export const projects = pgTable('projects', {
   slug: text('slug').notNull().unique(),
   description: text('description'),
 
-  // Turso database connection details
-  tursoDbUrl: text('turso_db_url').notNull(),
-  tursoDbToken: text('turso_db_token').notNull(),
+  // Turso database connection details (nullable during initial project creation)
+  tursoDbUrl: text('turso_db_url'),
+  tursoDbToken: text('turso_db_token'),
 
   // GitHub repository details (nullable for link-later strategy)
   githubRepoName: text('github_repo_name'),
