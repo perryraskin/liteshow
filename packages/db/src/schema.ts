@@ -98,7 +98,7 @@ export const projects = pgTable('projects', {
 
   // Deployment settings
   deploymentPlatform: text('deployment_platform').default('github-pages'),
-  deploymentStatus: text('deployment_status'), // 'live', 'building', 'failed', 'not_deployed'
+  deploymentStatus: text('deployment_status').default('not_deployed'), // 'live', 'building', 'failed', 'not_deployed'
   deploymentUrl: text('deployment_url'),
   lastDeployedAt: timestamp('last_deployed_at'),
   lastDeploymentCommit: text('last_deployment_commit'),
