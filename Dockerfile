@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat git
 RUN corepack enable pnpm
 
 # Stage 1: Install dependencies
