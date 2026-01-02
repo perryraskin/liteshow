@@ -29,6 +29,8 @@ export interface SyncResult {
   branchName?: string;
   filesChanged?: number;
   upToDate?: boolean;
+  initializedRepo?: boolean;
+  message?: string;
 }
 
 /**
@@ -1706,13 +1708,16 @@ export async function syncTemplateToRepo(
 
     // Get default branch name (fallback to 'main' if repo is empty)
     let baseBranch = 'main';
+    let isEmptyRepo = false;
     try {
       const { stdout: branchOutput } = await execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: userRepoDir });
       baseBranch = branchOutput.trim();
     } catch (error) {
-      console.log('⚠️  Repository appears to be empty, using default branch: main');
+      console.log('⚠️  Repository appears to be empty, will initialize with template files');
+      isEmptyRepo = true;
     }
     console.log('Base branch:', baseBranch);
+    console.log('Empty repo:', isEmptyRepo);
 
     // 3. Process template files with variable replacement
     console.log('\n[3/4] Processing template files...');
@@ -1779,12 +1784,31 @@ export async function syncTemplateToRepo(
       // Ignore diff errors
     }
 
-    // Create branch and push
+    // Configure git user
+    await execFile('git', ['config', 'user.name', 'Liteshow Bot'], { cwd: userRepoDir });
+    await execFile('git', ['config', 'user.email', 'bot@liteshow.io'], { cwd: userRepoDir });
+
+    if (isEmptyRepo) {
+      // For empty repos, push initial commit directly to main
+      console.log('\n[5/5] Committing initial template to main branch...');
+
+      const commitMessage = `chore: initialize with Liteshow template\n\nInitial commit from liteshowcms/templates`;
+      await execFile('git', ['commit', '-m', commitMessage], { cwd: userRepoDir });
+      await execFile('git', ['push', 'origin', baseBranch], { cwd: userRepoDir });
+
+      console.log('✅ Initial commit pushed to main');
+
+      return {
+        success: true,
+        initializedRepo: true,
+        message: 'Repository initialized with Liteshow template',
+      };
+    }
+
+    // For existing repos, create a PR
     const branchName = `liteshow/template-sync-${Date.now()}`;
     console.log('\n[5/5] Creating branch and pushing...');
 
-    await execFile('git', ['config', 'user.name', 'Liteshow Bot'], { cwd: userRepoDir });
-    await execFile('git', ['config', 'user.email', 'bot@liteshow.io'], { cwd: userRepoDir });
     await execFile('git', ['checkout', '-b', branchName], { cwd: userRepoDir });
 
     const commitMessage = `chore: sync with latest Liteshow template\n\nUpdated from liteshowcms/templates`;
