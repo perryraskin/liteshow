@@ -804,6 +804,31 @@ projectRoutes.post('/:id/sync-template', async (c) => {
       );
     }
 
+    // If we just initialized an empty repo, run sync again to check for updates
+    if (result.initializedRepo) {
+      console.log('Repository initialized, running sync again to check for updates...');
+      const secondResult = await syncTemplateToRepo(projectId, user.id);
+
+      if (secondResult.upToDate) {
+        return c.json({
+          success: true,
+          initialized: true,
+          upToDate: true,
+          message: 'Repository initialized with Liteshow template',
+        });
+      }
+
+      // If there are updates after initialization, return the PR
+      return c.json({
+        success: true,
+        initialized: true,
+        prUrl: secondResult.prUrl,
+        branchName: secondResult.branchName,
+        filesChanged: secondResult.filesChanged,
+        message: 'Repository initialized and updates available',
+      });
+    }
+
     if (result.upToDate) {
       return c.json({
         success: true,
