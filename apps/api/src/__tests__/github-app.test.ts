@@ -8,8 +8,10 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { generateGitHubAppJWT } from '../lib/github-app';
 import jwt from 'jsonwebtoken';
 
+// IMPORTANT: This is a FAKE test key for unit tests only - NOT a real credential
 // Valid test RSA private key (2048-bit) for testing purposes only
 // Generated with: openssl genrsa 2048
+// This key is intentionally committed and is NOT used in production
 const testPrivateKey = `-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCnXQpuhze8keua
 reAIXizmDNvmNsL/N2BBA6nYW2THMc1pyVDXWslZdUBcqyPyqVnOrMS9VWLRIql8

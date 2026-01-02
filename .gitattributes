@@ -1,0 +1,2 @@
+# Mark test files with dummy credentials as test fixtures
+apps/api/src/__tests__/**/*.test.ts linguist-generated=true
