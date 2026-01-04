@@ -16,6 +16,10 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
+// Initialize Sentry error tracking (must be done early)
+import { initSentry, captureException } from './lib/sentry';
+initSentry();
+
 import projectRoutes from './routes/projects';
 import pagesRoutes from './routes/pages';
 import blocksRoutes from './routes/blocks';
@@ -25,6 +29,11 @@ import publicContentRoutes from './routes/public-content';
 import githubAppRoutes from './routes/github-app-routes';
 import deploymentRoutes from './routes/deployment';
 import { errorHandler } from './middleware/error';
+import {
+  sentryUserContext,
+  sentryPerformanceContext,
+  sentryProjectContext,
+} from './middleware/sentry-context';
 
 const app = new Hono();
 
@@ -37,6 +46,11 @@ app.use(
     credentials: true,
   })
 );
+
+// Sentry context middleware
+app.use('*', sentryPerformanceContext);
+app.use('*', sentryUserContext);
+app.use('/projects/:projectId/*', sentryProjectContext);
 
 // Root route - simple status check
 app.get('/', (c) => {
@@ -78,5 +92,6 @@ try {
   console.log(`✅ Server listening on 0.0.0.0:${port}`);
 } catch (error) {
   console.error('❌ Failed to start server:', error);
+  captureException(error, { context: 'server_startup' });
   process.exit(1);
 }
